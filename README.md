@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M4 进行中：M1–M3 已完成；016 建立机器可读 Protocol、CLI `query/apply/jsonl`；MCP Adapter 与 Agent Skill 未开始。
+> v0.1 · M4 进行中：M1–M3 已完成；016 Protocol/CLI、017 MCP stdio Adapter 已建立；Agent Skill 与端到端未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -45,12 +45,12 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | Inspector / Source（M3 014） | 已建立：配置编辑、Change Review、只读 CodeMirror Source |
 | 外部修改同步（M3 015） | 已建立：digest 轮询、冲突守卫、Reload |
 | Agent Protocol（M4 016） | 已建立：query/transaction/JSONL、CLI query/apply |
-| MCP Adapter / Agent Skill | 未开始（M4 017–018） |
+| MCP Adapter / Agent Skill | 已建立 MCP（017）；Agent Skill 未开始（018） |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
-`composition-editor`、`composition-protocol` 与 `apps/designer`；Core/Protocol 通过
-`cargo test` / `clippy` / `fmt`，Designer 通过 `npm run build` 与 Tauri 宿主测试。
-M3 已完成可视化、编辑、Source 与外部同步；M4 016 已提供机器协议，MCP 与 Agent Skill 未开始。
+`composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
+Core/Protocol/MCP 通过 `cargo test` / `clippy` / `fmt`，Designer 通过 `npm run build` 与
+Tauri 宿主测试。M4 016–017 已提供机器协议与 MCP tools/resources；Agent Skill 未开始。
 M1–M3 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代表项目可以运行或部署。
 
 ## 3. 目录结构
@@ -68,6 +68,7 @@ composition-designer/
 │   ├── composition-cli/                   # 已建立（008，inspect/resolve/validate）
 │   ├── composition-editor/                # 已建立（009，命令/事务）
 │   ├── composition-protocol/              # 已建立（016，Query/Command/JSONL）
+│   ├── composition-mcp/                   # 已建立（017，MCP stdio）
 │   ├── composition-resolver/              # 暂并入 core
 │   ├── composition-validator/             # 暂并入 core
 │   └── composition-app/                   # 待 M3/M4
@@ -130,6 +131,7 @@ composition-designer/
 - [命令 Schema v1](./docs/spec/command-schema-v1.md)
 - [Designer Layout v1](./docs/spec/designer-layout-v1.md)
 - [Composition Protocol v1](./docs/spec/protocol-v1.md)
+- [MCP Adapter v1](./docs/spec/mcp-adapter-v1.md)
 - [错误代码 v1](./docs/spec/error-codes-v1.md)
 - [ADR-0001 领域模型与 Schema 冻结](./docs/adr/0001-domain-and-schema-freeze.md)
 - [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)

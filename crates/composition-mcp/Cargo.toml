@@ -1,0 +1,16 @@
+[package]
+name = "composition-mcp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Composition Designer v0.1 MCP stdio adapter"
+publish = false
+
+[[bin]]
+name = "composition-mcp"
+path = "src/main.rs"
+
+[dependencies]
+composition-protocol = { path = "../composition-protocol" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

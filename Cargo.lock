@@ -58,6 +58,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "composition-mcp"
+version = "0.1.0"
+dependencies = [
+ "composition-protocol",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "composition-protocol"
 version = "0.1.0"
 dependencies = [

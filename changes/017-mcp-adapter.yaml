@@ -1,0 +1,35 @@
+change:
+  id: change.m4-mcp-adapter
+  intent: 新增 composition-mcp，将 protocol 暴露为 MCP stdio tools/resources
+  authorization: extend
+  targets:
+    - Cargo.toml
+    - Cargo.lock
+    - crates/composition-mcp
+    - docs/spec
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - mcp_adapter
+      - jsonrpc_stdio
+      - tools
+      - resources
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - design_baseline
+      - second_model
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 直接实现 MCP 基础 JSON-RPC 2.0；所有操作仍经 composition-protocol。

@@ -1,8 +1,8 @@
 # crates/
 
 v0.1 Core 的 crate 布局（设计基线 §10.2）。M1/M2 已完成只读 Core、编辑事务与 TOML 写回；
-M3 012–015 建立 `apps/designer`（Tauri 2 + React + xyflow + CodeMirror）；M4 016 建立
-`composition-protocol`。桌面 host 不在本表中。
+M3 012–015 建立 `apps/designer`（Tauri 2 + React + xyflow + CodeMirror）；M4 016–017 建立
+`composition-protocol` 与 `composition-mcp`。桌面 host 不在本表中。
 
 | crate | 状态 | 职责 | 允许依赖 |
 |---|---|---|---|
@@ -12,6 +12,7 @@ M3 012–015 建立 `apps/designer`（Tauri 2 + React + xyflow + CodeMirror）�
 | `composition-cli` | 已建立（008/016，10 项测试） | inspect / resolve / validate、query / apply / jsonl | core, domain, protocol, serde, serde_json |
 | `composition-editor` | 已建立（009–011，30 项测试） | 命令、事务、Revision/幂等、结构化 Diff、保留格式 TOML 写回 | core, domain, toml, toml_edit, serde, serde_json |
 | `composition-protocol` | 已建立（016，4 项测试） | Query/Command 协议、JSONL、外部冲突守卫 | core, domain, editor, serde, serde_json |
+| `composition-mcp` | 已建立（017，4 项测试） | MCP stdio、6 tools / 4 resources | protocol, serde, serde_json |
 | `composition-resolver` | 暂并入 core | 模块解析与规范化结果 | domain, toml |
 | `composition-validator` | 暂并入 core | Schema、引用、契约校验 | domain, resolver |
 | `composition-app` | 待 M3/M4 | 应用服务编排 | core |

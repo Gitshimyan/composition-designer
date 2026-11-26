@@ -10,6 +10,7 @@ v0.1 的冻结规范（M0，2026-11-26）。实现、样例与错误码以本目
 | [`command-schema-v1.md`](./command-schema-v1.md) | M2 编辑命令 JSON 形状、事务规则、Revision 历史/幂等、结构化 Diff、TOML 写回 | M2 009–011 冻结 |
 | [`designer-layout-v1.md`](./designer-layout-v1.md) | `.designer/layout.toml` 的节点坐标格式与表现层边界 | M3 013 冻结 |
 | [`protocol-v1.md`](./protocol-v1.md) | 机器可读 Query/Command 协议、JSONL 与 CLI 单次命令 | M4 016 冻结 |
+| [`mcp-adapter-v1.md`](./mcp-adapter-v1.md) | MCP stdio 生命周期、tools/resources 与 JSON-RPC 错误 | M4 017 冻结 |
 
 相关：
 

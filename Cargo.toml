@@ -7,6 +7,7 @@ members = [
     "crates/composition-cli",
     "crates/composition-editor",
     "crates/composition-protocol",
+    "crates/composition-mcp",
 ]
 exclude = ["apps/designer/src-tauri"]
 
