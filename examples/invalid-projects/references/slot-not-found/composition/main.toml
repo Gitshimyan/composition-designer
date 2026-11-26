@@ -1,0 +1,26 @@
+[composition]
+schema_version = 1
+id = "example.invalid.slot-not-found"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "1.0.0"
+
+[[instances]]
+id = "hello"
+module = "leaf.widget"
+version = "1.0.0"
+
+[[bindings]]
+id = "app-content"
+parent = "app"
+slot = "content"
+child = "hello"
+
+[[bindings]]
+id = "app-body"
+parent = "app"
+slot = "body"
+child = "hello"

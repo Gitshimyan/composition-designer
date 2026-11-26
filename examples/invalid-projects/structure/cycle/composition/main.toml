@@ -1,0 +1,31 @@
+[composition]
+schema_version = 1
+id = "example.invalid.cycle"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.root"
+version = "1.0.0"
+
+[[instances]]
+id = "node-a"
+module = "ui.node"
+version = "1.0.0"
+
+[[instances]]
+id = "node-b"
+module = "ui.node"
+version = "1.0.0"
+
+[[bindings]]
+id = "node-a-child-b"
+parent = "node-a"
+slot = "child"
+child = "node-b"
+
+[[bindings]]
+id = "node-b-child-a"
+parent = "node-b"
+slot = "child"
+child = "node-a"

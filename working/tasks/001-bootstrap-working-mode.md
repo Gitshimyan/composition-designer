@@ -35,6 +35,6 @@
 ## 结果 / 遗留问题
 
 - 结果：working 编排、AGENTS、changes、docs（adr / ai / spec）与目录骨架就位；M0 三张卡待推进。
-- 遗留：仓库未 `git init`（需要历史 / 差异检查时再建）；宿主任务表只有 selftest 夹具，
+- 遗留：仓库已于 2026-11-26 初始化 git（main，首个提交 `58713e2`）；宿主任务表只有 selftest 夹具，
   M1 的 cargo 命令需以 dynamic host task 申请或在宿主侧执行。
 - 下一步：002（领域模型冻结）。

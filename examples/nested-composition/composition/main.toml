@@ -1,0 +1,110 @@
+[composition]
+schema_version = 1
+id = "example.nested"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "1.0.0"
+
+[instances.config]
+title = "Nested"
+
+[[instances]]
+id = "page-1"
+module = "ui.page"
+version = "1.0.0"
+
+[instances.config]
+title = "Page 1"
+
+[[instances]]
+id = "page-2"
+module = "ui.page"
+version = "1.0.0"
+
+[instances.config]
+title = "Page 2"
+
+[[instances]]
+id = "panel-1"
+module = "ui.panel"
+version = "1.0.0"
+
+[instances.config]
+heading = "Left"
+
+[[instances]]
+id = "panel-2"
+module = "ui.panel"
+version = "1.0.0"
+
+[instances.config]
+heading = "Right"
+
+[[instances]]
+id = "hello"
+module = "leaf.widget"
+version = "1.0.0"
+
+[instances.config]
+label = "Hello"
+
+[[instances]]
+id = "world"
+module = "leaf.widget"
+version = "1.0.0"
+
+[instances.config]
+label = "World"
+
+[[instances]]
+id = "status"
+module = "leaf.widget"
+version = "1.0.0"
+
+[instances.config]
+label = "Status"
+
+[[bindings]]
+id = "app-pages-1"
+parent = "app"
+slot = "content"
+child = "page-1"
+
+[[bindings]]
+id = "app-pages-2"
+parent = "app"
+slot = "content"
+child = "page-2"
+
+[[bindings]]
+id = "page-1-main"
+parent = "page-1"
+slot = "main"
+child = "panel-1"
+
+[[bindings]]
+id = "page-2-main"
+parent = "page-2"
+slot = "main"
+child = "panel-2"
+
+[[bindings]]
+id = "panel-1-hello"
+parent = "panel-1"
+slot = "body"
+child = "hello"
+
+[[bindings]]
+id = "panel-1-world"
+parent = "panel-1"
+slot = "body"
+child = "world"
+
+[[bindings]]
+id = "panel-2-status"
+parent = "panel-2"
+slot = "body"
+child = "status"

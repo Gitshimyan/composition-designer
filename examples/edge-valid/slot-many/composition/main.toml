@@ -1,0 +1,37 @@
+[composition]
+schema_version = 1
+id = "example.slot-many"
+root = "board"
+
+[[instances]]
+id = "board"
+module = "board.stack"
+version = "1.0.0"
+
+[[instances]]
+id = "card-a"
+module = "item.card"
+version = "1.0.0"
+
+[instances.config]
+title = "A"
+
+[[instances]]
+id = "card-b"
+module = "item.card"
+version = "1.0.0"
+
+[instances.config]
+title = "B"
+
+[[bindings]]
+id = "board-cards-a"
+parent = "board"
+slot = "cards"
+child = "card-a"
+
+[[bindings]]
+id = "board-cards-b"
+parent = "board"
+slot = "cards"
+child = "card-b"

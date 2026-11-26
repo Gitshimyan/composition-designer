@@ -1,0 +1,13 @@
+[module]
+schema_version = 1
+id = "ui.statusbar"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Status bar with a text input"
+
+[[contract.ports]]
+id = "status-in"
+direction = "input"
+type = "string"

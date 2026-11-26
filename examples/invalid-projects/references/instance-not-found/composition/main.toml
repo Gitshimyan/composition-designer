@@ -1,0 +1,15 @@
+[composition]
+schema_version = 1
+id = "example.invalid.instance-not-found"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "1.0.0"
+
+[[bindings]]
+id = "app-content"
+parent = "app"
+slot = "content"
+child = "ghost"

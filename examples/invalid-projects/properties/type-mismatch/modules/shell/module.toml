@@ -1,0 +1,12 @@
+[module]
+schema_version = 1
+id = "shell.desktop"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Shell with an integer width property"
+
+[contract.properties.width]
+type = "integer"
+required = true

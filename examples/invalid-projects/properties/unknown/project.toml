@@ -1,0 +1,8 @@
+[project]
+schema_version = 1
+id = "example.invalid.property-unknown"
+name = "Unknown Property"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]

@@ -1,0 +1,5 @@
+[composition]
+schema_version = 1
+id = "example.invalid.multiple-roots"
+root = "app"
+root = "app-2"

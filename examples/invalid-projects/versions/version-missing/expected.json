@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "schema-missing-field"
+  ],
+  "notes": "缺少必需字段属于 Schema 错误，不会继续做版本解析。"
+}

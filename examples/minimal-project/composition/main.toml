@@ -1,0 +1,26 @@
+[composition]
+schema_version = 1
+id = "example.minimal"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "1.0.0"
+
+[instances.config]
+title = "Minimal Project"
+
+[[instances]]
+id = "hello"
+module = "leaf.widget"
+version = "1.0.0"
+
+[instances.config]
+label = "Hello"
+
+[[bindings]]
+id = "app-content"
+parent = "app"
+slot = "content"
+child = "hello"

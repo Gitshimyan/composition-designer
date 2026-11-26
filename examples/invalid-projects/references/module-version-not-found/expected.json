@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "ref-module-version-not-found"
+  ],
+  "notes": "不会退化为 `ref-module-not-found`，也不会自动选择 `1.0.0`。"
+}

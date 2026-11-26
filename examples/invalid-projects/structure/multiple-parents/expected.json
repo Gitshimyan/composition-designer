@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "structure-instance-multiple-parents"
+  ],
+  "notes": "单父规则：非 Root 实例只能有一个父级 Binding。"
+}

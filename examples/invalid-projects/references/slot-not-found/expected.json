@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "ref-slot-not-found"
+  ],
+  "notes": "`hello` 已由合法 Binding 接入；无效 Binding 不参与父级计数，因此没有多父错误。"
+}

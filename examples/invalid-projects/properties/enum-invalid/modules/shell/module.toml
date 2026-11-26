@@ -1,0 +1,13 @@
+[module]
+schema_version = 1
+id = "shell.desktop"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Shell with a theme enum"
+
+[contract.properties.theme]
+type = "enum"
+required = true
+values = ["light", "dark"]

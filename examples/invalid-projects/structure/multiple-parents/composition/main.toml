@@ -1,0 +1,48 @@
+[composition]
+schema_version = 1
+id = "example.invalid.multiple-parents"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.root"
+version = "1.0.0"
+
+[[instances]]
+id = "branch-a"
+module = "ui.branch"
+version = "1.0.0"
+
+[[instances]]
+id = "branch-b"
+module = "ui.branch"
+version = "1.0.0"
+
+[[instances]]
+id = "leaf"
+module = "leaf.widget"
+version = "1.0.0"
+
+[[bindings]]
+id = "app-branch-a"
+parent = "app"
+slot = "children"
+child = "branch-a"
+
+[[bindings]]
+id = "app-branch-b"
+parent = "app"
+slot = "children"
+child = "branch-b"
+
+[[bindings]]
+id = "branch-a-leaf"
+parent = "branch-a"
+slot = "item"
+child = "leaf"
+
+[[bindings]]
+id = "branch-b-leaf"
+parent = "branch-b"
+slot = "item"
+child = "leaf"

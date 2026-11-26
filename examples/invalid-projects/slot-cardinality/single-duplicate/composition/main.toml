@@ -1,0 +1,31 @@
+[composition]
+schema_version = 1
+id = "example.invalid.slot-single-duplicate"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "1.0.0"
+
+[[instances]]
+id = "leaf-a"
+module = "leaf.widget"
+version = "1.0.0"
+
+[[instances]]
+id = "leaf-b"
+module = "leaf.widget"
+version = "1.0.0"
+
+[[bindings]]
+id = "app-content-a"
+parent = "app"
+slot = "content"
+child = "leaf-a"
+
+[[bindings]]
+id = "app-content-b"
+parent = "app"
+slot = "content"
+child = "leaf-b"

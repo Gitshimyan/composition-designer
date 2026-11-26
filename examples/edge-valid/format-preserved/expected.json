@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "notes": "`project.toml`、Composition 与 `module.toml` 都含注释、空行和非惯用字段顺序；M2 的往返测试应保持未编辑字节不变。"
+}

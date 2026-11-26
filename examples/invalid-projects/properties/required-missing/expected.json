@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "contract-property-required-missing"
+  ],
+  "notes": "必填判定在应用默认值之后：无默认值才报缺失。"
+}

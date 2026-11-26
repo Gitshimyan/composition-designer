@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "structure-slot-cardinality"
+  ],
+  "notes": "两个子实例各自只有一个父级；错误只在 Slot 基数超限。"
+}

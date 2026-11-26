@@ -1,0 +1,8 @@
+[module]
+schema_version = 1
+id = "leaf.widget"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Leaf widget"

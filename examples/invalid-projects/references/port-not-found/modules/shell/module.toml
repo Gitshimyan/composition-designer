@@ -1,0 +1,14 @@
+[module]
+schema_version = 1
+id = "shell.desktop"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Shell holding editor and status bar"
+
+[[contract.slots]]
+id = "content"
+cardinality = "many"
+required = true
+accepts = ["ui.editor", "ui.statusbar"]

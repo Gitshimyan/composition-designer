@@ -1,0 +1,10 @@
+# Format-preservation fixture: comments, blank lines and field order must survive edits.
+
+[project]
+name = "Format Preserved"   # display name first on purpose
+id = "example.format-preserved"
+schema_version = 1
+
+[workspace]
+module_roots = ["modules"]
+composition = "composition/main.toml"

@@ -1,0 +1,8 @@
+[project]
+schema_version = 1
+id = "example.invalid.property-enum"
+name = "Property Enum Invalid"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]

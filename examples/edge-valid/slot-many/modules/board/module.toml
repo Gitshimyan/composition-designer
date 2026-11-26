@@ -1,0 +1,14 @@
+[module]
+schema_version = 1
+id = "board.stack"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Board with many cards"
+
+[[contract.slots]]
+id = "cards"
+cardinality = "many"
+required = true
+accepts = ["item.card"]

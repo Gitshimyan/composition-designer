@@ -1,0 +1,14 @@
+[module]
+schema_version = 1
+id = "ui.node"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Node with an optional child"
+
+[[contract.slots]]
+id = "child"
+cardinality = "optional_one"
+required = false
+accepts = ["ui.node"]

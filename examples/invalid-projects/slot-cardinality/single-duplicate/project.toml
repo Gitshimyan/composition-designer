@@ -1,0 +1,8 @@
+[project]
+schema_version = 1
+id = "example.invalid.slot-single-duplicate"
+name = "Slot Single Duplicate"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]

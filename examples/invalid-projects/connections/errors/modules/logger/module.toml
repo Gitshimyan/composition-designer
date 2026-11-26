@@ -1,0 +1,14 @@
+[module]
+schema_version = 1
+id = "ui.logger"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Logger with an integer input"
+
+[[contract.ports]]
+id = "log"
+direction = "input"
+type = "integer"
+multi = true

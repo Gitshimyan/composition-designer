@@ -1,0 +1,19 @@
+[module]
+schema_version = 1
+id = "ui.panel"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Panel containing widgets"
+
+[contract.properties.heading]
+type = "string"
+required = false
+default = "Panel"
+
+[[contract.slots]]
+id = "body"
+cardinality = "many"
+required = true
+accepts = ["leaf.widget"]

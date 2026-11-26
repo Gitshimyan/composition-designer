@@ -1,0 +1,14 @@
+[composition]
+schema_version = 1
+id = "example.invalid.unreachable"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.root"
+version = "1.0.0"
+
+[[instances]]
+id = "orphan"
+module = "leaf.widget"
+version = "1.0.0"

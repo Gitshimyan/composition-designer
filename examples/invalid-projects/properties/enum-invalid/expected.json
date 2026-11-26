@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "contract-property-value-invalid"
+  ],
+  "notes": "枚举只接受声明的字符串值。"
+}

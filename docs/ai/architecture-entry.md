@@ -1,8 +1,8 @@
-# AI 架构入口（Bootstrap）
+# AI 架构入口
 
 > 给 AI / 新协作者的入口。开始修改前先读本文件、[`working/plan.md`](../../working/plan.md)
 > 与设计基线。事实来源是规范、样例与命令输出，不是本文件的文字描述。
-> M0 冻结后由 002 / 003 更新本文件。
+> M0 已冻结（2026-11-26）；字段与错误码以 [`docs/spec/`](../spec/) 为准。
 
 ## 1. 项目速览
 
@@ -10,11 +10,13 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | BOOTSTRAP：无代码、无门禁 |
+| 当前阶段 | M0 完成：领域模型、TOML Schema、错误码与 26 个样例夹具已冻结；M1 Core 未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
+| 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
+| 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
-| 验证入口 | 暂无；M1 起为 `cargo test` + `composition-cli validate` |
+| 验证入口 | M0：规范 + `expected.json` 人工/临时校验；M1 起为 `cargo test` + `composition-cli validate` |
 | working 入口 | [`working/plan.md`](../../working/plan.md) |
 
 ## 2. 目标结构与依赖方向
@@ -52,8 +54,9 @@
 | 路径 | 内容 |
 |---|---|
 | `examples/` | 合法 / 非法 / 边界项目，兼作 M1 验收数据 |
-| `docs/spec/` | M0 冻结的领域模型、TOML Schema、错误码 |
-| `docs/adr/` | 决策与否定方案 |
+| `docs/spec/` | 已冻结的领域模型、TOML Schema、错误码 |
+| `docs/glossary.md` | 术语表（中文 / English / 反例） |
+| `docs/adr/` | 决策与否定方案（0001 冻结、0002 不支持项） |
 | `changes/` | Change Manifest |
 
 ## 3. 权限模式
@@ -90,9 +93,9 @@
 | 要改什么 | 去哪里 |
 |---|---|
 | 设计基线（Rearchitect） | `composition-designer-v0.1-design.md` |
-| 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（002 建立） |
-| TOML Schema 与错误码 | `docs/spec/`（003 建立） |
-| 示例项目 | `examples/`（004 建立） |
+| 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
+| TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
+| 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
 | Core | `crates/`（M1 起） |
 | Designer | `apps/designer/`（M3 起） |
 | Agent 协议与 Adapter | `crates/composition-protocol`、M4 的 adapter（未建立） |
@@ -100,7 +103,11 @@
 | 变更声明 | `changes/` |
 | 计划与任务卡 | `working/` |
 
-## 7. 未冻结事项
+## 7. 已冻结与未冻结
 
-见 [`working/plan.md`](../../working/plan.md) §6“待冻结决策”。在 002 / 003 冻结前，
-不要根据设计基线里的示例 TOML 猜字段语义。
+- 领域模型、TOML Schema、错误码与样例已在 M0 冻结；决策见
+  [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
+  [ADR-0002](../adr/0002-v01-unsupported.md)；
+- v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
+- 尚未冻结的是 M1+ 实现细节：crate 拆分、命令 Schema、Revision 持久化与协议适配；
+  开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

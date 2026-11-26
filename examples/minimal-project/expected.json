@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "notes": "Root `app` 是 composite，`hello` 通过 `content` Slot 接入。"
+}

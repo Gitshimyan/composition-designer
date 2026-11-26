@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "contract-property-unknown"
+  ],
+  "notes": "未知属性不会被静默忽略，也不会进入有效配置。"
+}

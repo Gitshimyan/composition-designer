@@ -1,0 +1,14 @@
+[module]
+schema_version = 1
+id = "shell.root"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Shell with one content slot"
+
+[[contract.slots]]
+id = "content"
+cardinality = "one"
+required = true
+accepts = ["leaf.widget"]

@@ -1,0 +1,9 @@
+[composition]
+schema_version = 1
+id = "example.invalid.module-version"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "2.0.0"

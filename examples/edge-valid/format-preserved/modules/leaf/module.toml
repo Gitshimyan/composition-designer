@@ -1,0 +1,11 @@
+# leaf module
+
+[module]
+schema_version = 1
+version = "1.0.0"
+id = "leaf.widget"
+kind = "primitive"
+
+[contract.properties.label]
+type = "string"
+required = true

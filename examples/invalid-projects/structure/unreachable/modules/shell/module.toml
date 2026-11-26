@@ -1,0 +1,8 @@
+[module]
+schema_version = 1
+id = "shell.root"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Composite root without slots"

@@ -1,0 +1,8 @@
+[project]
+schema_version = 1
+id = "example.dependency"
+name = "Dependency Provider"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]

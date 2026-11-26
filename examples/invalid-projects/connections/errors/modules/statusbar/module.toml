@@ -1,0 +1,20 @@
+[module]
+schema_version = 1
+id = "ui.statusbar"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Status bar with text input and ack output"
+
+[[contract.ports]]
+id = "text"
+direction = "input"
+type = "string"
+multi = true
+
+[[contract.ports]]
+id = "ack"
+direction = "output"
+type = "string"
+multi = true

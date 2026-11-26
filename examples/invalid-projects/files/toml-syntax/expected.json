@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "toml-syntax-error"
+  ],
+  "notes": "语法错误在 L1 终止，不再尝试构建模型。"
+}

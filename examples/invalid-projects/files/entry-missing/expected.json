@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "file-project-missing"
+  ],
+  "notes": "项目目录中没有 project.toml。"
+}

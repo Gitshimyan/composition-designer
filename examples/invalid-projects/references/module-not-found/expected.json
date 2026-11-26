@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "ref-module-not-found"
+  ],
+  "notes": "`modules/` 目录存在但为空，因此不会额外触发 `file-module-root-missing`。"
+}

@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "notes": "`content` 与 `body` 使用 `many`，`main` 使用 `one`；同一模块定义被多个实例引用。"
+}

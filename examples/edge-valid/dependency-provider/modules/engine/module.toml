@@ -1,0 +1,12 @@
+[module]
+schema_version = 1
+id = "task.engine"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Engine requiring a logger"
+
+[[contract.dependencies]]
+id = "logger"
+module = "logging.console"

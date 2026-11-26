@@ -1,0 +1,14 @@
+[module]
+schema_version = 1
+id = "shell.root"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Root with two branches"
+
+[[contract.slots]]
+id = "children"
+cardinality = "many"
+required = true
+accepts = ["ui.branch", "leaf.widget"]

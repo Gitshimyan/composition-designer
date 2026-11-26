@@ -1,0 +1,26 @@
+[composition]
+schema_version = 1
+id = "example.invalid.duplicate-binding"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.root"
+version = "1.0.0"
+
+[[instances]]
+id = "leaf"
+module = "leaf.widget"
+version = "1.0.0"
+
+[[bindings]]
+id = "bind-1"
+parent = "app"
+slot = "content"
+child = "leaf"
+
+[[bindings]]
+id = "bind-2"
+parent = "app"
+slot = "content"
+child = "leaf"

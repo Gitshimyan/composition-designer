@@ -1,0 +1,18 @@
+[module]
+schema_version = 1
+id = "shell.desktop"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Desktop shell with one content area"
+
+[contract.properties.title]
+type = "string"
+required = true
+
+[[contract.slots]]
+id = "content"
+cardinality = "one"
+required = true
+accepts = ["leaf.widget"]

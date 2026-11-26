@@ -1,0 +1,9 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "connection-direction-invalid",
+    "connection-type-mismatch",
+    "connection-duplicate"
+  ],
+  "notes": "所有 Port 都是 `multi=true`，因此重复连接不会额外触发度数错误；`c-direction` 的类型恰好相同，只报方向。"
+}

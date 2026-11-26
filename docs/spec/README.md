@@ -1,12 +1,18 @@
 # docs/spec/
 
-v0.1 的冻结规范。M0 产出：
+v0.1 的冻结规范（M0，2026-11-26）。实现、样例与错误码以本目录为准。
 
-| 文件 | 内容 | 任务卡 |
+| 文件 | 内容 | 状态 |
 |---|---|---|
-| `domain-model-v1.md` | 领域对象、关系语义、不变量、术语表 | 002 |
-| `composition-schema-v1.md` | `project.toml`、`composition/**`、`modules/**/module.toml`、`.designer/**` 的字段、类型、默认值、约束 | 003 |
-| `error-codes-v1.md` | L1–L7 稳定错误代码、级别、关联对象、修正提示 | 003 |
+| [`domain-model-v1.md`](./domain-model-v1.md) | 领域对象、关系语义、不变量、对象标识 | 已冻结 |
+| [`composition-schema-v1.md`](./composition-schema-v1.md) | `project.toml`、`composition/**`、`modules/**/module.toml`、`.designer/**` 的字段、类型、默认值、约束、校验顺序、Revision | 已冻结 |
+| [`error-codes-v1.md`](./error-codes-v1.md) | L1–L7 稳定错误代码、级别、对象、提示 | 已冻结 |
+
+相关：
+
+- 术语表：[`../glossary.md`](../glossary.md)
+- 冻结决策：[ADR-0001](../adr/0001-domain-and-schema-freeze.md)、[ADR-0002](../adr/0002-v01-unsupported.md)
+- 测试数据：[`../../examples/README.md`](../../examples/README.md)
 
 规范一旦冻结，修改属于 Rearchitect：必须先更新 ADR、明确 `schema_version` 策略，
-再同步校验、样例与 Core。
+再同步校验、样例与 Core。顺序不能反。

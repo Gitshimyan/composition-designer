@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "structure-slot-cardinality"
+  ],
+  "notes": "唯一预期错误是 Slot 基数为 0；Root 与模块解析均正常。"
+}

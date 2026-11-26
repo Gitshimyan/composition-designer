@@ -1,0 +1,18 @@
+[module]
+schema_version = 1
+id = "shell.desktop"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Shell requiring a logger"
+
+[[contract.slots]]
+id = "content"
+cardinality = "many"
+required = true
+accepts = ["task.engine", "logging.console"]
+
+[[contract.dependencies]]
+id = "logger"
+module = "logging.console"

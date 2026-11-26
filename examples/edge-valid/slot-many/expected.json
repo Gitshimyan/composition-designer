@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "notes": "`cards` 允许任意数量；本例放 2 个，满足 required。"
+}

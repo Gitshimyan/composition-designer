@@ -1,0 +1,40 @@
+[composition]
+schema_version = 1
+id = "example.invalid.port-not-found"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "1.0.0"
+
+[[instances]]
+id = "editor"
+module = "ui.editor"
+version = "1.0.0"
+
+[[instances]]
+id = "statusbar"
+module = "ui.statusbar"
+version = "1.0.0"
+
+[[bindings]]
+id = "app-content-editor"
+parent = "app"
+slot = "content"
+child = "editor"
+
+[[bindings]]
+id = "app-content-statusbar"
+parent = "app"
+slot = "content"
+child = "statusbar"
+
+[[connections]]
+id = "editor-status"
+[connections.from]
+instance = "editor"
+port = "missing-out"
+[connections.to]
+instance = "statusbar"
+port = "status-in"

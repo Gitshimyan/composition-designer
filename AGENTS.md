@@ -8,7 +8,8 @@
 
 1. 读 [`working/plan.md`](./working/plan.md)，只取其中一张任务卡。
 2. 读设计基线 [`composition-designer-v0.1-design.md`](./composition-designer-v0.1-design.md)
-   的相关章节（执行顺序见 §16，阶段见 §11）。
+   的相关章节（执行顺序见 §16，阶段见 §11），以及 [`docs/spec/`](./docs/spec/README.md)
+   中与目标对象相关的冻结规范。
 3. 读 [`docs/ai/architecture-entry.md`](./docs/ai/architecture-entry.md) 与目标目录的 README，
    确认当前真实状态，不要沿用记忆里的字段或命令。
 4. 确认任务卡声明的验收条件现在是否可执行；不可执行就缩小卡的范围，而不是伪造结果。
@@ -49,7 +50,7 @@
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（BOOTSTRAP / M0）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（M0 已完成、M1 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -80,8 +81,9 @@
 ## 7. 常用命令
 
 ```powershell
-# M0（当前）：只有文档与样例
+# M0 产物（当前）：文档与样例
 Get-Content working/plan.md
+Get-Content docs/spec/composition-schema-v1.md
 
 # M1 起（规划，包名与结构在 005 冻结前只是占位）
 cargo fmt --check

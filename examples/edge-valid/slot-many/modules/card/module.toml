@@ -1,0 +1,12 @@
+[module]
+schema_version = 1
+id = "item.card"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Card item"
+
+[contract.properties.title]
+type = "string"
+required = true

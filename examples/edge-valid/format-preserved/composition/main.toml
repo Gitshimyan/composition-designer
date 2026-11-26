@@ -1,0 +1,29 @@
+# Format-preservation fixture for M2 TOML editing.
+
+[composition]
+root = "app"
+schema_version = 1
+id = "example.format-preserved"
+
+[[instances]]
+module = "shell.desktop"
+id = "app"
+version = "1.0.0"
+
+[instances.config]
+title = "Format Preserved"
+
+[[instances]]
+id = "hello"
+# field order intentionally different
+version = "1.0.0"
+module = "leaf.widget"
+
+[instances.config]
+label = "Hello"
+
+[[bindings]]
+child = "hello"
+parent = "app"
+slot = "content"
+id = "app-content"

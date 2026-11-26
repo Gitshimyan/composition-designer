@@ -1,0 +1,20 @@
+# shell module
+[module]
+kind = "composite"
+id = "shell.desktop"
+version = "1.0.0"
+schema_version = 1
+
+[description]
+summary = "Format-preserved shell"
+
+[contract.properties.title]
+required = true
+type = "string"
+
+# one required content slot
+[[contract.slots]]
+accepts = ["leaf.widget"]
+id = "content"
+required = true
+cardinality = "one"

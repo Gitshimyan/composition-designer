@@ -1,0 +1,14 @@
+[module]
+schema_version = 1
+id = "ui.branch"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Branch holding one leaf"
+
+[[contract.slots]]
+id = "item"
+cardinality = "one"
+required = true
+accepts = ["leaf.widget"]

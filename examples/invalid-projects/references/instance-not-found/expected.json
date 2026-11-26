@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "ref-instance-not-found"
+  ],
+  "notes": "Slot 是可选单值，因此不会再触发基数错误；该 Binding 被跳过。"
+}

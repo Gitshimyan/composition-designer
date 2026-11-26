@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "notes": "`app` 的 `logger` 依赖显式映射到 `logger-1`；`engine` 未映射，但全项目只有一个 `logging.console` 实例，故唯一解析成功。"
+}

@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "file-path-escape"
+  ],
+  "notes": "路径归一化后越出项目根，拒绝继续解析。"
+}

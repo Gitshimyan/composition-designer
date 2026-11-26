@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "structure-duplicate-binding"
+  ],
+  "notes": "保留首个 Binding；重复项不参与 Slot 基数与父级计数，因此不附加其他错误。"
+}

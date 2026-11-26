@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · Bootstrap：设计基线已就绪，代码尚未开始。
+> v0.1 · M0 完成：领域模型、TOML Schema、错误码与样例集已冻结；Core 尚未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -10,6 +10,8 @@ Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent In
 - 下一步行动入口：[working/plan.md](./working/plan.md)
 - AI 工作规则：[AGENTS.md](./AGENTS.md)
 - AI 架构入口：[docs/ai/architecture-entry.md](./docs/ai/architecture-entry.md)
+- 冻结规范：[docs/spec/](./docs/spec/README.md)
+- 测试数据：[examples/](./examples/README.md)
 
 ## 1. v0.1 要解决什么
 
@@ -19,7 +21,8 @@ Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent In
 4. **Validate**：检查语法、Schema、引用、契约、组合与依赖，返回可定位诊断。
 
 v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、在线模块市场、复杂版本求解、
-隐式 Adapter、多 Agent 调度、在 TOML 中执行脚本。边界详见设计基线 §1.2 与 §14。
+隐式 Adapter、多 Agent 调度、在 TOML 中执行脚本。边界详见设计基线 §1.2 / §14 与
+[ADR-0002](./docs/adr/0002-v01-unsupported.md)。
 
 ## 2. 当前状态（2026-11-26）
 
@@ -27,13 +30,16 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 |---|---|
 | 设计基线 | 就绪（Draft） |
 | working 编排 / AGENTS / Change Manifest | 就绪 |
-| 领域模型与 TOML Schema | 未冻结（M0：002–004） |
+| 领域模型与术语（M0 002） | 已冻结 |
+| TOML Schema 与错误码（M0 003） | 已冻结（63 个验证代码 + 6 个预留代码） |
+| 示例项目集（M0 004） | 26 个 `expected.json` 数据集（25 个完整项目 + 入口缺失目录） |
 | Core：解析 / 验证 / CLI | 未开始（M1） |
 | 编辑命令、事务、Revision | 未开始（M2） |
 | Designer UI | 未开始（M3） |
 | Agent Interface | 未开始（M4） |
 
-当前没有 crate、命令和门禁；“通过验证”在 M0 只能是文档与样例核对。
+当前没有 crate、命令和门禁；M0 的“通过”指规范自洽、样例与 `expected.json` 一致，
+不代表已经能运行项目或执行验证。
 
 ## 3. 目录结构
 
@@ -57,15 +63,17 @@ composition-designer/
 │       ├── src/{canvas,explorer,inspector,source,diagnostics,agent-status}/
 │       └── src-tauri/
 │
-├── examples/                              # 项目样例（M0 起；见 examples/README.md）
+├── examples/                              # 项目样例 + expected.json（M0 完成）
 │   ├── minimal-project/
 │   ├── nested-composition/
+│   ├── edge-valid/
 │   └── invalid-projects/
 │
 ├── docs/
-│   ├── adr/                               # 架构决策
+│   ├── adr/                               # 架构决策（0001 冻结、0002 不支持项）
 │   ├── ai/                                # AI 入口
-│   └── spec/                              # M0 冻结的规范
+│   ├── spec/                              # M0 冻结规范
+│   └── glossary.md                        # 术语表
 │
 ├── changes/                               # Change Manifest（改动范围声明）
 └── working/                               # 计划、任务卡、过程文件
@@ -102,8 +110,13 @@ composition-designer/
 - [设计基线](./composition-designer-v0.1-design.md)
 - [AI 架构入口](./docs/ai/architecture-entry.md)
 - [AI 工作规则](./AGENTS.md)
+- [术语表](./docs/glossary.md)
+- [领域模型 v1](./docs/spec/domain-model-v1.md)
+- [Composition Schema v1](./docs/spec/composition-schema-v1.md)
+- [错误代码 v1](./docs/spec/error-codes-v1.md)
+- [ADR-0001 领域模型与 Schema 冻结](./docs/adr/0001-domain-and-schema-freeze.md)
+- [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)
 - [crates 职责与依赖方向](./crates/README.md)
 - [Designer UI 区域](./apps/designer/README.md)
-- [示例项目约定](./examples/README.md)
-- [规范目录](./docs/spec/README.md)
+- [示例项目约定与覆盖矩阵](./examples/README.md)
 - [ADR 模板](./docs/adr/0000-template.md)

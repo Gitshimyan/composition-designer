@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "toml-duplicate-key"
+  ],
+  "notes": "v0.1 的 `root` 是单值字段，多个 Root 在模型上不可表达；重复键在 TOML 语法层被拒绝。"
+}

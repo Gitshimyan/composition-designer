@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "structure-cycle"
+  ],
+  "notes": "环内实例不再重复报不可达；Root 的 content Slot 是可选且未使用。"
+}

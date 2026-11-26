@@ -1,0 +1,78 @@
+[composition]
+schema_version = 1
+id = "example.invalid.connections"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "shell.desktop"
+version = "1.0.0"
+
+[[instances]]
+id = "editor"
+module = "ui.editor"
+version = "1.0.0"
+
+[[instances]]
+id = "statusbar"
+module = "ui.statusbar"
+version = "1.0.0"
+
+[[instances]]
+id = "logger"
+module = "ui.logger"
+version = "1.0.0"
+
+[[bindings]]
+id = "app-content-editor"
+parent = "app"
+slot = "content"
+child = "editor"
+
+[[bindings]]
+id = "app-content-statusbar"
+parent = "app"
+slot = "content"
+child = "statusbar"
+
+[[bindings]]
+id = "app-content-logger"
+parent = "app"
+slot = "content"
+child = "logger"
+
+[[connections]]
+id = "c-direction"
+[connections.from]
+instance = "statusbar"
+port = "text"
+[connections.to]
+instance = "editor"
+port = "ack"
+
+[[connections]]
+id = "c-type"
+[connections.from]
+instance = "editor"
+port = "text"
+[connections.to]
+instance = "logger"
+port = "log"
+
+[[connections]]
+id = "c-dup-1"
+[connections.from]
+instance = "editor"
+port = "text"
+[connections.to]
+instance = "statusbar"
+port = "text"
+
+[[connections]]
+id = "c-dup-2"
+[connections.from]
+instance = "editor"
+port = "text"
+[connections.to]
+instance = "statusbar"
+port = "text"

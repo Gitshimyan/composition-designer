@@ -1,0 +1,18 @@
+[module]
+schema_version = 1
+id = "shell.desktop"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Shell with a list of pages"
+
+[contract.properties.title]
+type = "string"
+required = true
+
+[[contract.slots]]
+id = "content"
+cardinality = "many"
+required = true
+accepts = ["ui.page"]

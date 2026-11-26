@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "contract-property-type-mismatch"
+  ],
+  "notes": "TOML integer 与 string 严格区分，不做隐式转换。"
+}
