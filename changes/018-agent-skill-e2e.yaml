@@ -1,0 +1,36 @@
+change:
+  id: change.m4-agent-skill-e2e
+  intent: 提供 Agent Skill/MCP 配置，并用真实 MCP stdio 进程验证 prepare/apply/validate 端到端
+  authorization: extend
+  targets:
+    - agent
+    - crates/composition-mcp
+    - crates/composition-protocol
+    - .gitignore
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - agent_skill
+      - mcp_config
+      - e2e_test
+      - protocol_result_shape
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - design_baseline
+      - direct_toml_edit
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test -p composition-mcp --test e2e
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: e2e 使用临时项目；修复 protocol inspection/validation 结果为 camelCase。

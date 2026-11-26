@@ -27,12 +27,12 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 ## 2. 当前状态（2026-11-26）
 
-- 阶段：`M4` 进行中——016（协议/CLI/JSONL）与 017（MCP Adapter）完成；018 Agent Skill 未开始
-- 已有：M1–M3 的 5 个 crate + `apps/designer`、`composition-protocol`、`composition-mcp`
-  （JSON-RPC stdio、6 tools/4 resources）、CLI query/apply/jsonl；141 Core + 5 Tauri 测试
-- 未建：Agent Skill、MCP 端到端演示
-- 门禁：`cargo test` / `clippy` / `fmt`、CLI protocol 测试、Tauri build/test
-- 规模：7 crate + 1 desktop app / 141 Core + 5 host 测试 / 6 MCP tools
+- 阶段：`M4` 完成（016–018）；`M5` 未开始
+- 已有：M1–M3 的 5 个 crate + `apps/designer`、`composition-protocol`、`composition-mcp`、
+  Agent Skill/MCP 配置、MCP e2e；142 Core + 5 Tauri 测试
+- 未建：M5 019 多文件/性能/崩溃恢复/迁移与 A01–A18 验收报告
+- 门禁：`cargo test` / `clippy` / `fmt`、MCP e2e、Tauri build/test
+- 规模：7 crate + 1 desktop app / 142 Core + 5 host 测试 / 6 MCP tools
 
 ## 3. 阶段路线图
 
@@ -44,7 +44,7 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 | M1 | ✅ 完成 | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 ✅ TOML 加载与 Source Map、007 ✅ 解析与 L1–L7 校验、008 ✅ CLI 与确定性 |
 | M2 | ✅ 完成 | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 ✅ 命令 Schema 与事务、010 ✅ Revision/幂等/结构化 Diff、011 ✅ 保留格式 TOML 写回 |
 | M3 | ✅ 完成 | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 ✅ 工程打开与 Designer 外壳、013 ✅ Canvas 与 Tree、014 ✅ Inspector/Source/Diagnostics、015 ✅ 外部修改同步 |
-| M4 | 进行中（016–017 完成） | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 ✅ 领域协议与 CLI/JSONL、017 ✅ MCP Adapter、018 Agent Skill 与端到端 |
+| M4 | ✅ 完成 | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 ✅ 领域协议与 CLI/JSONL、017 ✅ MCP Adapter、018 ✅ Agent Skill 与端到端 |
 | M5 | 未开始 | 完整性与稳定性 | 设计基线 §12 A01–A18 全部通过 | 019 多文件/性能/崩溃恢复/迁移与验收报告 |
 
 > 卡号为路线图预留；创建时以实际内容为准，不改已存在的编号。
@@ -54,10 +54,10 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 | # | 卡 | 方向 | 说明 | 所需授权 |
 |---|---|---|---|---|
-| 1 | 018 | Agent Skill 与端到端 | Agent 使用 MCP 完成组合修改与验证；提供可复现演示 | Extend |
+| 1 | 019 | 完整性与验收 | 多文件/性能/崩溃恢复/迁移检查，汇总 A01–A18 | Rearchitect |
 
 > 队列规则：一次只推进一张任务卡；没有用户确认的方向不写入队列，也不开工。
-> 017 已完成；018 待创建任务卡后再开始，完成后 M4 收口。
+> M4 已完成；M5 019 待创建任务卡并确认范围。
 
 ## 5. 验收映射（设计基线 §12）
 
@@ -109,8 +109,7 @@ A01–A09 已由 M1 覆盖；A10 起进入 M2/M3/M4。
 - Reload 丢弃未提交 Review，节点回到自动布局（layout 文件仍保留）；
 - 016 协议无 request 幂等持久化；CLI apply 只接受 transaction 文件；
 - 017 MCP 无 subscriptions/progress/cancellation/分页/认证，单进程单项目；
-- initialize 回显客户端 protocolVersion，未做版本拒绝；
-- 没有 Agent Skill/客户端配置（018）；
+- 018 无自动化“LLM 按 Skill 执行”的评测；e2e 覆盖 MCP 工具链；
 - 选择/聚焦/拖动有实现与布局 round-trip 测试，但无前端自动化 UI 测试；
 - Tauri app 不加入根 Cargo workspace，使用独立 `src-tauri/Cargo.lock`；
 - Revision 历史与 request 幂等记录只在当前工作区内存中，进程重启丢失；
@@ -148,13 +147,14 @@ npm run build
 npm run desktop
 npm start
 
-# M4（016–017 完成）
+# M4（016–018 完成）
 cargo run -p composition-cli -- query examples/minimal-project validate
 cargo run -p composition-cli -- jsonl examples/minimal-project
 cargo run -p composition-mcp -- --project examples/minimal-project
+cargo test -p composition-mcp --test e2e
 
-# M4 后续（018）
-# Agent Skill / 端到端
+# M5（019）
+# 完整性与验收
 ```
 
 ## 10. 行动日志
@@ -179,3 +179,4 @@ cargo run -p composition-mcp -- --project examples/minimal-project
 | 2026-11-26 | 015 | `check_external_changes` / `reload_project`、写前 digest 冲突守卫、2s 轮询/横幅/Reload；5 个宿主测试；**M3 完成** |
 | 2026-11-26 | 016 | 新增 `composition-protocol`：inspect/resolve/validate/source + prepare/apply；CLI query/apply/jsonl；4 protocol + 2 CLI 测试；协议文档；137 Core 测试 |
 | 2026-11-26 | 017 | 新增 `composition-mcp`：JSON-RPC 2.0 stdio、initialize/tools/resources、6 tools/4 resources；4 MCP 测试；141 Core 测试 |
+| 2026-11-26 | 018 | Agent Skill/MCP 配置；真实 MCP stdio e2e（inspect→resolve→prepare→apply→validate→source）；142 Core 测试；**M4 完成** |

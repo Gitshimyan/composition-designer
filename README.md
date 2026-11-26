@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M4 进行中：M1–M3 已完成；016 Protocol/CLI、017 MCP stdio Adapter 已建立；Agent Skill 与端到端未开始。
+> v0.1 · M4 完成：M1–M3 已完成；016 Protocol/CLI、017 MCP stdio Adapter、018 Agent Skill 与端到端已完成；M5 完整性与验收未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -45,12 +45,14 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | Inspector / Source（M3 014） | 已建立：配置编辑、Change Review、只读 CodeMirror Source |
 | 外部修改同步（M3 015） | 已建立：digest 轮询、冲突守卫、Reload |
 | Agent Protocol（M4 016） | 已建立：query/transaction/JSONL、CLI query/apply |
-| MCP Adapter / Agent Skill | 已建立 MCP（017）；Agent Skill 未开始（018） |
+| MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
+| Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
+| 完整性与验收 | 未开始（M5 019） |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
 Core/Protocol/MCP 通过 `cargo test` / `clippy` / `fmt`，Designer 通过 `npm run build` 与
-Tauri 宿主测试。M4 016–017 已提供机器协议与 MCP tools/resources；Agent Skill 未开始。
+Tauri 宿主测试。M4 已完成 Agent Skill 与真实 MCP 端到端；M5 完整性/验收未开始。
 M1–M3 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代表项目可以运行或部署。
 
 ## 3. 目录结构
@@ -74,9 +76,11 @@ composition-designer/
 │   └── composition-app/                   # 待 M3/M4
 │
 ├── apps/
-│   └── designer/                          # Tauri 2 + React 设计器（012–013 外壳/Canvas）
+│   └── designer/                          # Tauri 2 + React 设计器（012–015）
 │       ├── src/{canvas,explorer,inspector,source,diagnostics,agent-status}/
 │       └── src-tauri/
+│
+├── agent/                                 # Agent Skill + MCP 配置（018）
 │
 ├── examples/                              # 项目样例 + expected.json（M0 完成）
 │   ├── minimal-project/
@@ -137,5 +141,6 @@ composition-designer/
 - [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)
 - [crates 职责与依赖方向](./crates/README.md)
 - [Designer UI 区域](./apps/designer/README.md)
+- [Agent Skill / MCP 配置](./agent/README.md)
 - [示例项目约定与覆盖矩阵](./examples/README.md)
 - [ADR 模板](./docs/adr/0000-template.md)

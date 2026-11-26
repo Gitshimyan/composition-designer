@@ -36,6 +36,7 @@ pub struct Response {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Inspection {
     pub project: Option<Project>,
     pub modules: Vec<ModuleDefinition>,
@@ -47,6 +48,7 @@ pub struct Inspection {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ValidationView {
     pub valid: bool,
     pub error_count: usize,

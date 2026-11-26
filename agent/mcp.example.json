@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "composition-designer": {
+      "command": "${COMPOSITION_DESIGNER_ROOT}/target/debug/composition-mcp.exe",
+      "args": [
+        "--project",
+        "${COMPOSITION_PROJECT}"
+      ]
+    }
+  }
+}

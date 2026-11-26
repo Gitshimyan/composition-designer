@@ -29,6 +29,8 @@ artifacts/
 .dsh/*.json.tmp
 .dsh/allow-scripts.json
 
+agent/mcp.local.json
+
 # OS
 Thumbs.db
 .DS_Store
