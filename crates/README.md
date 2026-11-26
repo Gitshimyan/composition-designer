@@ -1,18 +1,17 @@
 # crates/
 
-v0.1 Core 的目标 crate 布局（设计基线 §10.2）。**首个实现不一定一次拆成 7 个 crate**：
-如果早期拆分带来不必要的边界成本，可以先在一个 crate 内按模块隔离，再按依赖方向拆分
-（拆分决策在 005 冻结）。
+v0.1 Core 的 crate 布局（设计基线 §10.2）。**不要求一次拆成 7 个 crate**：
+M1 005 先建立 `composition-domain`，其余按任务与依赖方向逐步加入。
 
-| crate | 职责 | 允许依赖 |
-|---|---|---|
-| `composition-domain` | 领域类型与不变量 | 无（仅标准库 / serde） |
-| `composition-toml` | TOML 读取、Source Map、保留格式修改 | domain |
-| `composition-resolver` | 模块解析与规范化结果 | domain, toml |
-| `composition-validator` | Schema、引用、契约校验 | domain, resolver |
-| `composition-editor` | 命令、事务、Revision、Diff、Undo | domain, resolver, validator, toml |
-| `composition-protocol` | 机器可读命令与结果 Schema | domain |
-| `composition-app` | 应用服务编排 | 以上全部 |
+| crate | 状态 | 职责 | 允许依赖 |
+|---|---|---|---|
+| `composition-domain` | 已建立（005，58 项测试） | 领域类型与不变量 | 无（仅标准库） |
+| `composition-toml` | 待 006 | TOML 读取、Source Map、保留格式修改 | domain |
+| `composition-resolver` | 待 007 | 模块解析与规范化结果 | domain, toml |
+| `composition-validator` | 待 007 | Schema、引用、契约校验 | domain, resolver |
+| `composition-editor` | 待 M2 | 命令、事务、Revision、Diff、Undo | domain, resolver, validator, toml |
+| `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
+| `composition-app` | 待 M3/M4 | 应用服务编排 | 以上全部 |
 
 规则：
 

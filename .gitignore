@@ -19,6 +19,7 @@ working/tmp/**/*.log
 artifacts/
 
 # local tool state (host-task config, editor/agent caches)
+.dsh/host-tasks.json
 .dsh/*.pending.json
 .dsh/*.json.tmp
 

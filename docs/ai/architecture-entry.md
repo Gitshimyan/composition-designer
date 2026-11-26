@@ -10,30 +10,30 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M0 完成：领域模型、TOML Schema、错误码与 26 个样例夹具已冻结；M1 Core 未开始 |
+| 当前阶段 | M1 进行中：`composition-domain` 已建立（58 项测试）；`composition-toml` 与 Core 未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
-| 验证入口 | M0：规范 + `expected.json` 人工/临时校验；M1 起为 `cargo test` + `composition-cli validate` |
+| 验证入口 | 当前：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；CLI 从 008 起 |
 | working 入口 | [`working/plan.md`](../../working/plan.md) |
 
 ## 2. 目标结构与依赖方向
 
 ### crates/
 
-| crate | 职责 | 允许依赖 |
-|---|---|---|
-| `composition-domain` | 领域类型、不变量 | 无 |
-| `composition-toml` | TOML 读取、Source Map、保留格式修改 | domain |
-| `composition-resolver` | 模块解析、规范化结果 | domain, toml |
-| `composition-validator` | Schema、引用、契约校验 | domain, resolver |
-| `composition-editor` | 命令、事务、Revision、Diff、Undo | domain, resolver, validator, toml |
-| `composition-protocol` | 机器可读命令与结果 Schema | domain |
-| `composition-app` | 应用服务编排 | 以上全部 |
+| crate | 状态 | 职责 | 允许依赖 |
+|---|---|---|---|
+| `composition-domain` | 已建立（005） | 领域类型、不变量、错误码 | 无（仅标准库） |
+| `composition-toml` | 待 006 | TOML 读取、Source Map、保留格式修改 | domain |
+| `composition-resolver` | 待 007 | 模块解析、规范化结果 | domain, toml |
+| `composition-validator` | 待 007 | Schema、引用、契约校验 | domain, resolver |
+| `composition-editor` | 待 M2 | 命令、事务、Revision、Diff、Undo | domain, resolver, validator, toml |
+| `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
+| `composition-app` | 待 M3/M4 | 应用服务编排 | 以上全部 |
 
-拆分不要求一次到位：可以先在单个 crate 内按模块隔离，再按依赖方向拆分（决策见 005）。
+005 只建立 `composition-domain`；其余 crate 在 006 / 007 / M2+ 按依赖方向加入。
 
 ### apps/designer/
 
@@ -75,7 +75,7 @@
 2. 读本卡相关的规范（`docs/spec/`）与设计基线章节；
 3. 复制 `changes/000-template.yaml` 声明范围（跨目录或高一级授权时必须）；
 4. 实现：先失败用例，再实现；不猜字段与命令；
-5. 验证：按任务卡验收条件；没有门禁就明确写“未执行”；
+5. 验证：按任务卡验收条件；当前先跑 `cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；没有门禁就明确写“未执行”；
 6. 回写任务卡与 plan。
 
 ## 5. 禁止清单
@@ -96,18 +96,20 @@
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
 | TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
-| Core | `crates/`（M1 起） |
+| Core | `crates/composition-domain`（已建立；TOML/Core 从 006 起） |
 | Designer | `apps/designer/`（M3 起） |
 | Agent 协议与 Adapter | `crates/composition-protocol`、M4 的 adapter（未建立） |
 | 决策 | `docs/adr/` |
 | 变更声明 | `changes/` |
 | 计划与任务卡 | `working/` |
 
-## 7. 已冻结与未冻结
+## 7. 已冻结与当前进度
 
 - 领域模型、TOML Schema、错误码与样例已在 M0 冻结；决策见
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
+- M1 005 已建立 `composition-domain`（ID/版本、契约、组合、诊断、Revision、规范化模型），
+  58 项测试、clippy、fmt 通过；尚未读取 TOML；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 M1+ 实现细节：crate 拆分、命令 Schema、Revision 持久化与协议适配；
+- 尚未冻结的是 M1+ 实现细节：TOML 加载策略、命令 Schema、Revision 持久化与协议适配；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

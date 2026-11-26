@@ -50,7 +50,7 @@
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（M0 已完成、M1 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（M0 完成、M1 005 完成）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -81,18 +81,18 @@
 ## 7. 常用命令
 
 ```powershell
-# M0 产物（当前）：文档与样例
-Get-Content working/plan.md
+# M1（当前，005 起）
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all --check
 Get-Content docs/spec/composition-schema-v1.md
 
-# M1 起（规划，包名与结构在 005 冻结前只是占位）
-cargo fmt --check
-cargo clippy --workspace -- -D warnings
-cargo test --workspace
+# M1 后续（008 起）
 cargo run -p composition-cli -- validate examples/minimal-project
 ```
 
 构建与测试通过宿主机任务（host_task）执行；分析、编辑在沙箱内完成。
+`ai.cargo-test` / `ai.cargo-clippy` / `ai.cargo-fmt` 已批准可用；新增命令需再登记。
 
 ## 8. 归档与例外
 

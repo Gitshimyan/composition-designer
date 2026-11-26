@@ -1,0 +1,31 @@
+change:
+  id: change.m1-rust-domain
+  intent: 建立 Cargo workspace 与 composition-domain crate，实现 v0.1 领域类型、错误码与不变量测试
+  authorization: extend
+  targets:
+    - Cargo.toml
+    - Cargo.lock
+    - crates/composition-domain
+    - docs/ai
+    - working
+  operations:
+    - extend
+  scope:
+    allowed:
+      - new_crate
+      - workspace_configuration
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - command_protocol
+      - design_baseline
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 只新增领域 crate 与 workspace；不引入 TOML 解析、编辑命令或 schema 变更。

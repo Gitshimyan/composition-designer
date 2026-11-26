@@ -1,0 +1,9 @@
+[package]
+name = "composition-domain"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Composition Designer v0.1 domain model and invariants"
+publish = false
+
+[dependencies]
