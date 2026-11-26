@@ -7,3 +7,4 @@ description = "Composition Designer v0.1 domain model and invariants"
 publish = false
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }

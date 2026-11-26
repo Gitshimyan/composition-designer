@@ -1,6 +1,8 @@
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct Position {
     pub line: u32,
     pub column: u32,
@@ -18,7 +20,7 @@ impl Position {
 }
 
 /// 半开区间：`start` 包含、`end` 不包含；`start <= end`。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub struct SourceRange {
     pub start: Position,
     pub end: Position,
@@ -35,7 +37,7 @@ impl SourceRange {
 }
 
 /// 模型对象的来源：相对项目根的路径 + 可选范围。
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct SourceRef {
     pub file: String,
     pub range: Option<SourceRange>,

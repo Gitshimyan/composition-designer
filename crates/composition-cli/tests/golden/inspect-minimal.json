@@ -1,0 +1,116 @@
+{
+  "project": {
+    "schema_version": 1,
+    "id": "example.minimal",
+    "name": "Minimal Project",
+    "composition_entry": "composition/main.toml",
+    "module_roots": [
+      "modules"
+    ],
+    "source": {
+      "file": "project.toml",
+      "range": {
+        "start": {
+          "line": 1,
+          "column": 1
+        },
+        "end": {
+          "line": 4,
+          "column": 25
+        }
+      }
+    }
+  },
+  "modules": [
+    {
+      "id": "leaf.widget",
+      "version": "1.0.0",
+      "kind": "primitive",
+      "description": "Leaf widget",
+      "contract": {
+        "properties": [
+          {
+            "type": "string",
+            "required": true,
+            "default": null,
+            "description": null,
+            "values": [],
+            "min_length": null,
+            "max_length": null,
+            "min": null,
+            "max": null,
+            "min_items": null,
+            "max_items": null,
+            "items": null
+          }
+        ],
+        "slots": [],
+        "ports": [],
+        "dependencies": []
+      },
+      "source": {
+        "file": "modules/leaf/module.toml",
+        "range": {
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 5,
+            "column": 19
+          }
+        }
+      }
+    },
+    {
+      "id": "shell.desktop",
+      "version": "1.0.0",
+      "kind": "composite",
+      "description": "Desktop shell with one content area",
+      "contract": {
+        "properties": [
+          {
+            "type": "string",
+            "required": true,
+            "default": null,
+            "description": null,
+            "values": [],
+            "min_length": null,
+            "max_length": null,
+            "min": null,
+            "max": null,
+            "min_items": null,
+            "max_items": null,
+            "items": null
+          }
+        ],
+        "slots": [
+          {
+            "cardinality": "one",
+            "required": true,
+            "accepts": [
+              "leaf.widget"
+            ]
+          }
+        ],
+        "ports": [],
+        "dependencies": []
+      },
+      "source": {
+        "file": "modules/shell/module.toml",
+        "range": {
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 5,
+            "column": 19
+          }
+        }
+      }
+    }
+  ],
+  "diagnostics": [],
+  "source_digest": "sha256:10cef70e22f16ef050fd9d1ea3d0f4ba3502235641aaf4f88b91260daa34768e"
+}

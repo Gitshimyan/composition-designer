@@ -1,0 +1,65 @@
+{
+  "valid": false,
+  "error_count": 3,
+  "warning_count": 0,
+  "source_digest": "sha256:fb5dfa0d98385fe27cdc8b5bc3ba50b788dd8ab83bf0323b4963eb9ce912d2bb",
+  "diagnostics": [
+    {
+      "code": "connection-direction-invalid",
+      "severity": "error",
+      "message": "connection c-direction must go from an output port to an input port",
+      "object_id": "connection:c-direction",
+      "file": "composition/main.toml",
+      "range": {
+        "start": {
+          "line": 44,
+          "column": 1
+        },
+        "end": {
+          "line": 45,
+          "column": 19
+        }
+      },
+      "related": [],
+      "hint": null
+    },
+    {
+      "code": "connection-type-mismatch",
+      "severity": "error",
+      "message": "connection c-type connects string to integer",
+      "object_id": "connection:c-type",
+      "file": "composition/main.toml",
+      "range": {
+        "start": {
+          "line": 53,
+          "column": 1
+        },
+        "end": {
+          "line": 54,
+          "column": 14
+        }
+      },
+      "related": [],
+      "hint": null
+    },
+    {
+      "code": "connection-duplicate",
+      "severity": "error",
+      "message": "connection c-dup-2 duplicates an existing endpoint pair",
+      "object_id": "connection:c-dup-2",
+      "file": "composition/main.toml",
+      "range": {
+        "start": {
+          "line": 71,
+          "column": 1
+        },
+        "end": {
+          "line": 72,
+          "column": 15
+        }
+      },
+      "related": [],
+      "hint": null
+    }
+  ]
+}

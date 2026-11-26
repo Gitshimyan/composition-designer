@@ -10,13 +10,13 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M1 进行中：`composition-domain`（58）、`composition-toml`（27）、`composition-core`（8）已建立；CLI 未开始 |
+| 当前阶段 | M1 完成：`composition-domain`（58）、`composition-toml`（27）、`composition-core`（8）、`composition-cli`（8）；M2 编辑事务未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
-| 验证入口 | 当前：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；CLI 从 008 起 |
+| 验证入口 | `cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；CLI：`cargo run -p composition-cli -- validate examples/minimal-project --json` |
 | working 入口 | [`working/plan.md`](../../working/plan.md) |
 
 ## 2. 目标结构与依赖方向
@@ -25,16 +25,18 @@
 
 | crate | 状态 | 职责 | 允许依赖 |
 |---|---|---|---|
-| `composition-domain` | 已建立（005） | 领域类型、不变量、错误码 | 无（仅标准库） |
+| `composition-domain` | 已建立（005） | 领域类型、不变量、错误码、serde JSON | serde |
 | `composition-toml` | 已建立（006） | TOML 加载、Source Map、source_digest | domain, toml_edit, sha2 |
 | `composition-core` | 已建立（007） | 解码、模块注册、L1–L7 校验、CompositionModel | domain, toml, toml_edit |
+| `composition-cli` | 已建立（008） | inspect / resolve / validate、JSON、退出码 | core, domain, serde, serde_json |
 | `composition-resolver` | 暂并入 core | 模块解析、规范化结果 | domain, toml |
 | `composition-validator` | 暂并入 core | Schema、引用、契约校验 | domain, resolver |
 | `composition-editor` | 待 M2 | 命令、事务、Revision、Diff、Undo | domain, core, toml |
 | `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
 | `composition-app` | 待 M3/M4 | 应用服务编排 | core |
 
-005 建立 `composition-domain`，006 建立 `composition-toml`，007 建立 `composition-core`；resolver/validator 暂并入 core，其余在 M2+ 按依赖方向加入。
+005 建立 `composition-domain`，006 建立 `composition-toml`，007 建立 `composition-core`，
+008 建立 `composition-cli`；resolver/validator 暂并入 core，其余在 M2+ 按依赖方向加入。
 
 ### apps/designer/
 
@@ -97,7 +99,7 @@
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
 | TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
-| Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）、`crates/composition-core`（007） |
+| Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）、`crates/composition-core`（007）、`crates/composition-cli`（008） |
 | Designer | `apps/designer/`（M3 起） |
 | Agent 协议与 Adapter | `crates/composition-protocol`、M4 的 adapter（未建立） |
 | 决策 | `docs/adr/` |
@@ -110,8 +112,8 @@
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
 - M1 005 已建立 `composition-domain`（58 测试）；006 已建立 `composition-toml`（27 测试）；
-  007 已建立 `composition-core`：解码、模块注册、L1–L7、SourceMap、CompositionModel 与
-  effective_config，26/26 样例代码集合匹配（8 项集成测试）；CLI 仍未开始；
+  007 已建立 `composition-core`（8 测试，26/26 样例匹配）；008 已建立 `composition-cli`
+  （inspect/resolve/validate、JSON、退出码、4 个 golden，8 测试）；M1 完成，编辑事务未开始；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 M1+ 实现细节：resolver/validator 拆分、命令 Schema、Revision 持久化与协议适配；
+- 尚未冻结的是 M2+ 实现细节：编辑器 crate 拆分、命令 Schema、Revision 持久化与协议适配；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

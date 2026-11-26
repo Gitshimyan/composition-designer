@@ -1,12 +1,16 @@
 use std::collections::{BTreeMap, HashSet};
 use std::str::FromStr;
 
+use serde::ser::SerializeStruct;
+use serde::{Serialize, Serializer};
+
 use crate::error::{DomainError, DomainResult};
 use crate::error_code::ErrorCode;
 use crate::ids::{LocalId, ModuleId, TypeId, Version};
 use crate::value::ConfigValue;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum PropertyType {
     String,
     Integer,
@@ -56,7 +60,8 @@ impl FromStr for PropertyType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SlotCardinality {
     One,
     OptionalOne,
@@ -93,7 +98,8 @@ impl FromStr for SlotCardinality {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum PortDirection {
     Input,
     Output,
@@ -128,12 +134,14 @@ impl FromStr for PortDirection {
 }
 
 /// 单个属性的契约。字段可在解析阶段直接构造，`check` 负责自洽校验。
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct PropertyContract {
+    #[serde(rename = "type")]
     pub property_type: PropertyType,
     pub required: bool,
     pub default: Option<ConfigValue>,
     pub description: Option<String>,
+    #[serde(rename = "values")]
     pub enum_values: Vec<String>,
     pub min_length: Option<u64>,
     pub max_length: Option<u64>,
@@ -490,7 +498,7 @@ impl PropertyContract {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct SlotContract {
     pub cardinality: SlotCardinality,
     pub required: bool,
@@ -551,9 +559,10 @@ impl SlotContract {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct PortContract {
     pub direction: PortDirection,
+    #[serde(rename = "type")]
     pub type_id: TypeId,
     pub multi: bool,
     pub protocol: Option<String>,
@@ -585,8 +594,9 @@ impl PortContract {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DependencyRequirement {
+    #[serde(rename = "module")]
     pub target: ModuleId,
     pub version: Option<Version>,
     pub optional: bool,
@@ -608,6 +618,23 @@ pub struct Contract {
     slots: BTreeMap<LocalId, SlotContract>,
     ports: BTreeMap<LocalId, PortContract>,
     dependencies: BTreeMap<LocalId, DependencyRequirement>,
+}
+
+impl Serialize for Contract {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Contract", 4)?;
+        state.serialize_field("properties", &self.properties.values().collect::<Vec<_>>())?;
+        state.serialize_field("slots", &self.slots.values().collect::<Vec<_>>())?;
+        state.serialize_field("ports", &self.ports.values().collect::<Vec<_>>())?;
+        state.serialize_field(
+            "dependencies",
+            &self.dependencies.values().collect::<Vec<_>>(),
+        )?;
+        state.end()
+    }
 }
 
 impl Contract {

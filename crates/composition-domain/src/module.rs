@@ -1,12 +1,15 @@
 use std::str::FromStr;
 
+use serde::Serialize;
+
 use crate::contract::Contract;
 use crate::error::{DomainError, DomainResult};
 use crate::error_code::ErrorCode;
 use crate::ids::{ModuleId, Version};
 use crate::source::SourceRef;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ModuleKind {
     Composite,
     Primitive,
@@ -40,7 +43,7 @@ impl FromStr for ModuleKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ModuleDefinition {
     pub id: ModuleId,
     pub version: Version,

@@ -1,7 +1,7 @@
 # AGENTS.md — Composition Designer 工作规则
 
-本文件告诉 AI 如何在本仓库工作。**文档不是强制边界**；真正的阻断在 M1/M2 之后由
-`cargo` 门禁、Schema 校验与变更检查承担。门禁建立之前，修改范围由任务卡的“授权”与
+本文件告诉 AI 如何在本仓库工作。**文档不是强制边界**；真正的阻断由 `cargo` 门禁、
+Schema 校验与变更检查承担。门禁建立之前，修改范围由任务卡的“授权”与
 `changes/` 声明自控，**不要声称执行过尚未存在的验证**。
 
 ## 0. 开始任何行动前
@@ -50,7 +50,7 @@
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（M0 完成、M1 005–007 完成）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（M1 完成、M2 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -81,15 +81,19 @@
 ## 7. 常用命令
 
 ```powershell
-# M1（当前，005–007 起）
+# M1（已完成，005–008）
 cargo test --workspace
-cargo test -p composition-core
+cargo test -p composition-cli
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all --check
-Get-Content docs/spec/composition-schema-v1.md
+cargo run -p composition-cli -- validate examples/minimal-project --json
 
-# M1 后续（008 起）
-cargo run -p composition-cli -- validate examples/minimal-project
+# 常用 CLI（M1 产物）
+cargo run -p composition-cli -- inspect examples/minimal-project
+cargo run -p composition-cli -- resolve examples/minimal-project
+
+# M2 起（规划）
+# 编辑命令 / 事务完成后在此补充
 ```
 
 构建与测试通过宿主机任务（host_task）执行；分析、编辑在沙箱内完成。

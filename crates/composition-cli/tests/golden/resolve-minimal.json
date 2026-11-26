@@ -1,0 +1,220 @@
+{
+  "model": {
+    "project": {
+      "schema_version": 1,
+      "id": "example.minimal",
+      "name": "Minimal Project",
+      "composition_entry": "composition/main.toml",
+      "module_roots": [
+        "modules"
+      ],
+      "source": {
+        "file": "project.toml",
+        "range": {
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 4,
+            "column": 25
+          }
+        }
+      }
+    },
+    "composition": {
+      "schema_version": 1,
+      "id": "example.minimal",
+      "root": "app",
+      "instances": [
+        {
+          "id": "app",
+          "module": {
+            "id": "shell.desktop",
+            "version": "1.0.0"
+          },
+          "config": {
+            "title": "Minimal Project"
+          },
+          "effective_config": {
+            "title": "Minimal Project"
+          },
+          "dependency_providers": {},
+          "source": {
+            "file": "composition/main.toml",
+            "range": {
+              "start": {
+                "line": 6,
+                "column": 1
+              },
+              "end": {
+                "line": 9,
+                "column": 18
+              }
+            }
+          }
+        },
+        {
+          "id": "hello",
+          "module": {
+            "id": "leaf.widget",
+            "version": "1.0.0"
+          },
+          "config": {
+            "label": "Hello"
+          },
+          "effective_config": {
+            "label": "Hello"
+          },
+          "dependency_providers": {},
+          "source": {
+            "file": "composition/main.toml",
+            "range": {
+              "start": {
+                "line": 14,
+                "column": 1
+              },
+              "end": {
+                "line": 17,
+                "column": 18
+              }
+            }
+          }
+        }
+      ],
+      "bindings": [
+        {
+          "id": "app-content",
+          "parent": "app",
+          "slot": "content",
+          "child": "hello",
+          "source": {
+            "file": "composition/main.toml",
+            "range": {
+              "start": {
+                "line": 22,
+                "column": 1
+              },
+              "end": {
+                "line": 26,
+                "column": 16
+              }
+            }
+          }
+        }
+      ],
+      "connections": [],
+      "source": {
+        "file": "composition/main.toml",
+        "range": {
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 4,
+            "column": 13
+          }
+        }
+      }
+    },
+    "modules": [
+      {
+        "id": "leaf.widget",
+        "version": "1.0.0",
+        "kind": "primitive",
+        "description": "Leaf widget",
+        "contract": {
+          "properties": [
+            {
+              "type": "string",
+              "required": true,
+              "default": null,
+              "description": null,
+              "values": [],
+              "min_length": null,
+              "max_length": null,
+              "min": null,
+              "max": null,
+              "min_items": null,
+              "max_items": null,
+              "items": null
+            }
+          ],
+          "slots": [],
+          "ports": [],
+          "dependencies": []
+        },
+        "source": {
+          "file": "modules/leaf/module.toml",
+          "range": {
+            "start": {
+              "line": 1,
+              "column": 1
+            },
+            "end": {
+              "line": 5,
+              "column": 19
+            }
+          }
+        }
+      },
+      {
+        "id": "shell.desktop",
+        "version": "1.0.0",
+        "kind": "composite",
+        "description": "Desktop shell with one content area",
+        "contract": {
+          "properties": [
+            {
+              "type": "string",
+              "required": true,
+              "default": null,
+              "description": null,
+              "values": [],
+              "min_length": null,
+              "max_length": null,
+              "min": null,
+              "max": null,
+              "min_items": null,
+              "max_items": null,
+              "items": null
+            }
+          ],
+          "slots": [
+            {
+              "cardinality": "one",
+              "required": true,
+              "accepts": [
+                "leaf.widget"
+              ]
+            }
+          ],
+          "ports": [],
+          "dependencies": []
+        },
+        "source": {
+          "file": "modules/shell/module.toml",
+          "range": {
+            "start": {
+              "line": 1,
+              "column": 1
+            },
+            "end": {
+              "line": 5,
+              "column": 19
+            }
+          }
+        }
+      }
+    ],
+    "dependencies": [],
+    "diagnostics": [],
+    "revision": {
+      "seq": 0,
+      "source_digest": "sha256:10cef70e22f16ef050fd9d1ea3d0f4ba3502235641aaf4f88b91260daa34768e"
+    }
+  },
+  "diagnostics": [],
+  "source_digest": "sha256:10cef70e22f16ef050fd9d1ea3d0f4ba3502235641aaf4f88b91260daa34768e"
+}

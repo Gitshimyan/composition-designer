@@ -1,11 +1,14 @@
 use std::fmt;
 use std::str::FromStr;
 
+use serde::{Serialize, Serializer};
+
 use crate::error::{DomainError, DomainResult};
 use crate::error_code::ErrorCode;
 
 /// 点分小写模块标识，例如 `shell.desktop`。
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
 pub struct ModuleId(String);
 
 impl ModuleId {
@@ -43,7 +46,8 @@ impl fmt::Display for ModuleId {
 }
 
 /// Port 类型标识，词法与模块 ID 相同，例如 `string` 或 `contract.task.state.v1`。
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
 pub struct TypeId(String);
 
 impl TypeId {
@@ -81,7 +85,8 @@ impl fmt::Display for TypeId {
 }
 
 /// 局部标识：实例、Binding、Connection、属性、Slot、Port、依赖。
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
 pub struct LocalId(String);
 
 impl LocalId {
@@ -165,6 +170,15 @@ impl FromStr for Version {
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+    }
+}
+
+impl Serialize for Version {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 

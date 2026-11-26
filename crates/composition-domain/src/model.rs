@@ -1,5 +1,7 @@
 use std::fmt;
 
+use serde::Serialize;
+
 use crate::composition::Composition;
 use crate::diagnostic::Diagnostic;
 use crate::ids::{LocalId, ModuleId};
@@ -8,7 +10,7 @@ use crate::revision::Revision;
 use crate::schema::SchemaVersion;
 use crate::source::SourceRef;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Project {
     pub schema_version: SchemaVersion,
     pub id: ModuleId,
@@ -37,7 +39,8 @@ impl Project {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum DependencyStatus {
     Resolved,
     Unresolved,
@@ -62,7 +65,7 @@ impl fmt::Display for DependencyStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DependencyResolution {
     pub requirement_id: LocalId,
     pub from_instance: LocalId,
@@ -72,7 +75,7 @@ pub struct DependencyResolution {
     pub source: Option<SourceRef>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct CompositionModel {
     pub project: Project,
     pub composition: Composition,

@@ -1,12 +1,15 @@
 use std::cmp::Ordering;
 use std::fmt;
 
+use serde::Serialize;
+
 use crate::error_code::{ErrorCode, Severity};
 use crate::ids::{LocalId, ModuleId, Version};
 use crate::source::SourceRange;
 
 /// 诊断关联对象的稳定标识，格式见 domain-model-v1 §7.2。
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
 pub struct ObjectId(String);
 
 impl ObjectId {
@@ -65,7 +68,7 @@ impl fmt::Display for ObjectId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Diagnostic {
     pub code: ErrorCode,
     pub severity: Severity,

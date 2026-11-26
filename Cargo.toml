@@ -4,6 +4,7 @@ members = [
     "crates/composition-domain",
     "crates/composition-toml",
     "crates/composition-core",
+    "crates/composition-cli",
 ]
 
 [workspace.package]

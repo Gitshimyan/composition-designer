@@ -1,7 +1,10 @@
 use std::fmt;
 
+use serde::Serialize;
+
 /// v0.1 的稳定错误代码。字符串形式见 `docs/spec/error-codes-v1.md`。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum ErrorCode {
     // L1 — files and syntax
     FileProjectMissing,
@@ -335,7 +338,8 @@ impl fmt::Display for ErrorCode {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Severity {
     Error,
     Warning,

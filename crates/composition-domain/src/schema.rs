@@ -1,7 +1,10 @@
 use std::fmt;
 
+use serde::Serialize;
+
 /// 声明格式版本。v0.1 只支持 `1`。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(transparent)]
 pub struct SchemaVersion(u16);
 
 impl SchemaVersion {

@@ -1,3 +1,5 @@
+use serde::{Serialize, Serializer};
+
 /// 实例配置值。v0.1 不支持 TOML table/object。
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConfigValue {
@@ -51,6 +53,31 @@ impl ConfigValue {
         match self {
             Self::Array(values) => Some(values),
             _ => None,
+        }
+    }
+}
+
+impl Serialize for ConfigValue {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Self::String(value) => serializer.serialize_str(value),
+            Self::Integer(value) => serializer.serialize_i64(*value),
+            Self::Float(value) => {
+                if value.is_finite() {
+                    serializer.serialize_f64(*value)
+                } else if value.is_nan() {
+                    serializer.serialize_str("nan")
+                } else if value.is_sign_positive() {
+                    serializer.serialize_str("inf")
+                } else {
+                    serializer.serialize_str("-inf")
+                }
+            }
+            Self::Boolean(value) => serializer.serialize_bool(*value),
+            Self::Array(values) => values.serialize(serializer),
         }
     }
 }

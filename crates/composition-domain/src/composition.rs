@@ -1,11 +1,13 @@
 use std::collections::BTreeMap;
 
+use serde::Serialize;
+
 use crate::ids::{LocalId, ModuleId, Version};
 use crate::schema::SchemaVersion;
 use crate::source::SourceRef;
 use crate::value::ConfigValue;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ModuleRef {
     pub id: ModuleId,
     pub version: Version,
@@ -17,7 +19,7 @@ impl ModuleRef {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Instance {
     pub id: LocalId,
     pub module: ModuleRef,
@@ -40,7 +42,7 @@ impl Instance {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Binding {
     pub id: LocalId,
     pub parent: LocalId,
@@ -61,7 +63,7 @@ impl Binding {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct PortRef {
     pub instance: LocalId,
     pub port: LocalId,
@@ -73,7 +75,7 @@ impl PortRef {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Connection {
     pub id: LocalId,
     pub from: PortRef,
@@ -92,7 +94,7 @@ impl Connection {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Composition {
     pub schema_version: SchemaVersion,
     pub id: ModuleId,
