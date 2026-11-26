@@ -50,8 +50,10 @@ version = "0.1.0"
 dependencies = [
  "composition-core",
  "composition-domain",
+ "composition-toml",
  "serde",
  "serde_json",
+ "toml_edit",
 ]
 
 [[package]]

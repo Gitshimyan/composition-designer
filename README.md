@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M2 进行中：M1 的只读 Core/CLI 已完成；`composition-editor` 已实现命令、原子事务、Revision 历史/幂等/结构化 Diff，TOML 写回未开始。
+> v0.1 · M2 完成：M1 的只读 Core/CLI 与 M2 的命令、事务、Revision/幂等/Diff、保留格式 TOML 写回已建立；M3 Designer 未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -37,15 +37,15 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | TOML 加载与 Source Map（M1 006） | 已建立：`composition-toml`，27 项测试 |
 | Core：解析 / 验证（M1 007） | 已建立：`composition-core`，26/26 数据集 |
 | CLI（M1 008） | 已建立：`composition-cli`，8 项测试 |
-| 编辑命令与事务（M2 009） | 已建立：`composition-editor`，22 项测试 |
-| Revision / 幂等 / Diff（M2 010） | 已建立 |
-| TOML 写回 | 未开始（M2 011） |
+| 编辑命令与事务（M2 009–011） | 已建立：`composition-editor`，29 项测试 |
+| Revision / 幂等 / Diff | 已建立（M2 010） |
+| 保留格式 TOML 写回 | 已建立（M2 011） |
 | Designer UI | 未开始（M3） |
 | Agent Interface | 未开始（M4） |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`
-与 `composition-editor`，并通过 `cargo test` / `clippy` / `fmt`；编辑、Revision 历史/幂等与
-结构化 Diff 已在内存中工作，TOML 写回、GUI 与 Agent 协议尚未开始。
+与 `composition-editor`，并通过 `cargo test` / `clippy` / `fmt`；编辑、Revision 历史/幂等、
+结构化 Diff 与保留格式 TOML 写回已在 M2 工作，Designer 与 Agent 协议尚未开始。
 M1 的“通过”指只读解析/校验/CLI 可复现，不代表项目可以运行或编辑。
 
 ## 3. 目录结构

@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M2 进行中：M1 的 domain/toml/core/cli 完成；009–010 `composition-editor`（22 测试）已实现命令、事务、Revision/幂等/Diff；011 TOML 写回未开始 |
+| 当前阶段 | M2 完成：M1 的 domain/toml/core/cli + 009–011 `composition-editor`（29 测试，命令/事务/Revision/幂等/Diff/TOML 写回）；M3 未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
@@ -31,7 +31,7 @@
 | `composition-cli` | 已建立（008） | inspect / resolve / validate、JSON、退出码 | core, domain, serde, serde_json |
 | `composition-resolver` | 暂并入 core | 模块解析、规范化结果 | domain, toml |
 | `composition-validator` | 暂并入 core | Schema、引用、契约校验 | domain, resolver |
-| `composition-editor` | 已建立（009–010） | 命令 Schema、候选事务、Revision 历史、request 幂等、结构化 Diff | core, domain, serde, serde_json |
+| `composition-editor` | 已建立（009–011） | 命令、事务、Revision/幂等、结构化 Diff、保留格式 TOML 写回 | core, domain, toml, toml_edit, serde, serde_json |
 | `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
 | `composition-app` | 待 M3/M4 | 应用服务编排 | core |
 
@@ -113,9 +113,9 @@
 - 领域模型、TOML Schema、错误码与样例已在 M0 冻结；决策见
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
-- M1 005–008 完成（domain 58 / toml 27 / core 8 / cli 8）；M2 009 新增
-  `composition-editor`（12 命令、候选事务），010 加入 Revision 历史、request 幂等与结构化
-  Diff；editor 共 4 单元 + 18 集成测试，workspace 123 项；TOML 写回仍未开始；
+- M1 005–008 完成（domain 58 / toml 27 / core 8 / cli 8）；M2 009–011 完成
+  `composition-editor`（命令、事务、Revision/幂等/Diff、`ProjectSession` TOML 写回），
+  29 项 editor 测试，workspace 130 项；M2 收口，M3 未开始；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 011 实现细节：TOML 局部写回、历史持久化、`source_digest` 刷新与协议适配；
+- 尚未冻结的是 M3 实现细节：Tauri/前端技术栈、Designer 外壳、外部修改同步与跨进程历史；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

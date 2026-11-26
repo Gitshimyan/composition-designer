@@ -1,0 +1,32 @@
+change:
+  id: change.m2-toml-writeback
+  intent: 用 toml_edit 将编辑事务局部写回 composition TOML，校验后刷新 source_digest，失败回滚
+  authorization: modify
+  targets:
+    - crates/composition-editor
+    - Cargo.lock
+    - docs/spec
+    - docs/ai
+    - working
+  operations:
+    - modify
+  scope:
+    allowed:
+      - toml_writeback
+      - atomic_file_replace
+      - digest_refresh
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - design_baseline
+      - module_editing
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 只写 composition 入口；Revision 历史跨进程持久化仍留待后续。

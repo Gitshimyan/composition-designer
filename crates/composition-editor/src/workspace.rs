@@ -27,7 +27,7 @@ struct CommittedRequest {
 }
 
 /// 编辑器工作区：已验证模型 + 来源映射 + Revision 历史/request 记录。
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EditorWorkspace {
     model: CompositionModel,
     source_map: SourceMap,
@@ -75,6 +75,30 @@ impl EditorWorkspace {
 
     pub fn history(&self) -> &[RevisionRecord] {
         &self.history
+    }
+
+    /// 011 落盘并重新解析后，用新的 SourceMap/digest 刷新当前 Revision。
+    pub(crate) fn refresh_source(&mut self, validation: ValidationResult) {
+        let seq = self.revision().seq;
+        let digest = validation.source_digest.clone();
+        let mut model = validation.model.expect("committed validation has a model");
+        model.revision = Some(Revision::new(seq, digest.clone()));
+        model.diagnostics = validation.diagnostics.clone();
+        self.model = model;
+        self.source_map = validation.source_map;
+        if let Some(last) = self.history.last_mut() {
+            last.revision = Revision::new(seq, digest.clone());
+        }
+        for record in self.requests.values_mut() {
+            if record
+                .model
+                .revision
+                .as_ref()
+                .is_some_and(|revision| revision.seq == seq)
+            {
+                record.model.revision = Some(Revision::new(seq, digest.clone()));
+            }
+        }
     }
 
     /// 原子应用事务：失败时工作区完全不变；成功时更新模型、`seq` 与历史。
