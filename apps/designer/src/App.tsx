@@ -1,8 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { initialProject, isTauri, openProject } from "./api";
-import type { Diagnostic, Instance, ProjectSnapshot } from "./types";
+import {
+  initialProject,
+  isTauri,
+  loadLayout,
+  openProject,
+  saveLayout,
+} from "./api";
+import CompositionCanvas from "./canvas/CompositionCanvas";
+import StructureTree from "./explorer/StructureTree";
+import { autoLayout, buildStructure } from "./layout";
+import type {
+  Diagnostic,
+  Instance,
+  LayoutNodes,
+  NodePosition,
+  ProjectSnapshot,
+} from "./types";
 
 const LAST_PATH_KEY = "composition-designer.last-project";
 
@@ -14,6 +29,14 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [showPath, setShowPath] = useState(false);
   const [pathInput, setPathInput] = useState("");
+  const [positions, setPositions] = useState<LayoutNodes>({});
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{
+    id: string;
+    nonce: number;
+  } | null>(null);
+  const [layoutStatus, setLayoutStatus] = useState<string | null>(null);
+  const [fitNonce, setFitNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,13 +114,106 @@ export default function App() {
   const diagnostics = snapshot?.diagnostics ?? [];
   const rootId = composition?.root ?? "";
 
-  const orderedInstances = useMemo(() => {
-    return [...instances].sort((a, b) => {
-      if (a.id === rootId) return -1;
-      if (b.id === rootId) return 1;
-      return a.id.localeCompare(b.id);
-    });
-  }, [instances, rootId]);
+  useEffect(() => {
+    if (!snapshot || !model) {
+      setPositions({});
+      setSelectedId(null);
+      setFocusRequest(null);
+      setLayoutStatus(null);
+      return;
+    }
+    let cancelled = false;
+    const auto = autoLayout(
+      model.composition.instances,
+      model.composition.bindings,
+      model.composition.root,
+    );
+    setPositions(auto);
+    setSelectedId(null);
+    setFocusRequest(null);
+    setLayoutStatus("auto layout");
+    void loadLayout(snapshot.root)
+      .then((saved) => {
+        if (cancelled) return;
+        const merged = { ...auto };
+        for (const [id, position] of Object.entries(saved)) {
+          if (id in merged) merged[id] = position;
+        }
+        setPositions(merged);
+        setFitNonce((value) => value + 1);
+        setLayoutStatus(
+          Object.keys(saved).length > 0 ? "layout restored" : "auto layout",
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setLayoutStatus("layout load failed");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [snapshot, model]);
+
+  async function persistLayout(next: LayoutNodes) {
+    if (!snapshot) return;
+    try {
+      await saveLayout(snapshot.root, next);
+      setLayoutStatus("layout saved");
+    } catch {
+      setLayoutStatus("layout save failed");
+    }
+  }
+
+  function handleMoveNode(id: string, position: NodePosition) {
+    setPositions((current) => ({ ...current, [id]: position }));
+  }
+
+  function handleCommitNode(id: string, position: NodePosition) {
+    const next = { ...positions, [id]: position };
+    setPositions(next);
+    void persistLayout(next);
+  }
+
+  function handleResetLayout() {
+    if (!model) return;
+    const next = autoLayout(
+      model.composition.instances,
+      model.composition.bindings,
+      model.composition.root,
+    );
+    setPositions(next);
+    setFitNonce((value) => value + 1);
+    setLayoutStatus("layout reset");
+    void persistLayout(next);
+  }
+
+  function handleSelectTree(id: string) {
+    setSelectedId(id);
+    setFocusRequest((current) => ({
+      id,
+      nonce: (current?.nonce ?? 0) + 1,
+    }));
+  }
+
+  function handleSelectCanvas(id: string | null) {
+    setSelectedId(id);
+  }
+
+  const moduleKinds = useMemo(
+    () => new Map(modules.map((module) => [module.id, module.kind])),
+    [modules],
+  );
+  const structure = useMemo(
+    () => buildStructure(instances, bindings, rootId),
+    [instances, bindings, rootId],
+  );
+  const selectedInstance = instances.find((instance) => instance.id === selectedId);
+  const selectedModule = selectedInstance
+    ? modules.find(
+        (module) =>
+          module.id === selectedInstance.module.id &&
+          module.version === selectedInstance.module.version,
+      )
+    : undefined;
 
   const status = describeStatus(loadState, snapshot, error);
   const digest = snapshot?.sourceDigest ?? model?.revision?.source_digest ?? null;
@@ -220,19 +336,13 @@ export default function App() {
 
                 <section className="explorer-section">
                   <div className="section-label">
-                    Instances <span>{instances.length}</span>
+                    Structure <span>{instances.length}</span>
                   </div>
-                  <ul className="tree-list">
-                    {orderedInstances.map((instance) => (
-                      <li key={instance.id}>
-                        <div className="tree-row">
-                          <span className="instance-dot" />
-                          <span className="tree-name">{instance.id}</span>
-                          {instance.id === rootId && <span className="badge">root</span>}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <StructureTree
+                    structure={structure}
+                    selectedId={selectedId}
+                    onSelect={handleSelectTree}
+                  />
                 </section>
 
                 <section className="explorer-section">
@@ -252,7 +362,7 @@ export default function App() {
           </div>
         </aside>
 
-        <section className="panel stage" aria-label="Composition preview">
+        <section className="panel stage" aria-label="Composition canvas">
           {snapshot === null ? (
             <EmptyState
               onChoose={() => void handleChooseProject()}
@@ -271,27 +381,24 @@ export default function App() {
                   </span>
                 }
               />
-              <div className="canvas-surface">
-                <div className="canvas-grid" aria-hidden="true" />
-                <div className="composition-grid">
-                  {orderedInstances.map((instance) => (
-                    <InstanceCard
-                      key={instance.id}
-                      instance={instance}
-                      isRoot={instance.id === rootId}
-                      moduleKind={
-                        modules.find(
-                          (module) =>
-                            module.id === instance.module.id &&
-                            module.version === instance.module.version,
-                        )?.kind
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
+              <CompositionCanvas
+                rootId={rootId}
+                instances={instances}
+                bindings={bindings}
+                positions={positions}
+                selectedId={selectedId}
+                focusRequest={focusRequest}
+                fitNonce={fitNonce}
+                moduleKinds={moduleKinds}
+                onSelect={handleSelectCanvas}
+                onMoveNode={handleMoveNode}
+                onCommitNode={handleCommitNode}
+                onResetLayout={handleResetLayout}
+              />
               <footer className="stage-footer">
-                <span className="stage-note">Read-only preview · canvas interactions land in 013</span>
+                <span className="stage-note">
+                  Drag to arrange · positions write to .designer/layout.toml · composition is read-only
+                </span>
                 <div className="stage-counts">
                   <span>{bindings.length} structural bindings</span>
                   <span>{connections.length} port connections</span>
@@ -305,7 +412,16 @@ export default function App() {
         <aside className="panel inspector" aria-label="Inspector">
           <PanelHeading eyebrow="Selection" title="Inspector" />
           <div className="inspector-scroll">
-            {project ? (
+            {selectedInstance ? (
+              <SelectionDetails
+                instance={selectedInstance}
+                moduleKind={selectedModule?.kind}
+                slots={selectedModule?.contract.slots.length ?? 0}
+                ports={selectedModule?.contract.ports.length ?? 0}
+                properties={selectedModule?.contract.properties.length ?? 0}
+                isRoot={selectedInstance.id === rootId}
+              />
+            ) : project ? (
               <>
                 <section className="inspector-section">
                   <div className="section-label">Project</div>
@@ -321,7 +437,7 @@ export default function App() {
                   <Property label="Valid" value={valid ? "yes" : "no"} />
                 </section>
                 <div className="inspector-hint">
-                  Selection, property editing and module contracts arrive in 014.
+                  Select a node or tree row to inspect an instance. Editing arrives in 014.
                 </div>
               </>
             ) : (
@@ -378,11 +494,12 @@ export default function App() {
           )}
         </div>
         <div className="status-right">
+          {layoutStatus && <span className="status-layout">{layoutStatus}</span>}
           <span className="status-digest" title={digest ?? undefined}>
             sha {shortDigest}
           </span>
           <span className="status-sep">read-only shell</span>
-          <span className="status-version">M3.012</span>
+          <span className="status-version">M3.013</span>
         </div>
       </footer>
 
@@ -438,35 +555,54 @@ function Property({
   );
 }
 
-function InstanceCard({
+function SelectionDetails({
   instance,
-  isRoot,
   moduleKind,
+  slots,
+  ports,
+  properties,
+  isRoot,
 }: {
   instance: Instance;
-  isRoot: boolean;
   moduleKind?: string;
+  slots: number;
+  ports: number;
+  properties: number;
+  isRoot: boolean;
 }) {
-  const configCount = Object.keys(instance.config ?? {}).length;
-  const providerCount = Object.keys(instance.dependency_providers ?? {}).length;
   return (
-    <article className={`instance-card ${isRoot ? "is-root" : ""}`}>
-      <div className="instance-top">
-        <code className="instance-id">{instance.id}</code>
-        <div className="instance-badges">
-          {isRoot && <span className="badge badge-root">root</span>}
-          {moduleKind && <span className={`badge badge-${moduleKind}`}>{moduleKind}</span>}
-        </div>
+    <>
+      <section className="inspector-section">
+        <div className="section-label">Instance</div>
+        <Property label="Id" value={instance.id} mono />
+        <Property label="Module" value={instance.module.id} mono />
+        <Property label="Version" value={instance.module.version} mono />
+        <Property label="Kind" value={moduleKind ?? "unknown"} />
+        <Property label="Role" value={isRoot ? "root" : "child"} />
+        <Property
+          label="Source"
+          value={instance.source?.file ?? "—"}
+          mono
+        />
+      </section>
+      <section className="inspector-section">
+        <div className="section-label">Contract</div>
+        <Property label="Properties" value={String(properties)} />
+        <Property label="Slots" value={String(slots)} />
+        <Property label="Ports" value={String(ports)} />
+        <Property
+          label="Configured"
+          value={String(Object.keys(instance.config ?? {}).length)}
+        />
+        <Property
+          label="Providers"
+          value={String(Object.keys(instance.dependency_providers ?? {}).length)}
+        />
+      </section>
+      <div className="inspector-hint">
+        Selection is read-only. Property and config editing arrives in 014.
       </div>
-      <div className="instance-module">
-        {instance.module.id}
-        <span>@{instance.module.version}</span>
-      </div>
-      <div className="instance-meta">
-        <span>{configCount} config</span>
-        <span>{providerCount} providers</span>
-      </div>
-    </article>
+    </>
   );
 }
 

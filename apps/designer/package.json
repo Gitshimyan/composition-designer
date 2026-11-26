@@ -6,16 +6,18 @@
   "scripts": {
     "setup": "npm install --no-audit --no-fund",
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "mkdir .tmp 2>nul & set \"TEMP=%CD%\\.tmp\" & set \"TMP=%CD%\\.tmp\" & tsc --noEmit && vite build",
     "preview": "vite preview",
     "start": ".\\src-tauri\\target\\debug\\composition-designer.exe --project ..\\..\\examples\\minimal-project",
     "start-invalid": ".\\src-tauri\\target\\debug\\composition-designer.exe --project ..\\..\\examples\\invalid-projects\\connections\\errors",
+    "start-topmost": ".\\src-tauri\\target\\debug\\composition-designer.exe --project ..\\..\\examples\\minimal-project --topmost",
     "desktop": "npm run build && cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol",
     "tauri": "tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@xyflow/react": "^12.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

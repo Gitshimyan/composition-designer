@@ -1,7 +1,8 @@
 # crates/
 
 v0.1 Core 的 crate 布局（设计基线 §10.2）。M1/M2 已完成只读 Core、编辑事务与 TOML 写回；
-M3 012 建立 `apps/designer`（Tauri 2 + React）只读外壳。桌面 host 不在本表中。
+M3 012–013 建立 `apps/designer`（Tauri 2 + React + @xyflow/react）外壳与 Canvas/Tree。
+桌面 host 不在本表中。
 
 | crate | 状态 | 职责 | 允许依赖 |
 |---|---|---|---|

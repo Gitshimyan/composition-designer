@@ -19,6 +19,7 @@ composition-domain = { path = "../../../crates/composition-domain" }
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
+toml_edit = "0.22.27"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

@@ -1,0 +1,33 @@
+change:
+  id: change.m3-canvas-tree
+  intent: 接入 @xyflow/react，渲染实例/Binding Canvas 与结构 Tree，并持久化 .designer 布局
+  authorization: extend
+  targets:
+    - apps/designer
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - canvas
+      - tree
+      - selection_focus
+      - layout_persistence
+      - tauri_commands
+      - documentation
+      - task_card
+    forbidden:
+      - composition_write
+      - toml_schema
+      - second_model
+      - design_baseline
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - npm run build
+    - npm run desktop
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+  notes: 布局只写 .designer/layout.toml；013 不提交 Composition 编辑。

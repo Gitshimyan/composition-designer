@@ -12,6 +12,7 @@ coverage/
 
 # Tauri generated schemas
 apps/designer/src-tauri/gen/
+apps/designer/.tmp/
 
 # working scratch space
 working/tmp/*

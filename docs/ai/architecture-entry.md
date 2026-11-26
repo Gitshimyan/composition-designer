@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M3 进行中：M1/M2 的 5 个 crate 完成；012 建立 `apps/designer`（Tauri 2 + React 19 + TS + Vite 7）只读外壳；013 Canvas/Tree 未开始 |
+| 当前阶段 | M3 进行中：M1/M2 的 5 个 crate 完成；012–013 建立 `apps/designer`（Tauri 2 + React 19 + @xyflow/react）外壳与 Canvas/Tree；014 Inspector/Source 未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
@@ -100,6 +100,7 @@
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
 | TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
 | 编辑命令 Schema | `docs/spec/command-schema-v1.md`（M2 009） |
+| Layout 格式 | `docs/spec/designer-layout-v1.md`（M3 013） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
 | Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）、`crates/composition-core`（007）、`crates/composition-cli`（008）、`crates/composition-editor`（009） |
 | Designer | `apps/designer/src-tauri`（Tauri 2 host，012）、`apps/designer/src`（React shell，012） |
@@ -113,8 +114,9 @@
 - 领域模型、TOML Schema、错误码与样例已在 M0 冻结；决策见
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
-- M3 012 已建立 `apps/designer`：Tauri 2 `open_project`/`initial_project`、React Explorer/
-  Composition/Inspector/Diagnostics 外壳；2 个宿主测试；Canvas/Source 仍是占位；
+- M3 012–013 已建立 `apps/designer`：Tauri `open_project`/`initial_project`/`load_layout`/
+  `save_layout`、React Explorer/Canvas/Tree/Inspector/Diagnostics 外壳；4 个宿主测试；
+  Inspector 编辑与 CodeMirror Source 仍是 014；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 013 实现细节：`@xyflow/react` 节点/边映射、Tree 选择、布局持久化与编辑命令；
+- 尚未冻结的是 014 实现细节：Inspector 编辑命令、CodeMirror Source、诊断定位与 Change Review；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

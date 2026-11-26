@@ -1,6 +1,11 @@
+use std::collections::BTreeMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+
 use composition_core::validate_project;
-use composition_domain::{CompositionModel, Diagnostic, Severity};
-use serde::Serialize;
+use composition_domain::{CompositionModel, Diagnostic, LocalId, Severity};
+use serde::{Deserialize, Serialize};
+use toml_edit::{value, DocumentMut, Item, Table};
 
 /// Read-only snapshot returned to the React shell. The model is the same
 /// canonical `CompositionModel` produced by the Rust Core; the UI never
@@ -15,6 +20,13 @@ pub struct ProjectSnapshot {
     pub source_digest: Option<String>,
     pub model: Option<CompositionModel>,
     pub diagnostics: Vec<Diagnostic>,
+}
+
+/// Presentation-only canvas position. `.designer/**` is never read by Core.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct NodePosition {
+    pub x: f64,
+    pub y: f64,
 }
 
 fn snapshot(path: &str) -> ProjectSnapshot {
@@ -57,6 +69,76 @@ fn initial_project() -> Option<String> {
     None
 }
 
+fn layout_path(root: &str) -> PathBuf {
+    Path::new(root).join(".designer").join("layout.toml")
+}
+
+fn number(item: Option<&Item>) -> Option<f64> {
+    item.and_then(|item| {
+        item.as_float()
+            .or_else(|| item.as_integer().map(|value| value as f64))
+    })
+}
+
+#[tauri::command]
+fn load_layout(root: String) -> Result<BTreeMap<String, NodePosition>, String> {
+    let path = layout_path(&root);
+    if !path.exists() {
+        return Ok(BTreeMap::new());
+    }
+    let text = fs::read_to_string(&path)
+        .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+    let document = text
+        .parse::<DocumentMut>()
+        .map_err(|error| format!("cannot parse {}: {error}", path.display()))?;
+    let Some(nodes) = document.get("nodes").and_then(Item::as_table) else {
+        return Ok(BTreeMap::new());
+    };
+    let mut positions = BTreeMap::new();
+    for (id, item) in nodes.iter() {
+        if LocalId::parse(id).is_err() {
+            continue;
+        }
+        let Some(table) = item.as_table() else {
+            continue;
+        };
+        let Some(x) = number(table.get("x")) else {
+            continue;
+        };
+        let Some(y) = number(table.get("y")) else {
+            continue;
+        };
+        positions.insert(id.to_owned(), NodePosition { x, y });
+    }
+    Ok(positions)
+}
+
+#[tauri::command]
+fn save_layout(root: String, nodes: BTreeMap<String, NodePosition>) -> Result<(), String> {
+    if !Path::new(&root).is_dir() {
+        return Err(format!("{root} is not a project directory"));
+    }
+    let path = layout_path(&root);
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
+    }
+    let mut table = Table::new();
+    for (id, position) in &nodes {
+        if LocalId::parse(id).is_err() {
+            continue;
+        }
+        let mut node = Table::new();
+        node.insert("x", value(position.x));
+        node.insert("y", value(position.y));
+        table.insert(id, Item::Table(node));
+    }
+    let mut document = DocumentMut::new();
+    document.insert("nodes", Item::Table(table));
+    fs::write(&path, document.to_string())
+        .map_err(|error| format!("cannot write {}: {error}", path.display()))
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -64,10 +146,19 @@ pub fn run() {
             use tauri::Manager;
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_position(tauri::PhysicalPosition::new(24, 24));
+                if std::env::args().any(|arg| arg == "--topmost") {
+                    let _ = window.set_always_on_top(true);
+                }
+                let _ = window.set_focus();
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![open_project, initial_project])
+        .invoke_handler(tauri::generate_handler![
+            open_project,
+            initial_project,
+            load_layout,
+            save_layout
+        ])
         .run(tauri::generate_context!())
         .expect("error while running composition designer");
 }
@@ -105,5 +196,32 @@ mod tests {
             diagnostic.code.as_str() == "file-project-missing"
                 || diagnostic.code.to_string() == "file-project-missing"
         }));
+    }
+
+    #[test]
+    fn missing_layout_is_empty() {
+        let root =
+            std::env::temp_dir().join(format!("composition-layout-empty-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let loaded = load_layout(root.to_string_lossy().into_owned()).unwrap();
+        assert!(loaded.is_empty());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn layout_round_trips() {
+        let root =
+            std::env::temp_dir().join(format!("composition-layout-round-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+        let mut nodes = BTreeMap::new();
+        nodes.insert("app".to_owned(), NodePosition { x: 12.5, y: -40.0 });
+        nodes.insert("hello".to_owned(), NodePosition { x: 240.0, y: 180.0 });
+        let root_string = root.to_string_lossy().into_owned();
+        save_layout(root_string.clone(), nodes.clone()).unwrap();
+        assert!(root.join(".designer/layout.toml").exists());
+        assert_eq!(load_layout(root_string).unwrap(), nodes);
+        let _ = fs::remove_dir_all(&root);
     }
 }

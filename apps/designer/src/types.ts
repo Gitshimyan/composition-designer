@@ -126,3 +126,10 @@ export interface ProjectSnapshot {
   model?: CompositionModel | null;
   diagnostics: Diagnostic[];
 }
+
+export interface NodePosition {
+  x: number;
+  y: number;
+}
+
+export type LayoutNodes = Record<string, NodePosition>;

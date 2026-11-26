@@ -8,6 +8,7 @@ v0.1 的冻结规范（M0，2026-11-26）。实现、样例与错误码以本目
 | [`composition-schema-v1.md`](./composition-schema-v1.md) | `project.toml`、`composition/**`、`modules/**/module.toml`、`.designer/**` 的字段、类型、默认值、约束、校验顺序、Revision | 已冻结 |
 | [`error-codes-v1.md`](./error-codes-v1.md) | L1–L7 稳定错误代码、级别、对象、提示 | 已冻结 |
 | [`command-schema-v1.md`](./command-schema-v1.md) | M2 编辑命令 JSON 形状、事务规则、Revision 历史/幂等、结构化 Diff、TOML 写回 | M2 009–011 冻结 |
+| [`designer-layout-v1.md`](./designer-layout-v1.md) | `.designer/layout.toml` 的节点坐标格式与表现层边界 | M3 013 冻结 |
 
 相关：
 
