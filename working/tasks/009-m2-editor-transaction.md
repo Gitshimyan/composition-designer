@@ -21,18 +21,18 @@ M1 的 Core 只读。M2 要让人和 Agent 通过统一命令修改项目，而�
 
 ## 清单
 
-- [ ] 根 workspace 加入 `crates/composition-editor`
-- [ ] `Command` 枚举：12 个命令 + serde `type` 标签
-- [ ] `Transaction`：request_id / base_revision / commands
-- [ ] `EditorWorkspace`：open、from_validation、prepare、apply、revision
-- [ ] 命令应用：实例增删改名/换模块、配置 set/unset、Binding 增删改、Connection 增删改
-- [ ] 删除实例级联清理 Binding / Connection / 依赖 provider；Root 拒绝
-- [ ] 重命名更新 root / Binding / Connection / 依赖 provider
-- [ ] `composition-core::validate_model`：候选模型 L2–L7 校验
-- [ ] 原子性：命令失败或候选校验失败时模型与 Revision 不变
-- [ ] 命令 Schema 文档 `docs/spec/command-schema-v1.md`
-- [ ] 测试：配置、重命名、增删级联、非法候选、重复 ID、旧 Revision、空请求、prepare 不变
-- [ ] `cargo test` / `clippy` / `fmt` 全绿；更新 plan、crates/README、docs/ai、任务卡
+- [x] 根 workspace 加入 `crates/composition-editor`
+- [x] `Command` 枚举：12 个命令 + serde `type` 标签
+- [x] `Transaction`：request_id / base_revision / commands
+- [x] `EditorWorkspace`：open、from_validation、prepare、apply、revision
+- [x] 命令应用：实例增删改名/换模块、配置 set/unset、Binding 增删改、Connection 增删改
+- [x] 删除实例级联清理 Binding / Connection / 依赖 provider；Root 拒绝
+- [x] 重命名更新 root / Binding / Connection / 依赖 provider
+- [x] `composition-core::validate_model`：候选模型 L2–L7 校验
+- [x] 原子性：命令失败或候选校验失败时模型与 Revision 不变
+- [x] 命令 Schema 文档 `docs/spec/command-schema-v1.md`
+- [x] 测试：配置、重命名、增删级联、非法候选、重复 ID、旧 Revision、空请求、prepare 不变
+- [x] `cargo test` / `clippy` / `fmt` 全绿；更新 plan、crates/README、docs/ai、任务卡
 
 ## 验收
 

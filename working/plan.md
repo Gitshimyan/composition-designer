@@ -27,12 +27,13 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 ## 2. 当前状态（2026-11-26）
 
-- 阶段：`M2` 进行中——009（命令 Schema 与内存事务）完成；010/011 未开始
-- 已有：M1 的 domain / toml / core / cli、`composition-editor`（3 单元 + 12 集成测试）、
-  116 项 workspace 测试、`docs/spec/command-schema-v1.md`、cargo 宿主任务、git
-- 未建：Revision 持久化/冲突与结构化 Diff（010）、TOML 局部写回（011）、Designer、Agent Adapter
-- 门禁：`cargo test` / `clippy` / `fmt` + `composition-cli validate`；116 项测试
-- 规模：5 crate / 116 项测试 / 3 个 CLI 命令 / 12 个编辑命令 / 26 个样例数据集
+- 阶段：`M2` 进行中——009（命令/事务）与 010（Revision/幂等/Diff）完成；011 未开始
+- 已有：M1 的 domain / toml / core / cli、`composition-editor`（Revision 历史、request 幂等、
+  结构化 Diff，22 项测试）、123 项 workspace 测试、`docs/spec/command-schema-v1.md`
+- 未建：保留格式 TOML 写回与 `source_digest` 刷新（011）、历史/request 磁盘持久化、
+  Designer、Agent Adapter
+- 门禁：`cargo test` / `clippy` / `fmt` + `composition-cli validate`；123 项测试
+- 规模：5 crate / 123 项测试 / 3 个 CLI 命令 / 12 个编辑命令 / 26 个样例数据集
 
 ## 3. 阶段路线图
 
@@ -42,7 +43,7 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 |---|---|---|---|---|
 | M0 | ✅ 完成 | Schema 与语义冻结 | 不同实现者只依赖规范与样例也能判断项目是否合法 | 002 领域模型、003 TOML/契约 Schema、004 示例项目集 |
 | M1 | ✅ 完成 | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 ✅ TOML 加载与 Source Map、007 ✅ 解析与 L1–L7 校验、008 ✅ CLI 与确定性 |
-| M2 | 进行中（009 完成） | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 ✅ 命令 Schema 与事务、010 Revision/冲突/结构化 Diff、011 保留格式的 TOML 编辑 |
+| M2 | 进行中（009–010 完成） | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 ✅ 命令 Schema 与事务、010 ✅ Revision/幂等/结构化 Diff、011 保留格式的 TOML 编辑 |
 | M3 | 未开始 | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 工程打开与 Designer 外壳、013 Canvas 与 Tree、014 Inspector/Source/Diagnostics、015 外部修改同步 |
 | M4 | 未开始 | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 领域协议与 CLI/JSONL、017 MCP Adapter、018 Agent Skill 与端到端 |
 | M5 | 未开始 | 完整性与稳定性 | 设计基线 §12 A01–A18 全部通过 | 019 多文件/性能/崩溃恢复/迁移与验收报告 |
@@ -54,11 +55,10 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 | # | 卡 | 方向 | 说明 | 所需授权 |
 |---|---|---|---|---|
-| 1 | 010 | Revision/冲突/结构化 Diff | Revision 持久化与 `base_revision` 冲突语义、request ID 幂等、结构化 Diff/影响分析 | Modify |
-| 2 | 011 | 保留格式 TOML 编辑 | 用 `toml_edit` 的 mutable 路径做局部编辑、保留注释与排版、刷新 `source_digest` | Modify |
+| 1 | 011 | 保留格式 TOML 编辑 | 用 `toml_edit` 的 mutable 路径做局部编辑、保留注释与排版、刷新 `source_digest`，并可持久化历史 | Modify |
 
 > 队列规则：一次只推进一张任务卡；没有用户确认的方向不写入队列，也不开工。
-> 009 已完成；010/011 待逐张创建任务卡，完成一张再创建下一张。
+> 009–010 已完成；011 待创建任务卡后再开始，完成后 M2 收口。
 
 ## 5. 验收映射（设计基线 §12）
 
@@ -105,8 +105,9 @@ A01–A09 已由 M1 覆盖；A10 起进入 M2/M3/M4。
 
 ## 7. 已知限制
 
-- 009 的事务只在内存模型上原子替换；`seq` 递增但 `source_digest` 尚未刷新，011 落盘时补齐；
-- 还没有 Revision 历史/冲突的完整语义、结构化 Diff、request ID 幂等（010）；
+- 009–010 的事务只在内存模型上原子替换；`seq` 递增但 `source_digest` 尚未刷新，011 落盘时补齐；
+- Revision 历史与 request 幂等记录只在当前工作区内存中，进程重启丢失；011 可持久化；
+- 结构化 Diff 覆盖实例/Binding/Connection，不含依赖解析结果与只读模块定义；
 - 新建实例/Binding 暂时没有 `SourceRef`，候选诊断只带对象 ID，落盘后重新解析补齐；
 - 设计基线仍是 Draft：字段以 `docs/spec/` 为准，修改设计基线需 Rearchitect 授权；
 - 宿主任务 `ai.cargo-test` / `ai.cargo-clippy` / `ai.cargo-fmt` 已批准并可用；
@@ -136,12 +137,12 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all --check
 cargo run -p composition-cli -- validate examples/minimal-project --json
 
-# M2（009 起）
+# M2（009–010 完成）
 cargo test -p composition-editor
 cargo run -p composition-cli -- inspect examples/minimal-project
 
-# M2 后续（010–011）
-# 编辑命令 / 事务完成后在此补充
+# M2 后续（011）
+# TOML 写回 / 历史持久化完成后在此补充
 ```
 
 ## 10. 行动日志
@@ -158,3 +159,4 @@ cargo run -p composition-cli -- inspect examples/minimal-project
 | 2026-11-26 | 007 | 建立 `composition-core`（解码 + L2–L7 + SourceMap + CompositionModel + effective_config）；26/26 数据集代码集合与 expected.json 一致；8 项集成测试；workspace 93 项测试 |
 | 2026-11-26 | 008 | 建立 `composition-cli`（inspect/resolve/validate、JSON、退出码、4 个 golden）；domain serde 序列化；8 项 CLI 测试；workspace 101 项测试；**M1 完成** |
 | 2026-11-26 | 009 | 建立 `composition-editor`（12 命令 + Transaction + EditorWorkspace 原子候选替换）；core 新增 `validate_model`；命令 Schema 文档；3 单元 + 12 集成测试；workspace 116 项测试 |
+| 2026-11-26 | 010 | 加入 Revision 历史、request_id 幂等重放、`edit-duplicate-request`、结构化 Diff/影响集合；4 单元 + 18 集成测试；workspace 123 项测试 |

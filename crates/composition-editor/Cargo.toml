@@ -3,13 +3,11 @@ name = "composition-editor"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-description = "Composition Designer v0.1 command schema and atomic transactions"
+description = "Composition Designer v0.1 command schema, transactions, revisions and diffs"
 publish = false
 
 [dependencies]
 composition-core = { path = "../composition-core" }
 composition-domain = { path = "../composition-domain" }
 serde = { version = "1", features = ["derive"] }
-
-[dev-dependencies]
 serde_json = "1"

@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-use composition_domain::{ConfigValue, ErrorCode, LocalId, ModuleId, Revision, Version};
-use composition_editor::{Command, EditorWorkspace, Transaction};
+use composition_domain::{ConfigValue, ErrorCode, LocalId, ModuleId, ObjectId, Revision, Version};
+use composition_editor::{ChangeKind, Command, EditorWorkspace, Transaction};
 
 fn workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -244,6 +244,7 @@ fn empty_request_id_is_rejected() {
 fn prepare_does_not_mutate_workspace() {
     let workspace = open("minimal-project");
     let before = workspace.model().clone();
+    let history_before = workspace.history().len();
     let outcome = workspace.prepare(&transaction(
         &workspace,
         vec![Command::SetConfig {
@@ -254,6 +255,158 @@ fn prepare_does_not_mutate_workspace() {
     ));
     assert!(outcome.is_accepted());
     assert_eq!(before, *workspace.model());
+    assert_eq!(workspace.history().len(), history_before);
+}
+
+#[test]
+fn diff_reports_modified_instance() {
+    let mut workspace = open("minimal-project");
+    let outcome = workspace.apply(&transaction(
+        &workspace,
+        vec![Command::SetConfig {
+            instance: local("app"),
+            property: local("title"),
+            value: ConfigValue::String("Changed".into()),
+        }],
+    ));
+    assert!(outcome.is_accepted());
+    let diff = outcome.diff().expect("diff");
+    assert_eq!(diff.summary.modified, 1);
+    assert_eq!(diff.summary.added, 0);
+    assert_eq!(diff.changes.len(), 1);
+    let change = &diff.changes[0];
+    assert_eq!(change.object_id, ObjectId::instance(&local("app")));
+    assert_eq!(change.kind, ChangeKind::Modified);
+    assert!(change.before.is_some());
+    assert!(change.after.is_some());
+}
+
+#[test]
+fn create_instance_diff_marks_both_objects_added() {
+    let mut workspace = open("edge-valid/slot-many");
+    let outcome = workspace.apply(&transaction(
+        &workspace,
+        vec![
+            Command::CreateInstance {
+                id: local("card-c"),
+                module: module("item.card"),
+                version: version(),
+                config: BTreeMap::from([(local("title"), ConfigValue::String("C".into()))]),
+            },
+            Command::CreateBinding {
+                id: local("board-cards-c"),
+                parent: local("board"),
+                slot: local("cards"),
+                child: local("card-c"),
+            },
+        ],
+    ));
+    assert!(outcome.is_accepted());
+    let diff = outcome.diff().expect("diff");
+    assert_eq!(diff.summary.added, 2);
+    assert!(diff
+        .changes
+        .iter()
+        .any(|change| change.object_id == ObjectId::instance(&local("card-c"))));
+    assert!(diff
+        .changes
+        .iter()
+        .any(|change| change.object_id == ObjectId::binding(&local("board-cards-c"))));
+}
+
+#[test]
+fn duplicate_request_replays_without_second_commit() {
+    let mut workspace = open("minimal-project");
+    let transaction = transaction(
+        &workspace,
+        vec![Command::SetConfig {
+            instance: local("app"),
+            property: local("title"),
+            value: ConfigValue::String("Once".into()),
+        }],
+    );
+    let first = workspace.apply(&transaction);
+    assert!(first.is_accepted());
+    let first_diff = first.diff().expect("diff").clone();
+    assert_eq!(workspace.revision().seq, 1);
+
+    let second = workspace.apply(&transaction);
+    assert!(second.is_replayed());
+    assert_eq!(second.diff(), Some(&first_diff));
+    assert_eq!(workspace.revision().seq, 1);
+    assert_eq!(workspace.history().len(), 2);
+}
+
+#[test]
+fn same_request_id_with_different_payload_is_rejected() {
+    let mut workspace = open("minimal-project");
+    workspace.apply(&transaction(
+        &workspace,
+        vec![Command::SetConfig {
+            instance: local("app"),
+            property: local("title"),
+            value: ConfigValue::String("First".into()),
+        }],
+    ));
+    let conflicting = Transaction::new(
+        "request-1",
+        workspace.revision(),
+        vec![Command::SetConfig {
+            instance: local("app"),
+            property: local("title"),
+            value: ConfigValue::String("Second".into()),
+        }],
+    );
+    let outcome = workspace.prepare(&conflicting);
+    assert!(!outcome.is_accepted());
+    assert_eq!(codes(&outcome), [ErrorCode::EditDuplicateRequest]);
+}
+
+#[test]
+fn stale_revision_after_a_commit_is_rejected() {
+    let mut workspace = open("minimal-project");
+    let initial = workspace.revision();
+    workspace.apply(&transaction(
+        &workspace,
+        vec![Command::SetConfig {
+            instance: local("app"),
+            property: local("title"),
+            value: ConfigValue::String("Committed".into()),
+        }],
+    ));
+    let stale = Transaction::new(
+        "request-2",
+        initial,
+        vec![Command::SetConfig {
+            instance: local("app"),
+            property: local("title"),
+            value: ConfigValue::String("Stale".into()),
+        }],
+    );
+    let outcome = workspace.prepare(&stale);
+    assert!(!outcome.is_accepted());
+    assert_eq!(codes(&outcome), [ErrorCode::EditRevisionConflict]);
+}
+
+#[test]
+fn history_records_initial_and_committed_revisions() {
+    let mut workspace = open("minimal-project");
+    assert_eq!(workspace.history().len(), 1);
+    assert_eq!(workspace.history()[0].request_id, "initial");
+    assert_eq!(workspace.history()[0].revision.seq, 0);
+
+    workspace.apply(&transaction(
+        &workspace,
+        vec![Command::SetConfig {
+            instance: local("app"),
+            property: local("title"),
+            value: ConfigValue::String("History".into()),
+        }],
+    ));
+    assert_eq!(workspace.history().len(), 2);
+    assert_eq!(workspace.history()[1].request_id, "request-1");
+    assert_eq!(workspace.history()[1].revision.seq, 1);
+    assert_eq!(workspace.history()[1].diff.summary.modified, 1);
 }
 
 #[test]

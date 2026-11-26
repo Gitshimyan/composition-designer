@@ -10,13 +10,13 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M2 进行中：M1 的 domain/toml/core/cli 完成；009 `composition-editor`（3+12 测试）已实现命令与内存事务；010/011 未开始 |
+| 当前阶段 | M2 进行中：M1 的 domain/toml/core/cli 完成；009–010 `composition-editor`（22 测试）已实现命令、事务、Revision/幂等/Diff；011 TOML 写回未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
-| 验证入口 | `cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；CLI：`cargo run -p composition-cli -- validate examples/minimal-project --json` |
+| 验证入口 | `cargo test --workspace`、`cargo test -p composition-editor`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；CLI：`cargo run -p composition-cli -- validate examples/minimal-project --json` |
 | working 入口 | [`working/plan.md`](../../working/plan.md) |
 
 ## 2. 目标结构与依赖方向
@@ -31,7 +31,7 @@
 | `composition-cli` | 已建立（008） | inspect / resolve / validate、JSON、退出码 | core, domain, serde, serde_json |
 | `composition-resolver` | 暂并入 core | 模块解析、规范化结果 | domain, toml |
 | `composition-validator` | 暂并入 core | Schema、引用、契约校验 | domain, resolver |
-| `composition-editor` | 已建立（009） | 命令 Schema、候选事务、原子替换 | core, domain, serde |
+| `composition-editor` | 已建立（009–010） | 命令 Schema、候选事务、Revision 历史、request 幂等、结构化 Diff | core, domain, serde, serde_json |
 | `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
 | `composition-app` | 待 M3/M4 | 应用服务编排 | core |
 
@@ -114,8 +114,8 @@
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
 - M1 005–008 完成（domain 58 / toml 27 / core 8 / cli 8）；M2 009 新增
-  `composition-editor`（12 命令、候选模型原子事务、core `validate_model`），3 单元 + 12 集成测试；
-  TOML 写回、Revision 冲突/Diff 仍未开始；
+  `composition-editor`（12 命令、候选事务），010 加入 Revision 历史、request 幂等与结构化
+  Diff；editor 共 4 单元 + 18 集成测试，workspace 123 项；TOML 写回仍未开始；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 M2 剩余实现细节：Revision 持久化/冲突、Diff、TOML 局部写回、协议适配；
+- 尚未冻结的是 011 实现细节：TOML 局部写回、历史持久化、`source_digest` 刷新与协议适配；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

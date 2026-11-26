@@ -142,6 +142,11 @@
 | `edit-duplicate-request` | M2 | `request_id` 重复提交 |
 | `watch-reload-failed` | M3 | 外部 TOML 变更后重新解析失败 |
 
+M2 009/010 已启用 `edit-invalid-command`、`edit-revision-conflict` 和
+`edit-duplicate-request`；候选模型校验失败保留 L2–L7 原代码，不统一改成
+`edit-transaction-failed`。`edit-transaction-failed` 留给 011 落盘失败，
+`edit-unsupported-operation` 与 `watch-reload-failed` 仍预留。
+
 ## 11. 代码覆盖检查
 
 M0 示例集至少覆盖：

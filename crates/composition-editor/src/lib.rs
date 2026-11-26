@@ -6,7 +6,9 @@
 //! 全量 L2–L7 校验后原子替换工作区；TOML 落盘与 `source_digest` 刷新属于 011。
 
 mod command;
+mod diff;
 mod workspace;
 
 pub use command::{Command, Transaction, COMMAND_KINDS};
-pub use workspace::{EditorWorkspace, TransactionOutcome};
+pub use diff::{ChangeKind, DiffSummary, ModelDiff, ObjectChange};
+pub use workspace::{EditorWorkspace, RevisionRecord, TransactionOutcome};

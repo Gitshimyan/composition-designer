@@ -1,16 +1,38 @@
+use std::collections::BTreeMap;
+
 use composition_core::{validate_model, validate_project, SourceMap, ValidationResult};
 use composition_domain::{
     Binding, CompositionModel, Diagnostic, ErrorCode, Instance, ModuleRef, ObjectId, PortRef,
     Revision,
 };
+use serde::Serialize;
 
 use crate::command::{Command, Transaction};
+use crate::diff::ModelDiff;
 
-/// 编辑器工作区：已验证模型 + 来源映射。009 只操作内存模型，不写 TOML。
+/// 已提交 Revision 的历史记录。010 仅保存在工作区内存中；011 可随 TOML 一起持久化。
+#[derive(Debug, Clone, Serialize)]
+pub struct RevisionRecord {
+    pub revision: Revision,
+    pub request_id: String,
+    pub diff: ModelDiff,
+}
+
+#[derive(Debug, Clone)]
+struct CommittedRequest {
+    transaction: Transaction,
+    model: CompositionModel,
+    diagnostics: Vec<Diagnostic>,
+    diff: ModelDiff,
+}
+
+/// 编辑器工作区：已验证模型 + 来源映射 + Revision 历史/request 记录。
 #[derive(Debug)]
 pub struct EditorWorkspace {
     model: CompositionModel,
     source_map: SourceMap,
+    history: Vec<RevisionRecord>,
+    requests: BTreeMap<String, CommittedRequest>,
 }
 
 impl EditorWorkspace {
@@ -18,9 +40,21 @@ impl EditorWorkspace {
         if result.model.is_none() || result.diagnostics.iter().any(Diagnostic::is_error) {
             return Err(result.diagnostics);
         }
+        let mut model = result.model.expect("checked above");
+        let revision = model
+            .revision
+            .clone()
+            .unwrap_or_else(|| Revision::new(0, None));
+        model.revision = Some(revision.clone());
         Ok(Self {
-            model: result.model.expect("checked above"),
+            model,
             source_map: result.source_map,
+            history: vec![RevisionRecord {
+                revision,
+                request_id: "initial".to_owned(),
+                diff: ModelDiff::empty(),
+            }],
+            requests: BTreeMap::new(),
         })
     }
 
@@ -39,24 +73,47 @@ impl EditorWorkspace {
             .unwrap_or_else(|| Revision::new(0, None))
     }
 
-    /// 原子应用事务：失败时工作区完全不变；成功时更新模型并把 `seq` 加一。
+    pub fn history(&self) -> &[RevisionRecord] {
+        &self.history
+    }
+
+    /// 原子应用事务：失败时工作区完全不变；成功时更新模型、`seq` 与历史。
     ///
-    /// 009 不写 TOML，因此 `source_digest` 保持读取时的值；011 在落盘后重算。
+    /// 010 不写 TOML，因此 `source_digest` 保持读取时的值；011 在落盘后重算。
     pub fn apply(&mut self, transaction: &Transaction) -> TransactionOutcome {
         let outcome = self.evaluate(transaction);
-        if let TransactionOutcome::Accepted { model, .. } = &outcome {
+        if let TransactionOutcome::Accepted {
+            model,
+            diagnostics,
+            diff,
+        } = &outcome
+        {
             self.model = model.as_ref().clone();
+            let revision = self.revision();
+            self.history.push(RevisionRecord {
+                revision,
+                request_id: transaction.request_id.clone(),
+                diff: diff.clone(),
+            });
+            self.requests.insert(
+                transaction.request_id.clone(),
+                CommittedRequest {
+                    transaction: transaction.clone(),
+                    model: self.model.clone(),
+                    diagnostics: diagnostics.clone(),
+                    diff: diff.clone(),
+                },
+            );
         }
         outcome
     }
 
-    /// 纯规划：不改变工作区，返回候选模型（或拒绝诊断）。
+    /// 纯规划：不改变工作区，返回候选模型、Diff 或拒绝诊断。
     pub fn prepare(&self, transaction: &Transaction) -> TransactionOutcome {
         self.evaluate(transaction)
     }
 
     fn evaluate(&self, transaction: &Transaction) -> TransactionOutcome {
-        let current = self.revision();
         if transaction.request_id.trim().is_empty() {
             return rejected(invalid_command(
                 "transaction request_id must not be empty",
@@ -69,7 +126,30 @@ impl EditorWorkspace {
                 ObjectId::composition(),
             ));
         }
-        if transaction.base_revision != current {
+
+        if let Some(record) = self.requests.get(&transaction.request_id) {
+            if &record.transaction == transaction {
+                return TransactionOutcome::Replayed {
+                    model: Box::new(record.model.clone()),
+                    diagnostics: record.diagnostics.clone(),
+                    diff: record.diff.clone(),
+                };
+            }
+            return rejected(Diagnostic::new(
+                ErrorCode::EditDuplicateRequest,
+                format!(
+                    "request_id {:?} was already used with a different payload",
+                    transaction.request_id
+                ),
+            ));
+        }
+
+        let current = self.revision();
+        let known_base = self
+            .history
+            .iter()
+            .any(|record| record.revision == transaction.base_revision);
+        if transaction.base_revision != current || !known_base {
             return rejected(Diagnostic::new(
                 ErrorCode::EditRevisionConflict,
                 format!(
@@ -97,6 +177,7 @@ impl EditorWorkspace {
             return rejected_many(result.diagnostics);
         }
         let mut model = result.model.expect("validated model");
+        let diff = ModelDiff::between(&self.model, &model);
         model.revision = Some(Revision::new(
             current.seq + 1,
             current.source_digest.clone(),
@@ -105,6 +186,7 @@ impl EditorWorkspace {
         TransactionOutcome::Accepted {
             model: Box::new(model),
             diagnostics: result.diagnostics,
+            diff,
         }
     }
 }
@@ -114,6 +196,12 @@ pub enum TransactionOutcome {
     Accepted {
         model: Box<CompositionModel>,
         diagnostics: Vec<Diagnostic>,
+        diff: ModelDiff,
+    },
+    Replayed {
+        model: Box<CompositionModel>,
+        diagnostics: Vec<Diagnostic>,
+        diff: ModelDiff,
     },
     Rejected {
         diagnostics: Vec<Diagnostic>,
@@ -122,19 +210,32 @@ pub enum TransactionOutcome {
 
 impl TransactionOutcome {
     pub fn is_accepted(&self) -> bool {
-        matches!(self, Self::Accepted { .. })
+        matches!(self, Self::Accepted { .. } | Self::Replayed { .. })
+    }
+
+    pub fn is_replayed(&self) -> bool {
+        matches!(self, Self::Replayed { .. })
     }
 
     pub fn model(&self) -> Option<&CompositionModel> {
         match self {
-            Self::Accepted { model, .. } => Some(model.as_ref()),
+            Self::Accepted { model, .. } | Self::Replayed { model, .. } => Some(model.as_ref()),
             Self::Rejected { .. } => None,
         }
     }
 
     pub fn diagnostics(&self) -> &[Diagnostic] {
         match self {
-            Self::Accepted { diagnostics, .. } | Self::Rejected { diagnostics } => diagnostics,
+            Self::Accepted { diagnostics, .. }
+            | Self::Replayed { diagnostics, .. }
+            | Self::Rejected { diagnostics } => diagnostics,
+        }
+    }
+
+    pub fn diff(&self) -> Option<&ModelDiff> {
+        match self {
+            Self::Accepted { diff, .. } | Self::Replayed { diff, .. } => Some(diff),
+            Self::Rejected { .. } => None,
         }
     }
 }
