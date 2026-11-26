@@ -1,0 +1,35 @@
+change:
+  id: change.m4-protocol-cli-jsonl
+  intent: 建立 composition-protocol 与 CLI query/apply/jsonl，统一 Agent/CLI 的查询和事务入口
+  authorization: extend
+  targets:
+    - Cargo.toml
+    - Cargo.lock
+    - crates/composition-protocol
+    - crates/composition-cli
+    - docs/spec
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - protocol
+      - cli_commands
+      - jsonl
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - design_baseline
+      - second_model
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 写操作仍只经 ProjectSession；协议层带外部 digest 冲突守卫。

@@ -9,6 +9,7 @@ v0.1 的冻结规范（M0，2026-11-26）。实现、样例与错误码以本目
 | [`error-codes-v1.md`](./error-codes-v1.md) | L1–L7 稳定错误代码、级别、对象、提示 | 已冻结 |
 | [`command-schema-v1.md`](./command-schema-v1.md) | M2 编辑命令 JSON 形状、事务规则、Revision 历史/幂等、结构化 Diff、TOML 写回 | M2 009–011 冻结 |
 | [`designer-layout-v1.md`](./designer-layout-v1.md) | `.designer/layout.toml` 的节点坐标格式与表现层边界 | M3 013 冻结 |
+| [`protocol-v1.md`](./protocol-v1.md) | 机器可读 Query/Command 协议、JSONL 与 CLI 单次命令 | M4 016 冻结 |
 
 相关：
 

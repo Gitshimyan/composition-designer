@@ -1,11 +1,15 @@
 use std::env;
+use std::fs;
+use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 
 use composition_core::{validate_project, ValidationResult};
 use composition_domain::{
     CompositionModel, Diagnostic, ModuleDefinition, Project, Severity, SourceDigest,
 };
+use composition_protocol::{error_response, ProtocolSession, Request, Response};
 use serde::Serialize;
+use serde_json::json;
 
 #[derive(Serialize)]
 struct InspectOutput<'a> {
@@ -52,6 +56,54 @@ where
         "-V" | "--version" => {
             println!("composition-cli {}", env!("CARGO_PKG_VERSION"));
             0
+        }
+        "jsonl" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            if args.next().is_some() {
+                usage();
+                return 2;
+            }
+            run_jsonl(Path::new(&path))
+        }
+        "query" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let Some(op) = args.next() else {
+                usage();
+                return 2;
+            };
+            if args.next().is_some() {
+                usage();
+                return 2;
+            }
+            run_query(Path::new(&path), &op)
+        }
+        "apply" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let Some(transaction_path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let mut dry_run = false;
+            for arg in args {
+                match arg.as_str() {
+                    "--dry-run" => dry_run = true,
+                    flag => {
+                        eprintln!("unknown option {flag}");
+                        usage();
+                        return 2;
+                    }
+                }
+            }
+            run_apply(Path::new(&path), Path::new(&transaction_path), dry_run)
         }
         "inspect" | "resolve" | "validate" => {
             let mut path = None;
@@ -106,6 +158,102 @@ where
             2
         }
     }
+}
+
+fn run_jsonl(root: &Path) -> i32 {
+    let mut session = ProtocolSession::new(root);
+    let stdin = io::stdin();
+    let mut stdout = io::stdout();
+    for line in stdin.lock().lines() {
+        let line = match line {
+            Ok(line) => line,
+            Err(error) => {
+                eprintln!("failed to read stdin: {error}");
+                return 2;
+            }
+        };
+        if line.trim().is_empty() {
+            continue;
+        }
+        let response = match serde_json::from_str::<Request>(&line) {
+            Ok(request) => session.dispatch(request),
+            Err(error) => error_response(
+                "",
+                "protocol-invalid-request",
+                format!("invalid JSON request: {error}"),
+            ),
+        };
+        if let Err(error) = write_response_line(&mut stdout, &response) {
+            eprintln!("failed to write response: {error}");
+            return 2;
+        }
+    }
+    0
+}
+
+fn run_query(root: &Path, op: &str) -> i32 {
+    let mut session = ProtocolSession::new(root);
+    let response = session.dispatch(Request {
+        id: "cli-query".to_owned(),
+        op: op.to_owned(),
+        params: json!({}),
+    });
+    write_response_pretty(&response)
+}
+
+fn run_apply(root: &Path, transaction_path: &Path, dry_run: bool) -> i32 {
+    let text = match fs::read_to_string(transaction_path) {
+        Ok(text) => text,
+        Err(error) => {
+            eprintln!("cannot read {}: {error}", transaction_path.display());
+            return 2;
+        }
+    };
+    let transaction = match serde_json::from_str::<serde_json::Value>(&text) {
+        Ok(transaction) => transaction,
+        Err(error) => {
+            eprintln!("invalid transaction JSON: {error}");
+            return 2;
+        }
+    };
+    let mut session = ProtocolSession::new(root);
+    let response = session.dispatch(Request {
+        id: "cli-apply".to_owned(),
+        op: if dry_run {
+            "prepare_transaction".to_owned()
+        } else {
+            "apply_transaction".to_owned()
+        },
+        params: json!({ "transaction": transaction }),
+    });
+    write_response_pretty(&response)
+}
+
+fn write_response_pretty(response: &Response) -> i32 {
+    match serde_json::to_string_pretty(response) {
+        Ok(text) => {
+            println!("{text}");
+            if response.ok {
+                0
+            } else {
+                1
+            }
+        }
+        Err(error) => {
+            eprintln!("failed to serialize response: {error}");
+            2
+        }
+    }
+}
+
+fn write_response_line(
+    writer: &mut impl Write,
+    response: &Response,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let text = serde_json::to_string(response)?;
+    writeln!(writer, "{text}")?;
+    writer.flush()?;
+    Ok(())
 }
 
 fn inspect_output(result: &ValidationResult) -> InspectOutput<'_> {
@@ -196,7 +344,7 @@ fn severity_name(severity: Severity) -> &'static str {
 }
 
 fn usage() {
-    eprintln!("Usage: composition-cli <inspect|resolve|validate> <project-dir> [--json]");
+    eprintln!("Usage: composition-cli <inspect|resolve|validate|query|apply|jsonl> ...");
 }
 
 fn print_help() {
@@ -206,11 +354,17 @@ fn print_help() {
     println!("  composition-cli inspect <project-dir>");
     println!("  composition-cli resolve <project-dir>");
     println!("  composition-cli validate <project-dir> [--json]");
+    println!("  composition-cli query <project-dir> <op>");
+    println!("  composition-cli apply <project-dir> <transaction.json> [--dry-run]");
+    println!("  composition-cli jsonl <project-dir>");
     println!();
     println!("Commands:");
     println!("  inspect   project, module contracts, diagnostics and source digest");
     println!("  resolve   normalized CompositionModel, diagnostics and source digest");
     println!("  validate  validation summary and diagnostics (human by default)");
+    println!("  query     protocol query: inspect | resolve | validate | source");
+    println!("  apply     protocol transaction from a JSON file (use --dry-run to prepare)");
+    println!("  jsonl     line-delimited JSON requests on stdin / responses on stdout");
     println!();
     println!("Exit codes: 0 valid, 1 errors, 2 usage/internal error.");
 }

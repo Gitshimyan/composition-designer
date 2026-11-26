@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M3 完成：M1/M2 Core、编辑事务与 TOML 写回已完成；012–015 建立 Tauri 2 + React Designer、Canvas/Tree、Inspector/Change Review、只读 Source 与外部修改同步；M4 Agent Interface 未开始。
+> v0.1 · M4 进行中：M1–M3 已完成；016 建立机器可读 Protocol、CLI `query/apply/jsonl`；MCP Adapter 与 Agent Skill 未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -36,21 +36,22 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | Rust 领域层（M1 005） | 已建立：`composition-domain`，58 项测试 |
 | TOML 加载与 Source Map（M1 006） | 已建立：`composition-toml`，27 项测试 |
 | Core：解析 / 验证（M1 007） | 已建立：`composition-core`，26/26 数据集 |
-| CLI（M1 008） | 已建立：`composition-cli`，8 项测试 |
-| 编辑命令与事务（M2 009–011） | 已建立：`composition-editor`，29 项测试 |
+| CLI（M1 008 / M4 016） | 已建立：`composition-cli`，10 项测试 |
+| 编辑命令与事务（M2 009–011） | 已建立：`composition-editor`，30 项测试 |
 | Revision / 幂等 / Diff | 已建立（M2 010） |
 | 保留格式 TOML 写回 | 已建立（M2 011） |
 | Designer 外壳（M3 012） | 已建立：Tauri 2 + React 19 + TS + Vite 7 |
 | Canvas / Tree（M3 013） | 已建立：`@xyflow/react`、结构树、布局持久化 |
 | Inspector / Source（M3 014） | 已建立：配置编辑、Change Review、只读 CodeMirror Source |
 | 外部修改同步（M3 015） | 已建立：digest 轮询、冲突守卫、Reload |
-| Agent Interface | 未开始（M4） |
+| Agent Protocol（M4 016） | 已建立：query/transaction/JSONL、CLI query/apply |
+| MCP Adapter / Agent Skill | 未开始（M4 017–018） |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
-`composition-editor` 与 `apps/designer`；Core 通过 `cargo test` / `clippy` / `fmt`，Designer
-通过 `npm run build` 与 Tauri 宿主测试。M3 已完成可视化、编辑、Source 与外部同步；
-Agent 协议、MCP Adapter 与端到端尚未开始。
-M1 的“通过”指只读解析/校验/CLI 可复现，不代表项目可以运行或编辑。
+`composition-editor`、`composition-protocol` 与 `apps/designer`；Core/Protocol 通过
+`cargo test` / `clippy` / `fmt`，Designer 通过 `npm run build` 与 Tauri 宿主测试。
+M3 已完成可视化、编辑、Source 与外部同步；M4 016 已提供机器协议，MCP 与 Agent Skill 未开始。
+M1–M3 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代表项目可以运行或部署。
 
 ## 3. 目录结构
 
@@ -66,11 +67,10 @@ composition-designer/
 │   ├── composition-core/                  # 已建立（007，解析/校验）
 │   ├── composition-cli/                   # 已建立（008，inspect/resolve/validate）
 │   ├── composition-editor/                # 已建立（009，命令/事务）
+│   ├── composition-protocol/              # 已建立（016，Query/Command/JSONL）
 │   ├── composition-resolver/              # 暂并入 core
 │   ├── composition-validator/             # 暂并入 core
-│   ├── composition-editor/
-│   ├── composition-protocol/
-│   └── composition-app/
+│   └── composition-app/                   # 待 M3/M4
 │
 ├── apps/
 │   └── designer/                          # Tauri 2 + React 设计器（012–013 外壳/Canvas）
@@ -129,6 +129,7 @@ composition-designer/
 - [Composition Schema v1](./docs/spec/composition-schema-v1.md)
 - [命令 Schema v1](./docs/spec/command-schema-v1.md)
 - [Designer Layout v1](./docs/spec/designer-layout-v1.md)
+- [Composition Protocol v1](./docs/spec/protocol-v1.md)
 - [错误代码 v1](./docs/spec/error-codes-v1.md)
 - [ADR-0001 领域模型与 Schema 冻结](./docs/adr/0001-domain-and-schema-freeze.md)
 - [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)

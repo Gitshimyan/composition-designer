@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 use std::fs;
-use std::path::PathBuf;
-use std::process::{Command, Output};
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Output, Stdio};
 
 use serde_json::Value;
 
@@ -162,6 +163,72 @@ fn usage_without_arguments() {
     let output = run(&[]);
     assert_eq!(output.status.code(), Some(2));
     assert!(stderr(&output).contains("Usage: composition-cli"));
+}
+
+#[test]
+fn jsonl_streams_multiple_responses() {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_composition-cli"))
+        .arg("jsonl")
+        .arg(example("minimal-project"))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("spawn jsonl");
+    {
+        let stdin = child.stdin.as_mut().expect("stdin");
+        writeln!(stdin, "{{\"id\":\"q1\",\"op\":\"inspect\"}}").unwrap();
+        writeln!(stdin, "{{\"id\":\"q2\",\"op\":\"validate\"}}").unwrap();
+    }
+    let output = child.wait_with_output().unwrap();
+    assert_eq!(output.status.code(), Some(0));
+    let output_text = stdout(&output);
+    let lines: Vec<&str> = output_text.lines().collect();
+    assert_eq!(lines.len(), 2);
+    let first: Value = serde_json::from_str(lines[0]).unwrap();
+    let second: Value = serde_json::from_str(lines[1]).unwrap();
+    assert_eq!(first["id"], "q1");
+    assert_eq!(first["ok"], true);
+    assert_eq!(second["id"], "q2");
+    assert_eq!(second["result"]["valid"], true);
+}
+
+#[test]
+fn apply_dry_run_does_not_write() {
+    let directory =
+        std::env::temp_dir().join(format!("composition-cli-apply-{}", std::process::id()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let transaction_path = directory.join("transaction.json");
+    let transaction = serde_json::json!({
+        "request_id": "cli-1",
+        "base_revision": {
+            "seq": 0,
+            "source_digest": "sha256:10cef70e22f16ef050fd9d1ea3d0f4ba3502235641aaf4f88b91260daa34768e"
+        },
+        "commands": [{
+            "type": "set_config",
+            "instance": "app",
+            "property": "title",
+            "value": "Dry run"
+        }]
+    });
+    std::fs::write(&transaction_path, serde_json::to_vec(&transaction).unwrap()).unwrap();
+    let before =
+        std::fs::read(Path::new(&example("minimal-project")).join("composition/main.toml"))
+            .unwrap();
+    let output = run(&[
+        "apply",
+        &example("minimal-project"),
+        transaction_path.to_str().unwrap(),
+        "--dry-run",
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    let value = json(&output);
+    assert_eq!(value["ok"], true);
+    assert_eq!(value["result"]["accepted"], true);
+    let after = std::fs::read(Path::new(&example("minimal-project")).join("composition/main.toml"))
+        .unwrap();
+    assert_eq!(before, after);
+    let _ = std::fs::remove_dir_all(&directory);
 }
 
 #[test]

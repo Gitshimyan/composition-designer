@@ -23,6 +23,7 @@ version = "0.1.0"
 dependencies = [
  "composition-core",
  "composition-domain",
+ "composition-protocol",
  "serde",
  "serde_json",
 ]
@@ -54,6 +55,17 @@ dependencies = [
  "serde",
  "serde_json",
  "toml_edit",
+]
+
+[[package]]
+name = "composition-protocol"
+version = "0.1.0"
+dependencies = [
+ "composition-core",
+ "composition-domain",
+ "composition-editor",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
