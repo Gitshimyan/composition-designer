@@ -27,13 +27,13 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 ## 2. 当前状态（2026-11-26）
 
-- 阶段：`M1` 进行中——005 完成（`composition-domain`），006 未开始
-- 已有：M0 规范与 26 个样例数据集、根 Cargo workspace、`composition-domain` crate（58 项测试）、
-  已批准的 `ai.cargo-test` / `ai.cargo-clippy` / `ai.cargo-fmt` 宿主任务、本地 git（main）
-- 未建：`composition-toml` / `resolver` / `validator` / `editor` / `protocol` / `app`、CLI、
-  Designer、Agent Adapter
-- 门禁：`cargo test` / `clippy` / `fmt` 已对 domain 生效；完整解析/CLI 门禁从 006 / 007 起
-- 规模：1 crate / 58 项测试 / 0 命令 / 26 个样例数据集（25 个完整项目 + 1 个入口缺失目录）
+- 阶段：`M1` 进行中——005（domain）与 006（TOML loader）完成，007 未开始
+- 已有：M0 规范与 26 个样例、`composition-domain`（58 测试）、`composition-toml`
+  （12 单元 + 15 集成测试）、`toml_edit` / `sha2` 依赖、已批准的 cargo 宿主任务、git
+- 未建：`composition-resolver` / `validator` / `editor` / `protocol` / `app`、CLI、Designer、
+  Agent Adapter；Composition / Module 的语义解码与 L3–L7 校验
+- 门禁：`cargo test` / `clippy` / `fmt`（workspace 85 项测试）；CLI 门禁从 008 起
+- 规模：2 crate / 85 项测试 / 0 命令 / 26 个样例数据集
 
 ## 3. 阶段路线图
 
@@ -42,7 +42,7 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 | 阶段 | 状态 | 目标 | 退出条件 | 任务卡 |
 |---|---|---|---|---|
 | M0 | ✅ 完成 | Schema 与语义冻结 | 不同实现者只依赖规范与样例也能判断项目是否合法 | 002 领域模型、003 TOML/契约 Schema、004 示例项目集 |
-| M1 | 进行中（005 完成） | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 TOML 加载与 Source Map、007 解析与 L1–L7 校验、008 CLI 与确定性 |
+| M1 | 进行中（005–006 完成） | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 ✅ TOML 加载与 Source Map、007 解析与 L1–L7 校验、008 CLI 与确定性 |
 | M2 | 未开始 | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 命令 Schema 与事务、010 Revision/冲突/结构化 Diff、011 保留格式的 TOML 编辑 |
 | M3 | 未开始 | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 工程打开与 Designer 外壳、013 Canvas 与 Tree、014 Inspector/Source/Diagnostics、015 外部修改同步 |
 | M4 | 未开始 | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 领域协议与 CLI/JSONL、017 MCP Adapter、018 Agent Skill 与端到端 |
@@ -55,12 +55,11 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 | # | 卡 | 方向 | 说明 | 所需授权 |
 |---|---|---|---|---|
-| 1 | 006 | TOML 加载与 Source Map | 新建 `composition-toml`，引入 `toml_edit`；加载 project / composition / module，保留源码位置；实现 `source_digest` 与文件集合 | Extend（新 crate + 依赖） |
-| 2 | 007 | 解析与 L1–L7 校验 | 模块注册、实例/Binding/Connection/依赖解析、规范化模型与诊断；以 26 个样例为断言 | Modify |
-| 3 | 008 | CLI 与确定性 | `inspect` / `resolve` / `validate`、JSON 输出、稳定性与 golden 测试 | Extend（CLI 入口） |
+| 1 | 007 | 解析与 L1–L7 校验 | 在 loader 之上解码 Composition / Module / Instance / Binding / Connection，建立引用、契约、结构与依赖校验，产出 `CompositionModel` + 诊断；以 26 个样例为断言 | Modify（新 crate 拆分需 Extend） |
+| 2 | 008 | CLI 与确定性 | `inspect` / `resolve` / `validate`、JSON 输出、稳定性与 golden 测试 | Extend（CLI 入口） |
 
 > 队列规则：一次只推进一张任务卡；没有用户确认的方向不写入队列，也不开工。
-> 005 已完成；006 待创建任务卡后再开始，完成一张再创建下一张。
+> 006 已完成；007 待创建任务卡后再开始，完成一张再创建下一张。
 
 ## 5. 验收映射（设计基线 §12）
 
@@ -107,8 +106,9 @@ M0 已冻结判断标准与样例；实际验证从 M1 开始。
 
 ## 7. 已知限制
 
-- domain 层已建立，但还没有 TOML 加载与 Core：26 个样例尚未被 Core 读取，M0 的
-  `expected.json` 还没变成真实断言；
+- 005 / 006 已建立 domain 与 TOML loader；还没有 Composition / Module 的语义解码、引用与结构校验，
+  26 个样例尚未产生真实 L3–L7 诊断；
+- 006 只做 L1 + Project L2；Composition / Module 的字段解码、模块注册、结构/依赖校验在 007；
 - 设计基线仍是 Draft：字段以 `docs/spec/` 为准，修改设计基线需 Rearchitect 授权；
 - 宿主任务 `ai.cargo-test` / `ai.cargo-clippy` / `ai.cargo-fmt` 已批准并可用；
   新增命令（如 doc test、集成测试）需要再登记；
@@ -150,3 +150,4 @@ cargo run -p composition-cli -- validate examples/minimal-project
 | 2026-11-26 | 003 | 冻结 `project.toml` / Composition / `module.toml` / `.designer` 字段表、L1–L7 校验顺序、Revision 摘要；63 个验证代码 + 6 个预留代码 |
 | 2026-11-26 | 004 | 建立 26 个数据集（25 个完整项目 + 入口缺失目录），覆盖设计基线 §12.1 的 12 类；临时校验器 26/26 与 `expected.json` 匹配；编辑/外部修改场景留 M2/M3 |
 | 2026-11-26 | 005 | 建立 Cargo workspace 与 `composition-domain`（ID / SchemaVersion / ConfigValue / 契约 / 模块 / 组合 / 诊断 / Revision / 模型）；58 项测试、clippy、fmt 全绿；无 TOML I/O；下一步 006 |
+| 2026-11-26 | 006 | 建立 `composition-toml`（LoadedFile + ImDocument span、路径规则、模块发现、project L2、source_digest）；12 单元 + 15 集成测试；workspace 85 项测试；L3–L7 留给 007 |

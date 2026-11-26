@@ -1,0 +1,31 @@
+change:
+  id: change.m1-toml-loader
+  intent: 新建 composition-toml，加载项目/组合/模块 TOML，保留源码位置并计算 source_digest
+  authorization: extend
+  targets:
+    - Cargo.toml
+    - Cargo.lock
+    - crates/composition-toml
+    - docs/ai
+    - working
+  operations:
+    - extend
+  scope:
+    allowed:
+      - new_crate
+      - dependency
+      - documentation
+      - task_card
+    forbidden:
+      - semantic_validation
+      - command_protocol
+      - design_baseline
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 只加载与定位，不把 Composition/Module 解码为领域对象，不做 L3–L7 校验。

@@ -50,7 +50,7 @@
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（M0 完成、M1 005 完成）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（M0 完成、M1 005–006 完成）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -81,8 +81,9 @@
 ## 7. 常用命令
 
 ```powershell
-# M1（当前，005 起）
+# M1（当前，005–006 起）
 cargo test --workspace
+cargo test -p composition-toml
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all --check
 Get-Content docs/spec/composition-schema-v1.md

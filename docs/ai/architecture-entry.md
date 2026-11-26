@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M1 进行中：`composition-domain` 已建立（58 项测试）；`composition-toml` 与 Core 未开始 |
+| 当前阶段 | M1 进行中：`composition-domain`（58 测试）与 `composition-toml`（27 测试）已建立；resolver / validator 未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
@@ -26,14 +26,14 @@
 | crate | 状态 | 职责 | 允许依赖 |
 |---|---|---|---|
 | `composition-domain` | 已建立（005） | 领域类型、不变量、错误码 | 无（仅标准库） |
-| `composition-toml` | 待 006 | TOML 读取、Source Map、保留格式修改 | domain |
+| `composition-toml` | 已建立（006） | TOML 加载、Source Map、source_digest | domain, toml_edit, sha2 |
 | `composition-resolver` | 待 007 | 模块解析、规范化结果 | domain, toml |
 | `composition-validator` | 待 007 | Schema、引用、契约校验 | domain, resolver |
 | `composition-editor` | 待 M2 | 命令、事务、Revision、Diff、Undo | domain, resolver, validator, toml |
 | `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
 | `composition-app` | 待 M3/M4 | 应用服务编排 | 以上全部 |
 
-005 只建立 `composition-domain`；其余 crate 在 006 / 007 / M2+ 按依赖方向加入。
+005 建立 `composition-domain`，006 建立 `composition-toml`；其余 crate 在 007 / M2+ 按依赖方向加入。
 
 ### apps/designer/
 
@@ -96,7 +96,7 @@
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
 | TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
-| Core | `crates/composition-domain`（已建立；TOML/Core 从 006 起） |
+| Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）；resolver/validator 从 007 起 |
 | Designer | `apps/designer/`（M3 起） |
 | Agent 协议与 Adapter | `crates/composition-protocol`、M4 的 adapter（未建立） |
 | 决策 | `docs/adr/` |
@@ -109,7 +109,8 @@
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
 - M1 005 已建立 `composition-domain`（ID/版本、契约、组合、诊断、Revision、规范化模型），
-  58 项测试、clippy、fmt 通过；尚未读取 TOML；
+  58 项测试；M1 006 已建立 `composition-toml`（ImDocument span、路径、模块发现、
+  project L2、source_digest），27 项测试；Composition / Module 的语义解码与 L3–L7 仍未开始；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 M1+ 实现细节：TOML 加载策略、命令 Schema、Revision 持久化与协议适配；
+- 尚未冻结的是 M1+ 实现细节：resolver/validator 拆分、命令 Schema、Revision 持久化与协议适配；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

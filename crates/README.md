@@ -6,7 +6,7 @@ M1 005 先建立 `composition-domain`，其余按任务与依赖方向逐步加�
 | crate | 状态 | 职责 | 允许依赖 |
 |---|---|---|---|
 | `composition-domain` | 已建立（005，58 项测试） | 领域类型与不变量 | 无（仅标准库） |
-| `composition-toml` | 待 006 | TOML 读取、Source Map、保留格式修改 | domain |
+| `composition-toml` | 已建立（006，27 项测试） | TOML 加载、Source Map、source_digest | domain, toml_edit, sha2 |
 | `composition-resolver` | 待 007 | 模块解析与规范化结果 | domain, toml |
 | `composition-validator` | 待 007 | Schema、引用、契约校验 | domain, resolver |
 | `composition-editor` | 待 M2 | 命令、事务、Revision、Diff、Undo | domain, resolver, validator, toml |

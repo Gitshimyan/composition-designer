@@ -1,0 +1,12 @@
+[package]
+name = "composition-toml"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "TOML loading, source locations and source digest for Composition Designer"
+publish = false
+
+[dependencies]
+composition-domain = { path = "../composition-domain" }
+sha2 = "0.10"
+toml_edit = "0.22"

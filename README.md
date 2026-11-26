@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M1 进行中：M0 规范与样例已冻结，`composition-domain` 已建立；TOML Core 尚未开始。
+> v0.1 · M1 进行中：M0 规范与样例已冻结，`composition-domain` 与 `composition-toml` 已建立；Core 校验尚未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -34,14 +34,15 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | TOML Schema 与错误码（M0 003） | 已冻结（63 个验证代码 + 6 个预留代码） |
 | 示例项目集（M0 004） | 26 个 `expected.json` 数据集（25 个完整项目 + 入口缺失目录） |
 | Rust 领域层（M1 005） | 已建立：`composition-domain`，58 项测试 |
-| Core：TOML 加载 / 解析 / 验证 / CLI | 进行中（M1：006 未开始） |
+| TOML 加载与 Source Map（M1 006） | 已建立：`composition-toml`，27 项测试 |
+| Core：解析 / 验证 / CLI | 进行中（M1：007 未开始） |
 | 编辑命令、事务、Revision | 未开始（M2） |
 | Designer UI | 未开始（M3） |
 | Agent Interface | 未开始（M4） |
 
-当前已有 `composition-domain` crate，并通过 `cargo test` / `clippy` / `fmt`；还没有 TOML
-加载、Composition Core、CLI 或 GUI 门禁。M0 的“通过”指规范自洽、样例与 `expected.json`
-一致，不代表已经能运行项目或执行验证。
+当前已有 `composition-domain` 与 `composition-toml`，并通过 `cargo test` / `clippy` / `fmt`；
+还没有 Composition / Module 的语义解析、引用/结构校验、CLI 或 GUI 门禁。M0 的“通过”指规范自洽、
+样例与 `expected.json` 一致，不代表已经能运行项目或执行验证。
 
 ## 3. 目录结构
 
@@ -53,6 +54,7 @@ composition-designer/
 │
 ├── crates/                                # Rust Core（M1 起；职责见 crates/README.md）
 │   ├── composition-domain/                # 已建立（005）
+│   ├── composition-toml/                  # 已建立（006）
 │   ├── composition-toml/
 │   ├── composition-resolver/
 │   ├── composition-validator/
