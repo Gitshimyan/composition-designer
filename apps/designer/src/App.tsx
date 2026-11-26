@@ -2,21 +2,30 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import {
+  applyTransaction,
   initialProject,
   isTauri,
   loadLayout,
   openProject,
+  prepareTransaction,
+  readSource,
   saveLayout,
 } from "./api";
 import CompositionCanvas from "./canvas/CompositionCanvas";
 import StructureTree from "./explorer/StructureTree";
 import { autoLayout, buildStructure } from "./layout";
+import SourceView from "./source/SourceView";
 import type {
   Diagnostic,
+  EditCommand,
+  EditResponse,
   Instance,
   LayoutNodes,
   NodePosition,
   ProjectSnapshot,
+  PropertyContract,
+  SourcePayload,
+  Transaction,
 } from "./types";
 
 const LAST_PATH_KEY = "composition-designer.last-project";
@@ -37,6 +46,16 @@ export default function App() {
   } | null>(null);
   const [layoutStatus, setLayoutStatus] = useState<string | null>(null);
   const [fitNonce, setFitNonce] = useState(0);
+  const [bottomTab, setBottomTab] = useState<"diagnostics" | "source">("diagnostics");
+  const [source, setSource] = useState<SourcePayload | null>(null);
+  const [revealLine, setRevealLine] = useState<{ line: number; nonce: number } | null>(null);
+  const [pendingReview, setPendingReview] = useState<{
+    transaction: Transaction;
+    preview: EditResponse;
+    description: string;
+  } | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,9 +148,12 @@ export default function App() {
       model.composition.root,
     );
     setPositions(auto);
-    setSelectedId(null);
+    setSelectedId(model.composition.root || null);
     setFocusRequest(null);
     setLayoutStatus("auto layout");
+    setBottomTab("diagnostics");
+    setRevealLine(null);
+    setPendingReview(null);
     void loadLayout(snapshot.root)
       .then((saved) => {
         if (cancelled) return;
@@ -151,7 +173,27 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [snapshot, model]);
+    // Re-run only when a different project is opened, not after edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshot?.root]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!snapshot?.canEdit) {
+      setSource(null);
+      return;
+    }
+    void readSource()
+      .then((payload) => {
+        if (!cancelled) setSource(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setSource(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [snapshot?.root, snapshot?.canEdit]);
 
   async function persistLayout(next: LayoutNodes) {
     if (!snapshot) return;
@@ -198,6 +240,73 @@ export default function App() {
     setSelectedId(id);
   }
 
+  async function reviewCommands(commands: EditCommand[], description: string) {
+    if (!model?.revision || !snapshot?.canEdit) {
+      setEditError("This project is not editable.");
+      return;
+    }
+    const requestId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `request-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const transaction: Transaction = {
+      request_id: requestId,
+      base_revision: {
+        seq: model.revision.seq,
+        source_digest: model.revision.source_digest ?? null,
+      },
+      commands,
+    };
+    setReviewBusy(true);
+    setEditError(null);
+    try {
+      const preview = await prepareTransaction(transaction);
+      setPendingReview({ transaction, preview, description });
+    } catch (reason) {
+      setEditError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function applyPendingReview() {
+    if (!pendingReview) return;
+    setReviewBusy(true);
+    setEditError(null);
+    try {
+      const response = await applyTransaction(pendingReview.transaction);
+      setSnapshot(response.snapshot);
+      if (!response.accepted) {
+        setPendingReview({ ...pendingReview, preview: response });
+        return;
+      }
+      setPendingReview(null);
+      if (response.snapshot.canEdit) {
+        try {
+          setSource(await readSource());
+        } catch {
+          setSource(null);
+        }
+      }
+    } catch (reason) {
+      setEditError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  function handleDiagnosticClick(diagnostic: Diagnostic) {
+    if (!source || diagnostic.file !== source.entry || !diagnostic.range) {
+      setBottomTab("diagnostics");
+      return;
+    }
+    setBottomTab("source");
+    setRevealLine((current) => ({
+      line: diagnostic.range?.start.line ?? 1,
+      nonce: (current?.nonce ?? 0) + 1,
+    }));
+  }
+
   const moduleKinds = useMemo(
     () => new Map(modules.map((module) => [module.id, module.kind])),
     [modules],
@@ -219,6 +328,7 @@ export default function App() {
   const digest = snapshot?.sourceDigest ?? model?.revision?.source_digest ?? null;
   const shortDigest = digest ? `${digest.slice(0, 7)}…${digest.slice(-6)}` : "—";
   const valid = snapshot?.valid ?? false;
+  const canEdit = snapshot?.canEdit ?? false;
 
   return (
     <div className="app-shell">
@@ -297,6 +407,16 @@ export default function App() {
           <strong>Could not open project.</strong>
           <span>{error}</span>
           <button type="button" onClick={() => setError(null)} aria-label="Dismiss error">
+            ×
+          </button>
+        </div>
+      )}
+
+      {editError && (
+        <div className="error-banner" role="alert">
+          <strong>Edit failed.</strong>
+          <span>{editError}</span>
+          <button type="button" onClick={() => setEditError(null)} aria-label="Dismiss edit error">
             ×
           </button>
         </div>
@@ -418,8 +538,13 @@ export default function App() {
                 moduleKind={selectedModule?.kind}
                 slots={selectedModule?.contract.slots.length ?? 0}
                 ports={selectedModule?.contract.ports.length ?? 0}
-                properties={selectedModule?.contract.properties.length ?? 0}
+                properties={selectedModule?.contract.properties ?? []}
                 isRoot={selectedInstance.id === rootId}
+                canEdit={canEdit}
+                revisionSeq={model?.revision?.seq ?? 0}
+                onReview={(commands, description) =>
+                  void reviewCommands(commands, description)
+                }
               />
             ) : project ? (
               <>
@@ -446,11 +571,28 @@ export default function App() {
           </div>
         </aside>
 
-        <section className="panel diagnostics" aria-label="Diagnostics">
+        <section className="panel diagnostics" aria-label="Diagnostics and source">
           <div className="diagnostics-head">
-            <div>
-              <div className="eyebrow">Validation</div>
-              <h2>Diagnostics</h2>
+            <div className="panel-tabs" role="tablist" aria-label="Bottom panel">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={bottomTab === "diagnostics"}
+                className={`panel-tab ${bottomTab === "diagnostics" ? "is-active" : ""}`}
+                onClick={() => setBottomTab("diagnostics")}
+              >
+                Diagnostics <span className="tab-count">{diagnostics.length}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={bottomTab === "source"}
+                className={`panel-tab ${bottomTab === "source" ? "is-active" : ""}`}
+                onClick={() => setBottomTab("source")}
+                disabled={!source}
+              >
+                TOML Source
+              </button>
             </div>
             <div className="diagnostic-counts">
               <span className="count count-error">{snapshot?.errorCount ?? 0} errors</span>
@@ -458,7 +600,22 @@ export default function App() {
             </div>
           </div>
           <div className="diagnostics-body">
-            {diagnostics.length === 0 ? (
+            {bottomTab === "source" ? (
+              source ? (
+                <div className="source-shell">
+                  <div className="source-meta">
+                    <code>{source.entry}</code>
+                    <span>read-only · edits go through Inspector</span>
+                  </div>
+                  <SourceView text={source.text} revealLine={revealLine} />
+                </div>
+              ) : (
+                <div className="diagnostics-empty">
+                  <span className="status-glyph">·</span>
+                  <span>No editable source session. Open a valid project to inspect TOML.</span>
+                </div>
+              )
+            ) : diagnostics.length === 0 ? (
               <div className={`diagnostics-empty ${valid ? "is-valid" : ""}`}>
                 <span className="status-glyph">{valid ? "✓" : "·"}</span>
                 <span>
@@ -471,16 +628,23 @@ export default function App() {
               <ul className="diagnostic-list">
                 {diagnostics.map((diagnostic, index) => (
                   <li key={`${diagnostic.code}-${index}`}>
-                    <span className={`severity-dot severity-${diagnostic.severity}`} />
-                    <code className="diagnostic-code">{diagnostic.code}</code>
-                    <span className="diagnostic-message">{diagnostic.message}</span>
-                    <span className="diagnostic-location">{diagnosticLocation(diagnostic)}</span>
+                    <button
+                      type="button"
+                      className="diagnostic-row"
+                      onClick={() => handleDiagnosticClick(diagnostic)}
+                    >
+                      <span className={`severity-dot severity-${diagnostic.severity}`} />
+                      <code className="diagnostic-code">{diagnostic.code}</code>
+                      <span className="diagnostic-message">{diagnostic.message}</span>
+                      <span className="diagnostic-location">{diagnosticLocation(diagnostic)}</span>
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
           </div>
         </section>
+
       </main>
 
       <footer className="statusbar">
@@ -502,6 +666,21 @@ export default function App() {
           <span className="status-version">M3.013</span>
         </div>
       </footer>
+
+      {pendingReview && (
+        <ChangeReview
+          transaction={pendingReview.transaction}
+          preview={pendingReview.preview}
+          description={pendingReview.description}
+          busy={reviewBusy}
+          error={editError}
+          onApply={() => void applyPendingReview()}
+          onClose={() => {
+            setPendingReview(null);
+            setEditError(null);
+          }}
+        />
+      )}
 
       {loadState === "loading" && (
         <div className="loading-veil" role="status" aria-live="polite">
@@ -562,13 +741,19 @@ function SelectionDetails({
   ports,
   properties,
   isRoot,
+  canEdit,
+  revisionSeq,
+  onReview,
 }: {
   instance: Instance;
   moduleKind?: string;
   slots: number;
   ports: number;
-  properties: number;
+  properties: PropertyContract[];
   isRoot: boolean;
+  canEdit: boolean;
+  revisionSeq: number;
+  onReview: (commands: EditCommand[], description: string) => void;
 }) {
   return (
     <>
@@ -585,9 +770,30 @@ function SelectionDetails({
           mono
         />
       </section>
+      <section className="inspector-section config-section">
+        <div className="section-label">
+          Config {!canEdit && <span className="read-only-tag">read-only</span>}
+        </div>
+        {properties.length === 0 ? (
+          <div className="config-empty">This module declares no properties.</div>
+        ) : (
+          <div className="config-list">
+            {properties.map((property) => (
+              <PropertyEditor
+                key={`${instance.id}:${property.id}:${revisionSeq}`}
+                instance={instance}
+                property={property}
+                canEdit={canEdit}
+                revisionSeq={revisionSeq}
+                onReview={onReview}
+              />
+            ))}
+          </div>
+        )}
+      </section>
       <section className="inspector-section">
         <div className="section-label">Contract</div>
-        <Property label="Properties" value={String(properties)} />
+        <Property label="Properties" value={String(properties.length)} />
         <Property label="Slots" value={String(slots)} />
         <Property label="Ports" value={String(ports)} />
         <Property
@@ -600,9 +806,252 @@ function SelectionDetails({
         />
       </section>
       <div className="inspector-hint">
-        Selection is read-only. Property and config editing arrives in 014.
+        {canEdit
+          ? "Changes are validated by Core and written through the editor transaction."
+          : "This project is read-only because no editable session could be opened."}
       </div>
     </>
+  );
+}
+
+function PropertyEditor({
+  instance,
+  property,
+  canEdit,
+  revisionSeq,
+  onReview,
+}: {
+  instance: Instance;
+  property: PropertyContract;
+  canEdit: boolean;
+  revisionSeq: number;
+  onReview: (commands: EditCommand[], description: string) => void;
+}) {
+  const current = instance.config[property.id] ?? undefined;
+  const initial = toDraftValue(current, property.type);
+  const [draft, setDraft] = useState(initial);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDraft(toDraftValue(instance.config[property.id], property.type));
+    setLocalError(null);
+  }, [instance.id, property.id, property.type, revisionSeq]);
+
+  const label = property.id;
+  const readOnly = !canEdit || property.type === "array";
+  const isEnum = property.values.length > 0;
+  const required = property.required;
+
+  function reviewSet() {
+    const parsed = parseDraft(draft, property);
+    if ("error" in parsed) {
+      setLocalError(parsed.error);
+      return;
+    }
+    onReview(
+      [
+        {
+          type: "set_config",
+          instance: instance.id,
+          property: label,
+          value: parsed.value,
+        },
+      ],
+      `Set ${instance.id}.${label}`,
+    );
+  }
+
+  function useDefault() {
+    onReview(
+      [
+        {
+          type: "unset_config",
+          instance: instance.id,
+          property: label,
+        },
+      ],
+      `Reset ${instance.id}.${label} to default`,
+    );
+  }
+
+  return (
+    <div className="config-row">
+      <div className="config-label-row">
+        <span className="config-label">{label}</span>
+        <span className="config-type">{property.type}</span>
+        {required && <span className="config-required">required</span>}
+      </div>
+      <div className="config-input-row">
+        {isEnum ? (
+          <select
+            value={draft}
+            disabled={readOnly}
+            onChange={(event) => setDraft(event.target.value)}
+          >
+            {!property.required && <option value="">(unset)</option>}
+            {property.values.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        ) : property.type === "boolean" ? (
+          <select
+            value={draft}
+            disabled={readOnly}
+            onChange={(event) => setDraft(event.target.value)}
+          >
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        ) : (
+          <input
+            type={property.type === "integer" || property.type === "float" ? "number" : "text"}
+            value={draft}
+            disabled={readOnly}
+            step={property.type === "float" ? "any" : undefined}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder={property.required ? "required" : "default"}
+          />
+        )}
+        <button
+          type="button"
+          className="config-action"
+          disabled={readOnly}
+          onClick={reviewSet}
+        >
+          Review
+        </button>
+        {!required && current !== undefined && (
+          <button
+            type="button"
+            className="config-action is-muted"
+            disabled={readOnly}
+            onClick={useDefault}
+          >
+            Default
+          </button>
+        )}
+      </div>
+      {localError && <div className="config-error">{localError}</div>}
+    </div>
+  );
+}
+
+function toDraftValue(value: unknown, type: string): string {
+  if (value === undefined || value === null) return "";
+  if (type === "boolean") return value ? "true" : "false";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function parseDraft(
+  draft: string,
+  property: PropertyContract,
+): { value: unknown } | { error: string } {
+  if (property.type === "boolean") return { value: draft === "true" };
+  if (property.type === "integer") {
+    const value = Number.parseInt(draft, 10);
+    if (Number.isNaN(value)) return { error: "Expected an integer" };
+    return { value };
+  }
+  if (property.type === "float") {
+    const value = Number.parseFloat(draft);
+    if (Number.isNaN(value)) return { error: "Expected a number" };
+    return { value };
+  }
+  if (property.type === "array") {
+    try {
+      const value = JSON.parse(draft);
+      if (!Array.isArray(value)) return { error: "Expected an array" };
+      return { value };
+    } catch {
+      return { error: "Expected valid JSON array" };
+    }
+  }
+  return { value: draft };
+}
+
+
+function ChangeReview({
+  transaction,
+  preview,
+  description,
+  busy,
+  error,
+  onApply,
+  onClose,
+}: {
+  transaction: Transaction;
+  preview: EditResponse;
+  description: string;
+  busy: boolean;
+  error: string | null;
+  onApply: () => void;
+  onClose: () => void;
+}) {
+  const summary = preview.diff?.summary;
+  return (
+    <div className="review-veil" role="presentation">
+      <section className="review-card" role="dialog" aria-modal="true" aria-labelledby="review-title">
+        <div className="review-head">
+          <div>
+            <div className="eyebrow">Change review</div>
+            <h2 id="review-title">{description}</h2>
+          </div>
+          <span className={`review-status ${preview.accepted ? "is-ok" : "is-bad"}`}>
+            {preview.accepted ? "validated" : "rejected"}
+          </span>
+        </div>
+        <div className="review-summary">
+          <span>{transaction.commands.length} command{transaction.commands.length === 1 ? "" : "s"}</span>
+          {summary && (
+            <span>
+              +{summary.added} / -{summary.removed} / ~{summary.modified}
+            </span>
+          )}
+          <span className="mono">seq {transaction.base_revision.seq}</span>
+        </div>
+        {preview.diff && preview.diff.changes.length > 0 && (
+          <ul className="review-changes">
+            {preview.diff.changes.slice(0, 8).map((change) => (
+              <li key={`${change.object_id}-${change.kind}`}>
+                <code>{change.object_id}</code>
+                <span className={`change-kind kind-${change.kind}`}>{change.kind}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {preview.diagnostics.length > 0 && (
+          <ul className="review-diagnostics">
+            {preview.diagnostics.slice(0, 6).map((diagnostic, index) => (
+              <li key={`${diagnostic.code}-${index}`}>
+                <code>{diagnostic.code}</code>
+                <span>{diagnostic.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {error && <div className="review-error">{error}</div>}
+        <div className="review-actions">
+          <button type="button" className="button button-ghost" onClick={onClose} disabled={busy}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="button button-primary"
+            onClick={onApply}
+            disabled={busy || !preview.accepted}
+          >
+            {busy ? "Applying…" : "Apply transaction"}
+          </button>
+        </div>
+        <p className="review-note">
+          Applying writes the composition entry through Core, revalidates, and refreshes the
+          source digest. Layout positions are unaffected.
+        </p>
+      </section>
+    </div>
   );
 }
 

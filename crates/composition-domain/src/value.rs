@@ -1,4 +1,4 @@
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// 实例配置值。v0.1 不支持 TOML table/object。
 #[derive(Debug, Clone, PartialEq)]
@@ -53,6 +53,39 @@ impl ConfigValue {
         match self {
             Self::Array(values) => Some(values),
             _ => None,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum RawConfigValue {
+    String(String),
+    Integer(i64),
+    Float(f64),
+    Boolean(bool),
+    Array(Vec<RawConfigValue>),
+}
+
+impl<'de> Deserialize<'de> for ConfigValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(RawConfigValue::deserialize(deserializer)?.into_config())
+    }
+}
+
+impl RawConfigValue {
+    fn into_config(self) -> ConfigValue {
+        match self {
+            Self::String(value) => ConfigValue::String(value),
+            Self::Integer(value) => ConfigValue::Integer(value),
+            Self::Float(value) => ConfigValue::Float(value),
+            Self::Boolean(value) => ConfigValue::Boolean(value),
+            Self::Array(values) => {
+                ConfigValue::Array(values.into_iter().map(Self::into_config).collect())
+            }
         }
     }
 }

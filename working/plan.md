@@ -27,13 +27,13 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 ## 2. 当前状态（2026-11-26）
 
-- 阶段：`M3` 进行中——012（只读外壳）与 013（Canvas/Tree/布局）完成；014 未开始
-- 已有：M1/M2 的 5 个 crate、`apps/designer`（Tauri 2 + React 19 + @xyflow/react）、
-  只读 ProjectSnapshot/IPC、结构 Canvas/Tree、选择/聚焦、`.designer/layout.toml`、
-  130 项 Core 测试 + 4 项 Tauri 宿主测试
-- 未建：Inspector 编辑、CodeMirror TOML Source、外部修改同步
+- 阶段：`M3` 进行中——012–014 完成；015 外部修改同步未开始
+- 已有：M1/M2 的 5 个 crate、`apps/designer`（Tauri 2 + React 19 + @xyflow/react +
+  CodeMirror 6）、ProjectSession 编辑 IPC、Inspector 配置编辑/Change Review、只读 Source、
+  诊断定位、`.designer/layout.toml`；131 Core + 4 Tauri 测试
+- 未建：外部 TOML 修改检测与冲突重载
 - 门禁：`cargo test` / `clippy` / `fmt`、`npm run build` / `desktop`、Tauri `cargo test`
-- 规模：5 crate + 1 desktop app / 130 Core + 4 host 测试 / 12 编辑命令 / 26 个样例数据集
+- 规模：5 crate + 1 desktop app / 131 Core + 4 host 测试 / 12 编辑命令
 
 ## 3. 阶段路线图
 
@@ -44,7 +44,7 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 | M0 | ✅ 完成 | Schema 与语义冻结 | 不同实现者只依赖规范与样例也能判断项目是否合法 | 002 领域模型、003 TOML/契约 Schema、004 示例项目集 |
 | M1 | ✅ 完成 | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 ✅ TOML 加载与 Source Map、007 ✅ 解析与 L1–L7 校验、008 ✅ CLI 与确定性 |
 | M2 | ✅ 完成 | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 ✅ 命令 Schema 与事务、010 ✅ Revision/幂等/结构化 Diff、011 ✅ 保留格式 TOML 写回 |
-| M3 | 进行中（012–013 完成） | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 ✅ 工程打开与 Designer 外壳、013 ✅ Canvas 与 Tree、014 Inspector/Source/Diagnostics、015 外部修改同步 |
+| M3 | 进行中（012–014 完成） | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 ✅ 工程打开与 Designer 外壳、013 ✅ Canvas 与 Tree、014 ✅ Inspector/Source/Diagnostics、015 外部修改同步 |
 | M4 | 未开始 | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 领域协议与 CLI/JSONL、017 MCP Adapter、018 Agent Skill 与端到端 |
 | M5 | 未开始 | 完整性与稳定性 | 设计基线 §12 A01–A18 全部通过 | 019 多文件/性能/崩溃恢复/迁移与验收报告 |
 
@@ -55,11 +55,10 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 | # | 卡 | 方向 | 说明 | 所需授权 |
 |---|---|---|---|---|
-| 1 | 014 | Inspector / Source / Diagnostics | 属性编辑、CodeMirror TOML Source、诊断定位与 Change Review | Extend |
-| 2 | 015 | 外部修改同步 | 检测外部文件变化、Revision 冲突与重新加载 | Extend |
+| 1 | 015 | 外部修改同步 | 检测外部文件变化、Revision 冲突与重新加载 | Extend |
 
 > 队列规则：一次只推进一张任务卡；没有用户确认的方向不写入队列，也不开工。
-> 013 已完成；014 待创建任务卡后再开始。
+> 014 已完成；015 待创建任务卡后再开始。
 
 ## 5. 验收映射（设计基线 §12）
 
@@ -106,15 +105,17 @@ A01–A09 已由 M1 覆盖；A10 起进入 M2/M3/M4。
 
 ## 7. 已知限制
 
-- 013 的 Designer 可看结构 Canvas/Tree 并拖动节点；Inspector 仍只读，Source/编辑在 014；
-- Canvas 只画结构 Binding，Port Connection 尚未单独绘制；
+- 014 的 TOML Source 只读；直接 Source 编辑需要新的 source transaction，留后续；
+- Inspector 只实现 Set/Unset Config；Binding/Connection 编辑 UI 未做；
+- Source 只加载 composition 入口；模块文件诊断不会打开模块 Source；
+- 编辑有 `prepare` 预览与 Apply；无多命令批量 Review；
 - 选择/聚焦/拖动有实现与布局 round-trip 测试，但无前端自动化 UI 测试；
 - 布局保存直接写 `.designer/layout.toml`，没有 fsync/崩溃恢复；
 - Tauri app 不加入根 Cargo workspace，使用独立 `src-tauri/Cargo.lock`；
 - 窗口尺寸/位置按当前 150% DPI 屏幕显式设定，尚未按显示器工作区自适应；
 - `apps/designer` 构建将 TEMP 指向 `.tmp` 以避开 esbuild 临时目录 ACL；
 - Revision 历史与 request 幂等记录只在当前工作区内存中，进程重启丢失；
-- 写回没有 fsync/崩溃恢复；只支持单 composition 入口，模块定义与 `.designer/**` 不写；
+- 写回没有 fsync/崩溃恢复；只支持单 composition 入口；
 - 设计基线仍是 Draft：字段以 `docs/spec/` 为准，修改设计基线需 Rearchitect 授权。
 
 ## 8. 执行规则
@@ -141,15 +142,15 @@ cargo run -p composition-cli -- validate examples/minimal-project --json
 cargo test -p composition-editor
 cargo run -p composition-cli -- inspect examples/minimal-project
 
-# M3（012–013 完成）
+# M3（012–014 完成）
 cd apps/designer
 npm run setup
 npm run build
 npm run desktop
 npm start
 
-# M3 后续（014 起）
-# Inspector 编辑 / CodeMirror Source
+# M3 后续（015）
+# 外部 TOML 修改检测 / 重载
 ```
 
 ## 10. 行动日志
@@ -170,3 +171,4 @@ npm start
 | 2026-11-26 | 011 | 新增 `ProjectSession`：`toml_edit` 保留格式局部写回、备份/替换/回滚、写后重新校验与 `source_digest` 刷新；7 个 session 测试；workspace 130 项测试；**M2 完成** |
 | 2026-11-26 | 012 | 建立 `apps/designer`：Tauri 2 + React 19 + TS + Vite 7；`open_project`/`initial_project` 只读快照；Explorer/Composition/Inspector/Diagnostics 外壳；前端构建 + 2 个宿主测试；真机验证 minimal 与 connection errors |
 | 2026-11-26 | 013 | 接入 `@xyflow/react`：实例节点/Binding 边、结构 Tree、选择/聚焦、fit/reset；Tauri `load_layout`/`save_layout` + `.designer/layout.toml`；4 个宿主测试；前端构建 + 真机验证 Canvas |
+| 2026-11-26 | 014 | ProjectSession 编辑 IPC、Inspector 配置编辑、Change Review、只读 CodeMirror Source、诊断跳转；契约 JSON 显式 id；131 Core + 4 host 测试；前端/桌面构建 |

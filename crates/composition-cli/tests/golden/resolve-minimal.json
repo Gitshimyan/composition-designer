@@ -127,6 +127,7 @@
         "contract": {
           "properties": [
             {
+              "id": "label",
               "type": "string",
               "required": true,
               "default": null,
@@ -167,6 +168,7 @@
         "contract": {
           "properties": [
             {
+              "id": "title",
               "type": "string",
               "required": true,
               "default": null,
@@ -183,6 +185,7 @@
           ],
           "slots": [
             {
+              "id": "content",
               "cardinality": "one",
               "required": true,
               "accepts": [

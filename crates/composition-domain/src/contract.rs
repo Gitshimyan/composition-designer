@@ -620,19 +620,64 @@ pub struct Contract {
     dependencies: BTreeMap<LocalId, DependencyRequirement>,
 }
 
+#[derive(Serialize)]
+struct PropertyEntry<'a> {
+    id: &'a LocalId,
+    #[serde(flatten)]
+    contract: &'a PropertyContract,
+}
+
+#[derive(Serialize)]
+struct SlotEntry<'a> {
+    id: &'a LocalId,
+    #[serde(flatten)]
+    contract: &'a SlotContract,
+}
+
+#[derive(Serialize)]
+struct PortEntry<'a> {
+    id: &'a LocalId,
+    #[serde(flatten)]
+    contract: &'a PortContract,
+}
+
+#[derive(Serialize)]
+struct DependencyEntry<'a> {
+    id: &'a LocalId,
+    #[serde(flatten)]
+    contract: &'a DependencyRequirement,
+}
+
 impl Serialize for Contract {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
+        let properties: Vec<PropertyEntry<'_>> = self
+            .properties
+            .iter()
+            .map(|(id, contract)| PropertyEntry { id, contract })
+            .collect();
+        let slots: Vec<SlotEntry<'_>> = self
+            .slots
+            .iter()
+            .map(|(id, contract)| SlotEntry { id, contract })
+            .collect();
+        let ports: Vec<PortEntry<'_>> = self
+            .ports
+            .iter()
+            .map(|(id, contract)| PortEntry { id, contract })
+            .collect();
+        let dependencies: Vec<DependencyEntry<'_>> = self
+            .dependencies
+            .iter()
+            .map(|(id, contract)| DependencyEntry { id, contract })
+            .collect();
         let mut state = serializer.serialize_struct("Contract", 4)?;
-        state.serialize_field("properties", &self.properties.values().collect::<Vec<_>>())?;
-        state.serialize_field("slots", &self.slots.values().collect::<Vec<_>>())?;
-        state.serialize_field("ports", &self.ports.values().collect::<Vec<_>>())?;
-        state.serialize_field(
-            "dependencies",
-            &self.dependencies.values().collect::<Vec<_>>(),
-        )?;
+        state.serialize_field("properties", &properties)?;
+        state.serialize_field("slots", &slots)?;
+        state.serialize_field("ports", &ports)?;
+        state.serialize_field("dependencies", &dependencies)?;
         state.end()
     }
 }

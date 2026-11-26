@@ -16,6 +16,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 composition-core = { path = "../../../crates/composition-core" }
 composition-domain = { path = "../../../crates/composition-domain" }
+composition-editor = { path = "../../../crates/composition-editor" }
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }

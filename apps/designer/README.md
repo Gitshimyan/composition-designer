@@ -1,28 +1,30 @@
 # apps/designer/
 
-v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–013 已建立外壳、
-结构 Canvas/Tree 与 `.designer/layout.toml` 持久化**；Inspector 编辑与 CodeMirror Source 在 014。
+v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–014 已建立外壳、
+结构 Canvas/Tree、Inspector 配置编辑/Change Review 与只读 CodeMirror Source**；
+直接 Source 编辑、外部修改同步在后续。
 
 | 区域 | 目录 | 职责 |
 |---|---|---|
 | Composition Canvas | `src/canvas/` | 实例与结构 Binding 的 `@xyflow/react` 呈现（013） |
 | Project Explorer | `src/explorer/` | 项目目录、结构 Tree、模块来源与搜索 |
 | Inspector | `src/inspector/` | 选中实例只读详情；属性编辑在 014 |
-| TOML Source | `src/source/` | 权威 TOML 的查看与直接编辑（014） |
+| TOML Source | `src/source/` | CodeMirror 6 只读 Source、诊断定位（014） |
 | Diagnostics | `src/diagnostics/` | 错误/警告、源码位置、修正提示 |
 | Agent Status | `src/agent-status/` | Agent 会话、Revision 与操作记录 |
-| Tauri Host | `src-tauri/` | `open_project` / `initial_project` / `load_layout` / `save_layout`、窗口与 IPC |
+| Tauri Host | `src-tauri/` | `open_project` / 编辑事务 / layout / source IPC |
 
 ## 当前外壳
 
 - 顶栏：打开项目、路径输入、项目标识；
 - Explorer：项目、模块、结构 Tree（层级/slot/选择/聚焦）；
 - Composition：`@xyflow/react` 实例节点 + Binding 边、Fit/Reset、拖动节点；
-- Inspector：选中实例的模块/契约计数/配置/依赖只读详情；
-- Diagnostics：L1–L7 代码、消息、文件:行:列；
+- Inspector：选中实例的模块/契约、配置编辑器、Change Review（Set/Unset Config）；
+- Diagnostics：L1–L7 代码、消息、文件:行:列；点击可跳到 Source；
+- TOML Source：CodeMirror 6 只读展示 composition 入口；
 - 空状态 / 无效项目 / 有效项目三种界面；
-- 布局只写 `.designer/layout.toml`，不改变 Composition、Revision 或 digest；
-- 所有数据来自 `composition_core::validate_project`，React 不解析 TOML。
+- 布局只写 `.designer/layout.toml`，编辑写 `composition/**` 但只经 Core 事务；
+- 所有数据来自 `composition_core` / `composition_editor`，React 不解析 TOML。
 
 ## 开发命令
 

@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M3 进行中：M1/M2 的 5 个 crate 完成；012–013 建立 `apps/designer`（Tauri 2 + React 19 + @xyflow/react）外壳与 Canvas/Tree；014 Inspector/Source 未开始 |
+| 当前阶段 | M3 进行中：M1/M2 的 5 个 crate 完成；012–014 建立 Tauri 2 + React Designer、Canvas/Tree、Inspector 编辑、Change Review 与只读 Source；015 外部同步未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
@@ -31,7 +31,7 @@
 | `composition-cli` | 已建立（008） | inspect / resolve / validate、JSON、退出码 | core, domain, serde, serde_json |
 | `composition-resolver` | 暂并入 core | 模块解析、规范化结果 | domain, toml |
 | `composition-validator` | 暂并入 core | Schema、引用、契约校验 | domain, resolver |
-| `composition-editor` | 已建立（009–011） | 命令、事务、Revision/幂等、结构化 Diff、保留格式 TOML 写回 | core, domain, toml, toml_edit, serde, serde_json |
+| `composition-editor` | 已建立（009–014） | 命令、事务、Revision/幂等、结构化 Diff、保留格式 TOML 写回、wire 反序列化 | core, domain, toml, toml_edit, serde, serde_json |
 | `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
 | `composition-app` | 待 M3/M4 | 应用服务编排 | core |
 
@@ -114,9 +114,9 @@
 - 领域模型、TOML Schema、错误码与样例已在 M0 冻结；决策见
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
-- M3 012–013 已建立 `apps/designer`：Tauri `open_project`/`initial_project`/`load_layout`/
-  `save_layout`、React Explorer/Canvas/Tree/Inspector/Diagnostics 外壳；4 个宿主测试；
-  Inspector 编辑与 CodeMirror Source 仍是 014；
+- M3 012–014 已建立 `apps/designer`：Tauri 项目/事务/layout/source 命令、React
+  Explorer/Canvas/Tree/Inspector/Diagnostics、CodeMirror 只读 Source；4 个宿主测试；
+  直接 Source 编辑与外部修改同步仍未实现；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 014 实现细节：Inspector 编辑命令、CodeMirror Source、诊断定位与 Change Review；
+- 尚未冻结的是 015 实现细节：外部文件变化检测、revision 冲突、自动/手动重载与 Source 编辑；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

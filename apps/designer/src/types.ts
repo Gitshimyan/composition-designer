@@ -40,8 +40,22 @@ export interface ModuleRef {
   version: string;
 }
 
+export interface PropertyContract {
+  id: string;
+  type: string;
+  required: boolean;
+  default?: unknown;
+  description?: string | null;
+  values: string[];
+  min_length?: number | null;
+  max_length?: number | null;
+  min?: unknown;
+  max?: unknown;
+  items?: PropertyContract | null;
+}
+
 export interface Contract {
-  properties: unknown[];
+  properties: PropertyContract[];
   slots: unknown[];
   ports: unknown[];
   dependencies: unknown[];
@@ -125,6 +139,57 @@ export interface ProjectSnapshot {
   sourceDigest?: string | null;
   model?: CompositionModel | null;
   diagnostics: Diagnostic[];
+  canEdit: boolean;
+}
+
+export type EditCommand =
+  | {
+      type: "set_config";
+      instance: string;
+      property: string;
+      value: unknown;
+    }
+  | {
+      type: "unset_config";
+      instance: string;
+      property: string;
+    };
+
+export interface Transaction {
+  request_id: string;
+  base_revision: Revision;
+  commands: EditCommand[];
+}
+
+export interface DiffSummary {
+  added: number;
+  removed: number;
+  modified: number;
+}
+
+export interface ObjectChange {
+  object_id: string;
+  kind: "added" | "removed" | "modified";
+  before?: unknown;
+  after?: unknown;
+}
+
+export interface ModelDiff {
+  summary: DiffSummary;
+  changes: ObjectChange[];
+}
+
+export interface EditResponse {
+  accepted: boolean;
+  replayed: boolean;
+  diff?: ModelDiff | null;
+  diagnostics: Diagnostic[];
+  snapshot: ProjectSnapshot;
+}
+
+export interface SourcePayload {
+  entry: string;
+  text: string;
 }
 
 export interface NodePosition {

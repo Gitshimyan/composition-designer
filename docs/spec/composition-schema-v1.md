@@ -521,7 +521,8 @@ theme = "light"
 - `status`：`resolved` / `unresolved` / `optional_unresolved` / `ambiguous`。
 - `source` 的 `range`：行、列均从 1 开始，结束位置**不包含**；列按 Unicode 码点计数，
   换行统一为 LF。
-- 契约字段序列化为数组；`properties` / `slots` / `ports` / `dependencies` 按 `id` 升序。
+- 契约字段序列化为数组；`properties` / `slots` / `ports` / `dependencies` 按 `id` 升序，
+  且每个元素显式带 `id`（M3 014 起；与 TOML 中的契约 ID 对应）。
 
 ### 8.2 排序
 

@@ -51,8 +51,16 @@ impl ProjectSession {
         &self.workspace
     }
 
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
     pub fn composition_entry(&self) -> &str {
         &self.composition_entry
+    }
+
+    pub fn source_text(&self) -> &str {
+        &self.current_text
     }
 
     pub fn prepare(&self, transaction: &Transaction) -> TransactionOutcome {

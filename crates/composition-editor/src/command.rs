@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
 
 use composition_domain::{ConfigValue, LocalId, ModuleId, PortRef, Revision, Version};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// v0.1 支持的编辑命令。所有命令都通过事务应用，不直接写 TOML。
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Command {
     CreateInstance {
@@ -99,7 +99,7 @@ pub const COMMAND_KINDS: &[&str] = &[
 ];
 
 /// 一次原子事务：一组命令 + 读取时的 Revision。
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Transaction {
     pub request_id: String,
     pub base_revision: Revision,
@@ -144,6 +144,33 @@ mod tests {
         let unique: std::collections::BTreeSet<&str> = COMMAND_KINDS.iter().copied().collect();
         assert_eq!(unique.len(), COMMAND_KINDS.len());
         assert_eq!(COMMAND_KINDS.len(), 12);
+    }
+
+    #[test]
+    fn transaction_deserializes_from_wire() {
+        let json = r#"{
+            "request_id": "r-1",
+            "base_revision": { "seq": 0, "source_digest": null },
+            "commands": [
+                {
+                    "type": "set_config",
+                    "instance": "app",
+                    "property": "title",
+                    "value": "Hello"
+                }
+            ]
+        }"#;
+        let transaction: Transaction = serde_json::from_str(json).unwrap();
+        assert_eq!(transaction.request_id, "r-1");
+        assert_eq!(transaction.commands.len(), 1);
+        assert_eq!(
+            transaction.commands[0],
+            Command::SetConfig {
+                instance: LocalId::parse("app").unwrap(),
+                property: LocalId::parse("title").unwrap(),
+                value: ConfigValue::String("Hello".into()),
+            }
+        );
     }
 
     #[test]

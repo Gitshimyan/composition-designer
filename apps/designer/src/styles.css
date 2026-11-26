@@ -1504,3 +1504,384 @@ code,
     display: none;
   }
 }
+
+
+/* ---------- 014: tabs, source, config editor, change review ---------- */
+.panel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.panel-tab {
+  min-height: 25px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--faint);
+  background: transparent;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.panel-tab:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--panel-raised);
+}
+
+.panel-tab.is-active {
+  color: var(--accent);
+  border-color: rgba(94, 224, 189, 0.2);
+  background: var(--accent-soft);
+}
+
+.panel-tab:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.tab-count {
+  margin-left: 4px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0;
+}
+
+.diagnostic-list li {
+  display: block;
+  padding: 0;
+  border-bottom: 1px solid rgba(29, 42, 56, 0.55);
+}
+
+.diagnostic-list li:hover {
+  background: transparent;
+}
+
+.diagnostic-row {
+  display: grid;
+  grid-template-columns: 8px 150px minmax(0, 1fr) minmax(120px, 220px);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 15px;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.diagnostic-row:hover {
+  background: var(--panel-raised);
+}
+
+.source-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.source-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--faint);
+  font-size: 9px;
+}
+
+.source-meta code {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-view {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.source-view .cm-editor {
+  height: 100%;
+}
+
+.source-view .cm-scroller {
+  overflow: auto;
+}
+
+.source-view .cm-editor.cm-focused {
+  outline: none;
+}
+
+.read-only-tag {
+  margin-left: auto;
+  color: var(--faint);
+  font-family: var(--sans);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.config-section {
+  padding-bottom: 10px;
+}
+
+.config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.config-row {
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(8, 12, 18, 0.35);
+}
+
+.config-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.config-label {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.config-type {
+  color: var(--faint);
+  font-size: 8px;
+}
+
+.config-required {
+  margin-left: auto;
+  color: var(--warning);
+  font-size: 8px;
+}
+
+.config-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.config-input-row input,
+.config-input-row select {
+  flex: 1;
+  min-width: 0;
+  height: 25px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.config-input-row input:disabled,
+.config-input-row select:disabled {
+  color: var(--faint);
+  opacity: 0.7;
+}
+
+.config-action {
+  height: 25px;
+  padding: 0 6px;
+  border: 1px solid rgba(94, 224, 189, 0.2);
+  border-radius: 4px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.config-action:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.config-action.is-muted {
+  border-color: var(--border);
+  color: var(--faint);
+  background: transparent;
+}
+
+.config-error {
+  margin-top: 4px;
+  color: var(--danger);
+  font-size: 8px;
+}
+
+.config-empty {
+  color: var(--faint);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.review-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 7, 11, 0.66);
+  backdrop-filter: blur(4px);
+}
+
+.review-card {
+  width: min(520px, 100%);
+  max-height: 82vh;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--panel-raised);
+  box-shadow: var(--shadow);
+}
+
+.review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.review-head h2 {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.review-status {
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.review-status.is-ok {
+  color: var(--accent);
+  border-color: rgba(94, 224, 189, 0.3);
+  background: var(--accent-soft);
+}
+
+.review-status.is-bad {
+  color: var(--danger);
+  border-color: rgba(255, 123, 123, 0.3);
+  background: var(--danger-soft);
+}
+
+.review-summary {
+  display: flex;
+  gap: 12px;
+  margin: 10px 0;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.review-changes,
+.review-diagnostics {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-changes li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.review-changes code {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change-kind {
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.change-kind.kind-added {
+  color: var(--accent);
+}
+
+.change-kind.kind-removed {
+  color: var(--danger);
+}
+
+.change-kind.kind-modified {
+  color: var(--warning);
+}
+
+.review-diagnostics {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.review-diagnostics li {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.review-diagnostics code {
+  flex: 0 0 auto;
+  color: var(--danger);
+  font-size: 8px;
+}
+
+.review-error {
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 9px;
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.review-note {
+  margin: 10px 0 0;
+  color: var(--faint);
+  font-size: 8px;
+  line-height: 1.5;
+}

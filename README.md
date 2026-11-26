@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M3 进行中：M1/M2 Core、编辑事务与 TOML 写回已完成；012–013 建立 Tauri 2 + React Designer 外壳、结构 Canvas/Tree 与布局持久化；Inspector 编辑/Source 未开始。
+> v0.1 · M3 进行中：M1/M2 Core、编辑事务与 TOML 写回已完成；012–014 建立 Tauri 2 + React Designer、Canvas/Tree、Inspector 配置编辑、Change Review 与只读 TOML Source；外部修改同步未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -42,13 +42,14 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | 保留格式 TOML 写回 | 已建立（M2 011） |
 | Designer 外壳（M3 012） | 已建立：Tauri 2 + React 19 + TS + Vite 7 |
 | Canvas / Tree（M3 013） | 已建立：`@xyflow/react`、结构树、布局持久化 |
-| Inspector 编辑 / Source / 外部同步 | 未开始（M3 014–015） |
+| Inspector / Source（M3 014） | 已建立：配置编辑、Change Review、只读 CodeMirror Source |
+| 外部修改同步 | 未开始（M3 015） |
 | Agent Interface | 未开始（M4） |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor` 与 `apps/designer`；Core 通过 `cargo test` / `clippy` / `fmt`，Designer
-通过 `npm run build` 与 Tauri 宿主测试。013 已提供 Canvas/Tree 与 `.designer/layout.toml`；
-Inspector 编辑、CodeMirror Source、外部修改同步和 Agent 协议尚未开始。
+通过 `npm run build` 与 Tauri 宿主测试。014 已把 Inspector 配置编辑接到 Core 事务，并提供
+只读 CodeMirror Source 与诊断定位；外部修改同步和 Agent 协议尚未开始。
 M1 的“通过”指只读解析/校验/CLI 可复现，不代表项目可以运行或编辑。
 
 ## 3. 目录结构

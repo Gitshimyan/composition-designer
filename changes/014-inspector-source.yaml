@@ -1,0 +1,38 @@
+change:
+  id: change.m3-inspector-source
+  intent: 接入 ProjectSession 编辑事务、Inspector 配置编辑、Change Review 与只读 CodeMirror Source
+  authorization: extend
+  targets:
+    - apps/designer
+    - crates/composition-domain
+    - crates/composition-editor
+    - docs/spec
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - inspector_editing
+      - transaction_ipc
+      - change_review
+      - source_view
+      - diagnostics_navigation
+      - contract_serialization
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - design_baseline
+      - direct_toml_editing
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - npm run build
+    - npm run desktop
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+  notes: Source 014 只读；编辑只走 Core 事务；契约 JSON 增加显式 id，golden 已同步。

@@ -1,15 +1,20 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
-use composition_core::validate_project;
+use composition_core::{validate_project, ValidationResult};
 use composition_domain::{CompositionModel, Diagnostic, LocalId, Severity};
+use composition_editor::{ModelDiff, ProjectSession, Transaction};
 use serde::{Deserialize, Serialize};
+use tauri::State;
 use toml_edit::{value, DocumentMut, Item, Table};
 
-/// Read-only snapshot returned to the React shell. The model is the same
-/// canonical `CompositionModel` produced by the Rust Core; the UI never
-/// parses project files itself.
+type SessionState = Mutex<Option<ProjectSession>>;
+
+/// Read-only/editable snapshot returned to the React shell. The model is the
+/// canonical `CompositionModel` produced by the Rust Core; the UI never parses
+/// project files itself.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectSnapshot {
@@ -20,6 +25,7 @@ pub struct ProjectSnapshot {
     pub source_digest: Option<String>,
     pub model: Option<CompositionModel>,
     pub diagnostics: Vec<Diagnostic>,
+    pub can_edit: bool,
 }
 
 /// Presentation-only canvas position. `.designer/**` is never read by Core.
@@ -29,28 +35,164 @@ pub struct NodePosition {
     pub y: f64,
 }
 
-fn snapshot(path: &str) -> ProjectSnapshot {
-    let validation = validate_project(path);
-    let error_count = validation.error_count();
-    let warning_count = validation
-        .diagnostics
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditResponse {
+    pub accepted: bool,
+    pub replayed: bool,
+    pub diff: Option<ModelDiff>,
+    pub diagnostics: Vec<Diagnostic>,
+    pub snapshot: ProjectSnapshot,
+}
+
+#[derive(Serialize)]
+pub struct SourcePayload {
+    pub entry: String,
+    pub text: String,
+}
+
+fn counts(diagnostics: &[Diagnostic]) -> (usize, usize) {
+    let errors = diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.is_error())
+        .count();
+    let warnings = diagnostics
         .iter()
         .filter(|diagnostic| diagnostic.severity == Severity::Warning)
         .count();
+    (errors, warnings)
+}
+
+fn snapshot_from_model(root: String, model: &CompositionModel, can_edit: bool) -> ProjectSnapshot {
+    let diagnostics = model.diagnostics.clone();
+    let (error_count, warning_count) = counts(&diagnostics);
+    let valid = error_count == 0;
+    let source_digest = model
+        .revision
+        .as_ref()
+        .and_then(|revision| revision.source_digest.as_ref())
+        .map(|digest| digest.to_string());
     ProjectSnapshot {
-        root: path.to_owned(),
+        root,
+        valid,
+        error_count,
+        warning_count,
+        source_digest,
+        model: Some(model.clone()),
+        diagnostics,
+        can_edit,
+    }
+}
+
+fn snapshot_from_validation(
+    root: &str,
+    validation: &ValidationResult,
+    can_edit: bool,
+) -> ProjectSnapshot {
+    let (error_count, warning_count) = counts(&validation.diagnostics);
+    ProjectSnapshot {
+        root: root.to_owned(),
         valid: validation.is_valid(),
         error_count,
         warning_count,
-        source_digest: validation.source_digest.map(|digest| digest.to_string()),
-        model: validation.model,
-        diagnostics: validation.diagnostics,
+        source_digest: validation
+            .source_digest
+            .as_ref()
+            .map(|digest| digest.to_string()),
+        model: validation.model.clone(),
+        diagnostics: validation.diagnostics.clone(),
+        can_edit,
+    }
+}
+
+#[cfg(test)]
+fn snapshot(path: &str) -> ProjectSnapshot {
+    snapshot_from_validation(path, &validate_project(path), false)
+}
+
+fn snapshot_from_session(session: &ProjectSession) -> ProjectSnapshot {
+    snapshot_from_model(
+        session.root().to_string_lossy().into_owned(),
+        session.workspace().model(),
+        true,
+    )
+}
+
+fn edit_response(
+    session: &ProjectSession,
+    outcome: composition_editor::TransactionOutcome,
+) -> EditResponse {
+    let accepted = outcome.is_accepted();
+    let replayed = outcome.is_replayed();
+    let diff = outcome.diff().cloned();
+    let diagnostics = outcome.diagnostics().to_vec();
+    EditResponse {
+        accepted,
+        replayed,
+        diff,
+        diagnostics,
+        snapshot: snapshot_from_session(session),
     }
 }
 
 #[tauri::command]
-fn open_project(path: String) -> ProjectSnapshot {
-    snapshot(&path)
+fn open_project(path: String, state: State<'_, SessionState>) -> Result<ProjectSnapshot, String> {
+    let validation = validate_project(&path);
+    let session = ProjectSession::open(&path).ok();
+    let can_edit = session.is_some();
+    let response = match &session {
+        Some(session) => snapshot_from_session(session),
+        None => snapshot_from_validation(&path, &validation, can_edit),
+    };
+    let mut guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    *guard = session;
+    Ok(response)
+}
+
+#[tauri::command]
+fn apply_transaction(
+    transaction: Transaction,
+    state: State<'_, SessionState>,
+) -> Result<EditResponse, String> {
+    let mut guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_mut() else {
+        return Err("project is not editable".to_owned());
+    };
+    let outcome = session.apply(&transaction);
+    Ok(edit_response(session, outcome))
+}
+
+#[tauri::command]
+fn prepare_transaction(
+    transaction: Transaction,
+    state: State<'_, SessionState>,
+) -> Result<EditResponse, String> {
+    let guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_ref() else {
+        return Err("project is not editable".to_owned());
+    };
+    let outcome = session.prepare(&transaction);
+    Ok(edit_response(session, outcome))
+}
+
+#[tauri::command]
+fn read_source(state: State<'_, SessionState>) -> Result<SourcePayload, String> {
+    let guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_ref() else {
+        return Err("project is not editable".to_owned());
+    };
+    Ok(SourcePayload {
+        entry: session.composition_entry().to_owned(),
+        text: session.source_text().to_owned(),
+    })
 }
 
 /// Optional startup project for automation:
@@ -141,6 +283,7 @@ fn save_layout(root: String, nodes: BTreeMap<String, NodePosition>) -> Result<()
 
 pub fn run() {
     tauri::Builder::default()
+        .manage(SessionState::default())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             use tauri::Manager;
@@ -156,6 +299,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             open_project,
             initial_project,
+            apply_transaction,
+            prepare_transaction,
+            read_source,
             load_layout,
             save_layout
         ])

@@ -371,6 +371,7 @@ version = "0.1.0"
 dependencies = [
  "composition-core",
  "composition-domain",
+ "composition-editor",
  "serde",
  "tauri",
  "tauri-build",
@@ -383,6 +384,18 @@ name = "composition-domain"
 version = "0.1.0"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "composition-editor"
+version = "0.1.0"
+dependencies = [
+ "composition-core",
+ "composition-domain",
+ "composition-toml",
+ "serde",
+ "serde_json",
+ "toml_edit 0.22.27",
 ]
 
 [[package]]

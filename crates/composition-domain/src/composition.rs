@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::ids::{LocalId, ModuleId, Version};
 use crate::schema::SchemaVersion;
@@ -63,7 +63,7 @@ impl Binding {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PortRef {
     pub instance: LocalId,
     pub port: LocalId,
