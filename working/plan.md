@@ -27,13 +27,13 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 ## 2. 当前状态（2026-11-26）
 
-- 阶段：`M1` 进行中——005（domain）与 006（TOML loader）完成，007 未开始
-- 已有：M0 规范与 26 个样例、`composition-domain`（58 测试）、`composition-toml`
-  （12 单元 + 15 集成测试）、`toml_edit` / `sha2` 依赖、已批准的 cargo 宿主任务、git
-- 未建：`composition-resolver` / `validator` / `editor` / `protocol` / `app`、CLI、Designer、
-  Agent Adapter；Composition / Module 的语义解码与 L3–L7 校验
-- 门禁：`cargo test` / `clippy` / `fmt`（workspace 85 项测试）；CLI 门禁从 008 起
-- 规模：2 crate / 85 项测试 / 0 命令 / 26 个样例数据集
+- 阶段：`M1` 进行中——005（domain）、006（TOML loader）、007（Core 解析/校验）完成，008 未开始
+- 已有：M0 规范与 26 个样例、`composition-domain`（58）、`composition-toml`（27）、
+  `composition-core`（8）、`toml_edit` / `sha2`（+ `serde_json` dev）、cargo 宿主任务、git
+- 未建：CLI、`composition-editor` / `protocol` / `app`、Designer、Agent Adapter；
+  TOML 编辑事务与 Agent 协议
+- 门禁：`cargo test` / `clippy` / `fmt`（workspace 93 项测试）；CLI 门禁从 008 起
+- 规模：3 crate / 93 项测试 / 0 命令 / 26 个样例数据集
 
 ## 3. 阶段路线图
 
@@ -42,7 +42,7 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 | 阶段 | 状态 | 目标 | 退出条件 | 任务卡 |
 |---|---|---|---|---|
 | M0 | ✅ 完成 | Schema 与语义冻结 | 不同实现者只依赖规范与样例也能判断项目是否合法 | 002 领域模型、003 TOML/契约 Schema、004 示例项目集 |
-| M1 | 进行中（005–006 完成） | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 ✅ TOML 加载与 Source Map、007 解析与 L1–L7 校验、008 CLI 与确定性 |
+| M1 | 进行中（005–007 完成） | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 ✅ TOML 加载与 Source Map、007 ✅ 解析与 L1–L7 校验、008 CLI 与确定性 |
 | M2 | 未开始 | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 命令 Schema 与事务、010 Revision/冲突/结构化 Diff、011 保留格式的 TOML 编辑 |
 | M3 | 未开始 | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 工程打开与 Designer 外壳、013 Canvas 与 Tree、014 Inspector/Source/Diagnostics、015 外部修改同步 |
 | M4 | 未开始 | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 领域协议与 CLI/JSONL、017 MCP Adapter、018 Agent Skill 与端到端 |
@@ -55,11 +55,10 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 | # | 卡 | 方向 | 说明 | 所需授权 |
 |---|---|---|---|---|
-| 1 | 007 | 解析与 L1–L7 校验 | 在 loader 之上解码 Composition / Module / Instance / Binding / Connection，建立引用、契约、结构与依赖校验，产出 `CompositionModel` + 诊断；以 26 个样例为断言 | Modify（新 crate 拆分需 Extend） |
-| 2 | 008 | CLI 与确定性 | `inspect` / `resolve` / `validate`、JSON 输出、稳定性与 golden 测试 | Extend（CLI 入口） |
+| 1 | 008 | CLI 与确定性 | 建立 `composition-cli`：`inspect` / `resolve` / `validate`、JSON 输出、退出码、golden 测试 | Extend（CLI 入口） |
 
 > 队列规则：一次只推进一张任务卡；没有用户确认的方向不写入队列，也不开工。
-> 006 已完成；007 待创建任务卡后再开始，完成一张再创建下一张。
+> 007 已完成；008 待创建任务卡后再开始。完成后 M1 收口，进入 M2 编辑事务。
 
 ## 5. 验收映射（设计基线 §12）
 
@@ -106,9 +105,8 @@ M0 已冻结判断标准与样例；实际验证从 M1 开始。
 
 ## 7. 已知限制
 
-- 005 / 006 已建立 domain 与 TOML loader；还没有 Composition / Module 的语义解码、引用与结构校验，
-  26 个样例尚未产生真实 L3–L7 诊断；
-- 006 只做 L1 + Project L2；Composition / Module 的字段解码、模块注册、结构/依赖校验在 007；
+- 005–007 已建立 domain + TOML loader + Core 解析/校验；还没有 CLI、编辑事务与协议适配；
+- 007 的 26/26 断言覆盖 M0 数据集，但模块语法错误与引用级联只有基础处理，缺少专门样例；
 - 设计基线仍是 Draft：字段以 `docs/spec/` 为准，修改设计基线需 Rearchitect 授权；
 - 宿主任务 `ai.cargo-test` / `ai.cargo-clippy` / `ai.cargo-fmt` 已批准并可用；
   新增命令（如 doc test、集成测试）需要再登记；
@@ -130,13 +128,14 @@ M0 已冻结判断标准与样例；实际验证从 M1 开始。
 ## 9. 快速命令
 
 ```powershell
-# M1（当前，005 起）
+# M1（当前，005–007 起）
 cargo test --workspace
+cargo test -p composition-core
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all --check
 Get-Content docs/spec/composition-schema-v1.md
 
-# M1 后续（006–008）
+# M1 后续（008 起）
 cargo run -p composition-cli -- validate examples/minimal-project
 ```
 
@@ -151,3 +150,4 @@ cargo run -p composition-cli -- validate examples/minimal-project
 | 2026-11-26 | 004 | 建立 26 个数据集（25 个完整项目 + 入口缺失目录），覆盖设计基线 §12.1 的 12 类；临时校验器 26/26 与 `expected.json` 匹配；编辑/外部修改场景留 M2/M3 |
 | 2026-11-26 | 005 | 建立 Cargo workspace 与 `composition-domain`（ID / SchemaVersion / ConfigValue / 契约 / 模块 / 组合 / 诊断 / Revision / 模型）；58 项测试、clippy、fmt 全绿；无 TOML I/O；下一步 006 |
 | 2026-11-26 | 006 | 建立 `composition-toml`（LoadedFile + ImDocument span、路径规则、模块发现、project L2、source_digest）；12 单元 + 15 集成测试；workspace 85 项测试；L3–L7 留给 007 |
+| 2026-11-26 | 007 | 建立 `composition-core`（解码 + L2–L7 + SourceMap + CompositionModel + effective_config）；26/26 数据集代码集合与 expected.json 一致；8 项集成测试；workspace 93 项测试 |

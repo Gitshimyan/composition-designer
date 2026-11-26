@@ -1,0 +1,35 @@
+change:
+  id: change.m1-composition-core
+  intent: 新建 composition-core，解码声明并执行 L1–L7 校验，产出规范化 CompositionModel
+  authorization: extend
+  targets:
+    - Cargo.toml
+    - Cargo.lock
+    - crates/composition-core
+    - crates/composition-domain
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - new_crate
+      - dependency
+      - domain_type_completion
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - command_protocol
+      - design_baseline
+      - toml_editing
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 只读解析与校验；不写 TOML、不提供 CLI/编辑命令。

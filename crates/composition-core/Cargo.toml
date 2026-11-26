@@ -1,0 +1,15 @@
+[package]
+name = "composition-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Composition Designer v0.1 decoding, resolution and validation core"
+publish = false
+
+[dependencies]
+composition-domain = { path = "../composition-domain" }
+composition-toml = { path = "../composition-toml" }
+toml_edit = "0.22"
+
+[dev-dependencies]
+serde_json = "1"

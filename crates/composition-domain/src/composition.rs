@@ -22,6 +22,7 @@ pub struct Instance {
     pub id: LocalId,
     pub module: ModuleRef,
     pub config: BTreeMap<LocalId, ConfigValue>,
+    pub effective_config: BTreeMap<LocalId, ConfigValue>,
     pub dependency_providers: BTreeMap<LocalId, LocalId>,
     pub source: Option<SourceRef>,
 }
@@ -32,6 +33,7 @@ impl Instance {
             id,
             module,
             config: BTreeMap::new(),
+            effective_config: BTreeMap::new(),
             dependency_providers: BTreeMap::new(),
             source: None,
         }
@@ -135,6 +137,7 @@ mod tests {
         let instance = Instance::new(local("app"), module_ref("shell.desktop", "1.0.0"));
         assert_eq!(instance.id, local("app"));
         assert!(instance.config.is_empty());
+        assert!(instance.effective_config.is_empty());
         assert!(instance.dependency_providers.is_empty());
         assert!(instance.source.is_none());
     }

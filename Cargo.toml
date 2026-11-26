@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["crates/composition-domain", "crates/composition-toml"]
+members = [
+    "crates/composition-domain",
+    "crates/composition-toml",
+    "crates/composition-core",
+]
 
 [workspace.package]
 version = "0.1.0"
