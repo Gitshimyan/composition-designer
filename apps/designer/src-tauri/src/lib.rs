@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use composition_core::{validate_project, ValidationResult};
-use composition_domain::{CompositionModel, Diagnostic, LocalId, Severity};
+use composition_domain::{CompositionModel, Diagnostic, ErrorCode, LocalId, ObjectId, Severity};
 use composition_editor::{ModelDiff, ProjectSession, Transaction};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -43,6 +43,17 @@ pub struct EditResponse {
     pub diff: Option<ModelDiff>,
     pub diagnostics: Vec<Diagnostic>,
     pub snapshot: ProjectSnapshot,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExternalChangeState {
+    pub has_session: bool,
+    pub dirty: bool,
+    pub session_digest: Option<String>,
+    pub disk_digest: Option<String>,
+    pub disk_valid: bool,
+    pub disk_error_count: usize,
 }
 
 #[derive(Serialize)]
@@ -118,6 +129,39 @@ fn snapshot_from_session(session: &ProjectSession) -> ProjectSnapshot {
     )
 }
 
+fn external_change_state(session: &ProjectSession) -> ExternalChangeState {
+    let disk = validate_project(session.root());
+    let session_digest = session.workspace().revision().source_digest;
+    let disk_digest = disk.source_digest.clone();
+    let dirty = session_digest != disk_digest;
+    ExternalChangeState {
+        has_session: true,
+        dirty,
+        session_digest: session_digest.map(|digest| digest.to_string()),
+        disk_digest: disk_digest.map(|digest| digest.to_string()),
+        disk_valid: disk.is_valid(),
+        disk_error_count: disk.error_count(),
+    }
+}
+
+fn external_dirty(session: &ProjectSession) -> bool {
+    session.workspace().revision().source_digest != validate_project(session.root()).source_digest
+}
+
+fn conflict_response(session: &ProjectSession) -> EditResponse {
+    EditResponse {
+        accepted: false,
+        replayed: false,
+        diff: None,
+        diagnostics: vec![Diagnostic::new(
+            ErrorCode::EditRevisionConflict,
+            "project changed on disk; reload before editing",
+        )
+        .with_object_id(ObjectId::composition())],
+        snapshot: snapshot_from_session(session),
+    }
+}
+
 fn edit_response(
     session: &ProjectSession,
     outcome: composition_editor::TransactionOutcome,
@@ -162,6 +206,9 @@ fn apply_transaction(
     let Some(session) = guard.as_mut() else {
         return Err("project is not editable".to_owned());
     };
+    if external_dirty(session) {
+        return Ok(conflict_response(session));
+    }
     let outcome = session.apply(&transaction);
     Ok(edit_response(session, outcome))
 }
@@ -177,6 +224,9 @@ fn prepare_transaction(
     let Some(session) = guard.as_ref() else {
         return Err("project is not editable".to_owned());
     };
+    if external_dirty(session) {
+        return Ok(conflict_response(session));
+    }
     let outcome = session.prepare(&transaction);
     Ok(edit_response(session, outcome))
 }
@@ -193,6 +243,44 @@ fn read_source(state: State<'_, SessionState>) -> Result<SourcePayload, String> 
         entry: session.composition_entry().to_owned(),
         text: session.source_text().to_owned(),
     })
+}
+
+#[tauri::command]
+fn check_external_changes(state: State<'_, SessionState>) -> Result<ExternalChangeState, String> {
+    let guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_ref() else {
+        return Ok(ExternalChangeState {
+            has_session: false,
+            dirty: false,
+            session_digest: None,
+            disk_digest: None,
+            disk_valid: false,
+            disk_error_count: 0,
+        });
+    };
+    Ok(external_change_state(session))
+}
+
+#[tauri::command]
+fn reload_project(state: State<'_, SessionState>) -> Result<ProjectSnapshot, String> {
+    let mut guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_ref() else {
+        return Err("no open project to reload".to_owned());
+    };
+    let root = session.root().to_path_buf();
+    let validation = validate_project(&root);
+    let new_session = ProjectSession::open(&root).ok();
+    let can_edit = new_session.is_some();
+    let response = match &new_session {
+        Some(session) => snapshot_from_session(session),
+        None => snapshot_from_validation(&root.to_string_lossy(), &validation, can_edit),
+    };
+    *guard = new_session;
+    Ok(response)
 }
 
 /// Optional startup project for automation:
@@ -302,6 +390,8 @@ pub fn run() {
             apply_transaction,
             prepare_transaction,
             read_source,
+            check_external_changes,
+            reload_project,
             load_layout,
             save_layout
         ])
@@ -352,6 +442,44 @@ mod tests {
         fs::create_dir_all(&root).unwrap();
         let loaded = load_layout(root.to_string_lossy().into_owned()).unwrap();
         assert!(loaded.is_empty());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    fn copy_dir(source: &Path, target: &Path) {
+        fs::create_dir_all(target).unwrap();
+        for entry in fs::read_dir(source).unwrap() {
+            let entry = entry.unwrap();
+            let target_path = target.join(entry.file_name());
+            if entry.file_type().unwrap().is_dir() {
+                copy_dir(&entry.path(), &target_path);
+            } else {
+                fs::copy(entry.path(), target_path).unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn external_change_is_detected_and_reloaded() {
+        let source = PathBuf::from(example("minimal-project"));
+        let root =
+            std::env::temp_dir().join(format!("composition-external-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        copy_dir(&source, &root);
+        let session = ProjectSession::open(&root).unwrap();
+        let clean = external_change_state(&session);
+        assert!(!clean.dirty);
+
+        let composition = root.join("composition/main.toml");
+        let mut text = fs::read_to_string(&composition).unwrap();
+        text.insert_str(0, "# changed outside the designer\n");
+        fs::write(&composition, text).unwrap();
+        let changed = external_change_state(&session);
+        assert!(changed.dirty);
+        assert!(changed.disk_valid);
+
+        let reloaded = ProjectSession::open(&root).unwrap();
+        let clean_again = external_change_state(&reloaded);
+        assert!(!clean_again.dirty);
         let _ = fs::remove_dir_all(&root);
     }
 

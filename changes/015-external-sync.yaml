@@ -1,0 +1,34 @@
+change:
+  id: change.m3-external-sync
+  intent: 检测外部 TOML 修改，阻止旧模型写回，并提供安全 Reload
+  authorization: extend
+  targets:
+    - apps/designer
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - external_change_detection
+      - conflict_guard
+      - reload
+      - polling
+      - documentation
+      - task_card
+    forbidden:
+      - composition_write_bypass
+      - toml_schema
+      - design_baseline
+      - merge
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - npm run build
+    - npm run desktop
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+  notes: 外部 dirty 时只允许 Reload；写操作仍只经 ProjectSession。

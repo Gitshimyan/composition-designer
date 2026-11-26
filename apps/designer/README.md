@@ -1,8 +1,8 @@
 # apps/designer/
 
-v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–014 已建立外壳、
-结构 Canvas/Tree、Inspector 配置编辑/Change Review 与只读 CodeMirror Source**；
-直接 Source 编辑、外部修改同步在后续。
+v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–015 已建立外壳、
+结构 Canvas/Tree、Inspector 配置编辑/Change Review、只读 CodeMirror Source 与外部修改
+同步/Reload**。
 
 | 区域 | 目录 | 职责 |
 |---|---|---|
@@ -22,6 +22,7 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
 - Inspector：选中实例的模块/契约、配置编辑器、Change Review（Set/Unset Config）；
 - Diagnostics：L1–L7 代码、消息、文件:行:列；点击可跳到 Source；
 - TOML Source：CodeMirror 6 只读展示 composition 入口；
+- 外部修改：2s digest 轮询；dirty 时禁编辑并提示 Reload；
 - 空状态 / 无效项目 / 有效项目三种界面；
 - 布局只写 `.designer/layout.toml`，编辑写 `composition/**` 但只经 Core 事务；
 - 所有数据来自 `composition_core` / `composition_editor`，React 不解析 TOML。

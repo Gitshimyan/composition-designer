@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   EditResponse,
+  ExternalChangeState,
   LayoutNodes,
   NodePosition,
   ProjectSnapshot,
@@ -43,4 +44,12 @@ export async function applyTransaction(
 
 export async function readSource(): Promise<SourcePayload> {
   return invoke<SourcePayload>("read_source");
+}
+
+export async function checkExternalChanges(): Promise<ExternalChangeState> {
+  return invoke<ExternalChangeState>("check_external_changes");
+}
+
+export async function reloadProject(): Promise<ProjectSnapshot> {
+  return invoke<ProjectSnapshot>("reload_project");
 }

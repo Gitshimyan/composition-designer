@@ -192,6 +192,15 @@ export interface SourcePayload {
   text: string;
 }
 
+export interface ExternalChangeState {
+  hasSession: boolean;
+  dirty: boolean;
+  sessionDigest?: string | null;
+  diskDigest?: string | null;
+  diskValid: boolean;
+  diskErrorCount: number;
+}
+
 export interface NodePosition {
   x: number;
   y: number;

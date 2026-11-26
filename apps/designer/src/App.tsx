@@ -3,12 +3,14 @@ import type { FormEvent, ReactNode } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import {
   applyTransaction,
+  checkExternalChanges,
   initialProject,
   isTauri,
   loadLayout,
   openProject,
   prepareTransaction,
   readSource,
+  reloadProject,
   saveLayout,
 } from "./api";
 import CompositionCanvas from "./canvas/CompositionCanvas";
@@ -19,6 +21,7 @@ import type {
   Diagnostic,
   EditCommand,
   EditResponse,
+  ExternalChangeState,
   Instance,
   LayoutNodes,
   NodePosition,
@@ -56,6 +59,8 @@ export default function App() {
   } | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [external, setExternal] = useState<ExternalChangeState | null>(null);
+  const [reloading, setReloading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,6 +200,28 @@ export default function App() {
     };
   }, [snapshot?.root, snapshot?.canEdit]);
 
+  useEffect(() => {
+    if (!snapshot?.canEdit) {
+      setExternal(null);
+      return;
+    }
+    let cancelled = false;
+    async function check() {
+      try {
+        const state = await checkExternalChanges();
+        if (!cancelled) setExternal(state);
+      } catch {
+        if (!cancelled) setExternal(null);
+      }
+    }
+    void check();
+    const timer = window.setInterval(() => void check(), 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [snapshot?.root, snapshot?.canEdit]);
+
   async function persistLayout(next: LayoutNodes) {
     if (!snapshot) return;
     try {
@@ -228,6 +255,46 @@ export default function App() {
     void persistLayout(next);
   }
 
+  async function handleReloadProject() {
+    setReloading(true);
+    setEditError(null);
+    try {
+      const next = await reloadProject();
+      setSnapshot(next);
+      setExternal(null);
+      setPendingReview(null);
+      setBottomTab("diagnostics");
+      setRevealLine(null);
+      if (next.model) {
+        const composition = next.model.composition;
+        const auto = autoLayout(
+          composition.instances,
+          composition.bindings,
+          composition.root,
+        );
+        setPositions(auto);
+        setFitNonce((value) => value + 1);
+        setSelectedId(composition.root || null);
+      } else {
+        setSource(null);
+        setSelectedId(null);
+      }
+      if (next.canEdit) {
+        try {
+          setSource(await readSource());
+        } catch {
+          setSource(null);
+        }
+      } else {
+        setSource(null);
+      }
+    } catch (reason) {
+      setEditError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setReloading(false);
+    }
+  }
+
   function handleSelectTree(id: string) {
     setSelectedId(id);
     setFocusRequest((current) => ({
@@ -243,6 +310,10 @@ export default function App() {
   async function reviewCommands(commands: EditCommand[], description: string) {
     if (!model?.revision || !snapshot?.canEdit) {
       setEditError("This project is not editable.");
+      return;
+    }
+    if (external?.dirty) {
+      setEditError("Files changed on disk. Reload the project before editing.");
       return;
     }
     const requestId =
@@ -271,6 +342,10 @@ export default function App() {
 
   async function applyPendingReview() {
     if (!pendingReview) return;
+    if (external?.dirty) {
+      setEditError("Files changed on disk. Reload before applying.");
+      return;
+    }
     setReviewBusy(true);
     setEditError(null);
     try {
@@ -329,6 +404,7 @@ export default function App() {
   const shortDigest = digest ? `${digest.slice(0, 7)}…${digest.slice(-6)}` : "—";
   const valid = snapshot?.valid ?? false;
   const canEdit = snapshot?.canEdit ?? false;
+  const externalDirty = external?.dirty ?? false;
 
   return (
     <div className="app-shell">
@@ -418,6 +494,28 @@ export default function App() {
           <span>{editError}</span>
           <button type="button" onClick={() => setEditError(null)} aria-label="Dismiss edit error">
             ×
+          </button>
+        </div>
+      )}
+
+      {externalDirty && (
+        <div className="external-banner" role="alert">
+          <div>
+            <strong>Files changed on disk.</strong>
+            <span>
+              Reload before editing. Local apply is blocked while the source digest differs.
+              {external && external.diskErrorCount > 0
+                ? ` Disk now has ${external.diskErrorCount} error(s).`
+                : ""}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="button button-primary"
+            onClick={() => void handleReloadProject()}
+            disabled={reloading}
+          >
+            {reloading ? "Reloading…" : "Reload project"}
           </button>
         </div>
       )}
@@ -540,7 +638,7 @@ export default function App() {
                 ports={selectedModule?.contract.ports.length ?? 0}
                 properties={selectedModule?.contract.properties ?? []}
                 isRoot={selectedInstance.id === rootId}
-                canEdit={canEdit}
+                canEdit={canEdit && !externalDirty}
                 revisionSeq={model?.revision?.seq ?? 0}
                 onReview={(commands, description) =>
                   void reviewCommands(commands, description)
@@ -656,6 +754,7 @@ export default function App() {
               {snapshot.errorCount} errors · {snapshot.warningCount} warnings
             </span>
           )}
+          {externalDirty && <span className="status-sep status-warn">external changes</span>}
         </div>
         <div className="status-right">
           {layoutStatus && <span className="status-layout">{layoutStatus}</span>}

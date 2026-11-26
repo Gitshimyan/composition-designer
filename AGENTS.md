@@ -50,7 +50,7 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（M3 012–014 完成、015 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（M3 完成、M4 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -92,15 +92,15 @@ cargo run -p composition-cli -- validate examples/minimal-project --json
 cargo test -p composition-editor
 cargo run -p composition-cli -- inspect examples/minimal-project
 
-# M3（012–014 完成）
+# M3（012–015 完成）
 cd apps/designer
 npm run setup
 npm run build
 npm run desktop
 npm start
 
-# M3 后续（015）
-# 外部 TOML 修改检测 / 重载
+# M4（016 起）
+# 领域协议 / CLI JSONL / MCP
 ```
 
 构建与测试通过宿主机任务（host_task）执行；分析、编辑在沙箱内完成。
