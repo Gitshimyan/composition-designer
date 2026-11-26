@@ -10,13 +10,13 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M2 完成：M1 的 domain/toml/core/cli + 009–011 `composition-editor`（29 测试，命令/事务/Revision/幂等/Diff/TOML 写回）；M3 未开始 |
+| 当前阶段 | M3 进行中：M1/M2 的 5 个 crate 完成；012 建立 `apps/designer`（Tauri 2 + React 19 + TS + Vite 7）只读外壳；013 Canvas/Tree 未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
-| 验证入口 | `cargo test --workspace`、`cargo test -p composition-editor`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；CLI：`cargo run -p composition-cli -- validate examples/minimal-project --json` |
+| 验证入口 | Core：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；Designer：`cd apps/designer && npm run build`、`npm run desktop`、`cargo test --manifest-path src-tauri/Cargo.toml` |
 | working 入口 | [`working/plan.md`](../../working/plan.md) |
 
 ## 2. 目标结构与依赖方向
@@ -102,7 +102,7 @@
 | 编辑命令 Schema | `docs/spec/command-schema-v1.md`（M2 009） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
 | Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）、`crates/composition-core`（007）、`crates/composition-cli`（008）、`crates/composition-editor`（009） |
-| Designer | `apps/designer/`（M3 起） |
+| Designer | `apps/designer/src-tauri`（Tauri 2 host，012）、`apps/designer/src`（React shell，012） |
 | Agent 协议与 Adapter | `crates/composition-protocol`、M4 的 adapter（未建立） |
 | 决策 | `docs/adr/` |
 | 变更声明 | `changes/` |
@@ -113,9 +113,8 @@
 - 领域模型、TOML Schema、错误码与样例已在 M0 冻结；决策见
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
-- M1 005–008 完成（domain 58 / toml 27 / core 8 / cli 8）；M2 009–011 完成
-  `composition-editor`（命令、事务、Revision/幂等/Diff、`ProjectSession` TOML 写回），
-  29 项 editor 测试，workspace 130 项；M2 收口，M3 未开始；
+- M3 012 已建立 `apps/designer`：Tauri 2 `open_project`/`initial_project`、React Explorer/
+  Composition/Inspector/Diagnostics 外壳；2 个宿主测试；Canvas/Source 仍是占位；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 M3 实现细节：Tauri/前端技术栈、Designer 外壳、外部修改同步与跨进程历史；
+- 尚未冻结的是 013 实现细节：`@xyflow/react` 节点/边映射、Tree 选择、布局持久化与编辑命令；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

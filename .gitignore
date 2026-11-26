@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+.npm-cache/
 
 # Rust / Tauri build
 target/
@@ -8,6 +9,9 @@ target/
 dist/
 coverage/
 *.tsbuildinfo
+
+# Tauri generated schemas
+apps/designer/src-tauri/gen/
 
 # working scratch space
 working/tmp/*
@@ -22,6 +26,7 @@ artifacts/
 .dsh/host-tasks.json
 .dsh/*.pending.json
 .dsh/*.json.tmp
+.dsh/allow-scripts.json
 
 # OS
 Thumbs.db

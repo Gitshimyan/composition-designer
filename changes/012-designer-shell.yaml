@@ -1,0 +1,35 @@
+change:
+  id: change.m3-designer-shell
+  intent: 建立 Tauri 2 + React/TS Designer 外壳，打开项目并经 Rust Core 返回只读快照
+  authorization: extend
+  targets:
+    - apps/designer
+    - Cargo.toml
+    - .gitignore
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - desktop_app
+      - frontend_shell
+      - tauri_ipc
+      - project_snapshot
+      - documentation
+      - task_card
+    forbidden:
+      - toml_editing
+      - toml_schema
+      - second_model
+      - design_baseline
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - npm run build
+    - cargo build --manifest-path apps/designer/src-tauri/Cargo.toml --features custom-protocol
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+  notes: 012 只读；Canvas/Source 与编辑在 013/014，Domain 仍只由 Rust Core 持有。
