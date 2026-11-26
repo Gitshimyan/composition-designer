@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# Rust / Tauri build
+target/
+
+# frontend build / test output
+dist/
+coverage/
+*.tsbuildinfo
+
+# working scratch space
+working/tmp/*
+!working/tmp/.gitkeep
+
+# runtime artifacts
+working/tmp/**/*.log
+*.log
+artifacts/
+
+# local tool state (host-task config, editor/agent caches)
+.dsh/*.pending.json
+.dsh/*.json.tmp
+
+# OS
+Thumbs.db
+.DS_Store

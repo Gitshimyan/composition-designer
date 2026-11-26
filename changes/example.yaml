@@ -1,0 +1,25 @@
+change:
+  id: change.m0-domain-model
+  intent: 冻结 v0.1 领域对象、关系语义与不变量，产出 docs/spec/domain-model-v1.md
+  authorization: modify
+  targets:
+    - docs/spec
+    - working
+  operations:
+    - modify
+  scope:
+    allowed:
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - command_protocol
+      - implementation
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - 人工对照设计基线 §3 / §15
+    - 术语表与 domain-model-v1.md 交叉检查
+  notes: 只写文档；若冻结过程发现设计基线需要修改，停下并申请 rearchitect。
