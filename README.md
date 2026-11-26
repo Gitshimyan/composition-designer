@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M1 完成：M0 规范与样例已冻结，`composition-domain`、`composition-toml`、`composition-core` 与 `composition-cli` 已建立；M2 编辑事务未开始。
+> v0.1 · M2 进行中：M1 的只读 Core/CLI 已完成；`composition-editor` 已实现命令 Schema 与内存原子事务，TOML 写回与 Diff 未开始。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -37,12 +37,14 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | TOML 加载与 Source Map（M1 006） | 已建立：`composition-toml`，27 项测试 |
 | Core：解析 / 验证（M1 007） | 已建立：`composition-core`，26/26 数据集 |
 | CLI（M1 008） | 已建立：`composition-cli`，8 项测试 |
-| 编辑命令、事务、Revision | 未开始（M2） |
+| 编辑命令与事务（M2 009） | 已建立：`composition-editor`，15 项测试 |
+| Revision / Diff / TOML 写回 | 未开始（M2 010–011） |
 | Designer UI | 未开始（M3） |
 | Agent Interface | 未开始（M4） |
 
-当前已有 `composition-domain`、`composition-toml`、`composition-core` 与 `composition-cli`，
-并通过 `cargo test` / `clippy` / `fmt`；编辑事务、GUI 与 Agent 协议尚未开始。
+当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`
+与 `composition-editor`，并通过 `cargo test` / `clippy` / `fmt`；编辑事务与候选校验已在
+内存中工作，TOML 写回、Revision 冲突/Diff、GUI 与 Agent 协议尚未开始。
 M1 的“通过”指只读解析/校验/CLI 可复现，不代表项目可以运行或编辑。
 
 ## 3. 目录结构
@@ -58,6 +60,7 @@ composition-designer/
 │   ├── composition-toml/                  # 已建立（006）
 │   ├── composition-core/                  # 已建立（007，解析/校验）
 │   ├── composition-cli/                   # 已建立（008，inspect/resolve/validate）
+│   ├── composition-editor/                # 已建立（009，命令/事务）
 │   ├── composition-resolver/              # 暂并入 core
 │   ├── composition-validator/             # 暂并入 core
 │   ├── composition-editor/
@@ -119,6 +122,7 @@ composition-designer/
 - [术语表](./docs/glossary.md)
 - [领域模型 v1](./docs/spec/domain-model-v1.md)
 - [Composition Schema v1](./docs/spec/composition-schema-v1.md)
+- [命令 Schema v1](./docs/spec/command-schema-v1.md)
 - [错误代码 v1](./docs/spec/error-codes-v1.md)
 - [ADR-0001 领域模型与 Schema 冻结](./docs/adr/0001-domain-and-schema-freeze.md)
 - [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)

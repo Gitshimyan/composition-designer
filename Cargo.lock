@@ -45,6 +45,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "composition-editor"
+version = "0.1.0"
+dependencies = [
+ "composition-core",
+ "composition-domain",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "composition-toml"
 version = "0.1.0"
 dependencies = [

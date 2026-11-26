@@ -9,4 +9,4 @@ mod source_map;
 mod validate;
 
 pub use source_map::SourceMap;
-pub use validate::{validate_loaded, validate_project, ValidationResult};
+pub use validate::{validate_loaded, validate_model, validate_project, ValidationResult};

@@ -5,6 +5,7 @@ members = [
     "crates/composition-toml",
     "crates/composition-core",
     "crates/composition-cli",
+    "crates/composition-editor",
 ]
 
 [workspace.package]

@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M1 完成：`composition-domain`（58）、`composition-toml`（27）、`composition-core`（8）、`composition-cli`（8）；M2 编辑事务未开始 |
+| 当前阶段 | M2 进行中：M1 的 domain/toml/core/cli 完成；009 `composition-editor`（3+12 测试）已实现命令与内存事务；010/011 未开始 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
@@ -31,12 +31,13 @@
 | `composition-cli` | 已建立（008） | inspect / resolve / validate、JSON、退出码 | core, domain, serde, serde_json |
 | `composition-resolver` | 暂并入 core | 模块解析、规范化结果 | domain, toml |
 | `composition-validator` | 暂并入 core | Schema、引用、契约校验 | domain, resolver |
-| `composition-editor` | 待 M2 | 命令、事务、Revision、Diff、Undo | domain, core, toml |
+| `composition-editor` | 已建立（009） | 命令 Schema、候选事务、原子替换 | core, domain, serde |
 | `composition-protocol` | 待 M4 | 机器可读命令与结果 Schema | domain |
 | `composition-app` | 待 M3/M4 | 应用服务编排 | core |
 
 005 建立 `composition-domain`，006 建立 `composition-toml`，007 建立 `composition-core`，
-008 建立 `composition-cli`；resolver/validator 暂并入 core，其余在 M2+ 按依赖方向加入。
+008 建立 `composition-cli`，009 建立 `composition-editor`；resolver/validator 暂并入 core，
+其余在 M3/M4 按依赖方向加入。
 
 ### apps/designer/
 
@@ -98,8 +99,9 @@
 | 设计基线（Rearchitect） | `composition-designer-v0.1-design.md` |
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
 | TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
+| 编辑命令 Schema | `docs/spec/command-schema-v1.md`（M2 009） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
-| Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）、`crates/composition-core`（007）、`crates/composition-cli`（008） |
+| Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）、`crates/composition-core`（007）、`crates/composition-cli`（008）、`crates/composition-editor`（009） |
 | Designer | `apps/designer/`（M3 起） |
 | Agent 协议与 Adapter | `crates/composition-protocol`、M4 的 adapter（未建立） |
 | 决策 | `docs/adr/` |
@@ -111,9 +113,9 @@
 - 领域模型、TOML Schema、错误码与样例已在 M0 冻结；决策见
   [ADR-0001](../adr/0001-domain-and-schema-freeze.md) 与
   [ADR-0002](../adr/0002-v01-unsupported.md)；
-- M1 005 已建立 `composition-domain`（58 测试）；006 已建立 `composition-toml`（27 测试）；
-  007 已建立 `composition-core`（8 测试，26/26 样例匹配）；008 已建立 `composition-cli`
-  （inspect/resolve/validate、JSON、退出码、4 个 golden，8 测试）；M1 完成，编辑事务未开始；
+- M1 005–008 完成（domain 58 / toml 27 / core 8 / cli 8）；M2 009 新增
+  `composition-editor`（12 命令、候选模型原子事务、core `validate_model`），3 单元 + 12 集成测试；
+  TOML 写回、Revision 冲突/Diff 仍未开始；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 M2+ 实现细节：编辑器 crate 拆分、命令 Schema、Revision 持久化与协议适配；
+- 尚未冻结的是 M2 剩余实现细节：Revision 持久化/冲突、Diff、TOML 局部写回、协议适配；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

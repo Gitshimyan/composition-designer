@@ -1,0 +1,35 @@
+change:
+  id: change.m2-editor-transaction
+  intent: 新增 composition-editor，定义编辑命令并在候选模型上原子应用与全量校验
+  authorization: extend
+  targets:
+    - Cargo.toml
+    - Cargo.lock
+    - crates/composition-editor
+    - crates/composition-core
+    - docs/spec
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - new_crate
+      - command_schema
+      - core_validation_refactor
+      - documentation
+      - task_card
+    forbidden:
+      - toml_schema
+      - design_baseline
+      - toml_editing
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 009 只做内存候选事务；TOML 写回、source_digest 刷新与 Diff 留给 010/011。

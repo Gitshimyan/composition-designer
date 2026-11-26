@@ -50,7 +50,7 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（M1 完成、M2 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（M2 009 完成、010/011 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -88,11 +88,11 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all --check
 cargo run -p composition-cli -- validate examples/minimal-project --json
 
-# 常用 CLI（M1 产物）
+# M2（009 起）
+cargo test -p composition-editor
 cargo run -p composition-cli -- inspect examples/minimal-project
-cargo run -p composition-cli -- resolve examples/minimal-project
 
-# M2 起（规划）
+# M2 后续（010–011）
 # 编辑命令 / 事务完成后在此补充
 ```
 

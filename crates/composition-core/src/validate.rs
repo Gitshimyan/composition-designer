@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use composition_domain::{
-    Binding, CompositionModel, DependencyResolution, DependencyStatus, Diagnostic, ErrorCode,
-    Instance, LocalId, ModuleDefinition, ModuleId, ModuleKind, ObjectId, PortContract,
-    PortDirection, Revision, SourceDigest, Version,
+    Binding, Composition, CompositionModel, DependencyResolution, DependencyStatus, Diagnostic,
+    ErrorCode, Instance, LocalId, ModuleDefinition, ModuleId, ModuleKind, ObjectId, PortContract,
+    PortDirection, Project, Revision, SourceDigest, Version,
 };
 use composition_toml::{load_project, LoadedWorkspace};
 
@@ -48,19 +48,57 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
 
     let decoded = decode(loaded);
     diagnostics.extend(decoded.diagnostics.iter().cloned());
-    let Some(mut composition) = decoded.composition.clone() else {
+    let Some(composition) = decoded.composition.clone() else {
         return finish(None, diagnostics, loaded);
     };
+    validate_parts(
+        project,
+        composition,
+        &decoded.modules,
+        &decoded.invalid_instances,
+        decoded.source_map,
+        diagnostics,
+        loaded.source_digest.clone(),
+    )
+}
 
+/// 对内存中的候选模型重新执行 L2–L7 校验；供 M2 编辑事务使用。
+pub fn validate_model(
+    project: &Project,
+    composition: &Composition,
+    modules: &[ModuleDefinition],
+    source_map: SourceMap,
+    source_digest: Option<SourceDigest>,
+) -> ValidationResult {
+    validate_parts(
+        project,
+        composition.clone(),
+        modules,
+        &BTreeSet::new(),
+        source_map,
+        Vec::new(),
+        source_digest,
+    )
+}
+
+fn validate_parts(
+    project: &Project,
+    mut composition: Composition,
+    modules: &[ModuleDefinition],
+    invalid_instances: &BTreeSet<LocalId>,
+    source_map: SourceMap,
+    mut diagnostics: Vec<Diagnostic>,
+    source_digest: Option<SourceDigest>,
+) -> ValidationResult {
     let mut registry = BTreeMap::new();
     let mut duplicate_keys = BTreeSet::new();
-    for module in &decoded.modules {
+    for module in modules {
         let key = (module.id.clone(), module.version);
         match registry.entry(key.clone()) {
             std::collections::btree_map::Entry::Occupied(_) => {
                 duplicate_keys.insert(key);
                 push_at(
-                    &decoded.source_map,
+                    &source_map,
                     &mut diagnostics,
                     ErrorCode::IdDuplicateModule,
                     format!(
@@ -88,7 +126,7 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
         let object = ObjectId::instance(&instance.id);
         if duplicate_keys.contains(&key) {
             push_at(
-                &decoded.source_map,
+                &source_map,
                 &mut diagnostics,
                 ErrorCode::RefModuleAmbiguous,
                 format!(
@@ -103,7 +141,7 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
             resolved.insert(instance.id.clone(), module);
         } else if registry.keys().any(|(id, _)| id == &instance.module.id) {
             push_at(
-                &decoded.source_map,
+                &source_map,
                 &mut diagnostics,
                 ErrorCode::RefModuleVersionNotFound,
                 format!(
@@ -114,7 +152,7 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
             );
         } else {
             push_at(
-                &decoded.source_map,
+                &source_map,
                 &mut diagnostics,
                 ErrorCode::RefModuleNotFound,
                 format!("module {} is not defined", instance.module.id),
@@ -123,28 +161,28 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
         }
     }
 
-    check_module_contracts(&registry, &decoded.source_map, &mut diagnostics);
+    check_module_contracts(&registry, &source_map, &mut diagnostics);
     check_instance_configs(
         &composition.instances,
         &resolved,
-        &decoded.source_map,
+        &source_map,
         &mut diagnostics,
     );
     let valid_bindings = resolve_bindings(
         &composition,
         &instances_by_id,
         &resolved,
-        &decoded.invalid_instances,
-        &decoded.source_map,
+        invalid_instances,
+        &source_map,
         &mut diagnostics,
     );
 
     let root_module = resolved.get(&composition.root).copied();
     if !instances_by_id.contains_key(&composition.root)
-        && !decoded.invalid_instances.contains(&composition.root)
+        && !invalid_instances.contains(&composition.root)
     {
         push_at(
-            &decoded.source_map,
+            &source_map,
             &mut diagnostics,
             ErrorCode::RefRootNotFound,
             format!(
@@ -161,7 +199,7 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
         &resolved,
         root_module,
         &valid_bindings,
-        &decoded.source_map,
+        &source_map,
         &mut diagnostics,
     );
 
@@ -169,24 +207,24 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
         &composition,
         &instances_by_id,
         &resolved,
-        &decoded.invalid_instances,
-        &decoded.source_map,
+        invalid_instances,
+        &source_map,
         &mut diagnostics,
     );
-    check_connections(&valid_connections, &decoded.source_map, &mut diagnostics);
+    check_connections(&valid_connections, &source_map, &mut diagnostics);
 
     let dependencies = check_dependencies(
         &composition,
         &instances_by_id,
         &resolved,
-        &decoded.invalid_instances,
-        &decoded.source_map,
+        invalid_instances,
+        &source_map,
         &mut diagnostics,
     );
 
     if composition.id != project.id {
         push_at(
-            &decoded.source_map,
+            &source_map,
             &mut diagnostics,
             ErrorCode::CompositionProjectIdMismatch,
             format!(
@@ -225,14 +263,14 @@ pub fn validate_loaded(loaded: &LoadedWorkspace) -> ValidationResult {
     model.modules = registry.into_values().collect();
     model.dependencies = dependencies;
     model.diagnostics = diagnostics.clone();
-    model.revision = Some(Revision::initial(loaded.source_digest.clone()));
+    model.revision = Some(Revision::initial(source_digest.clone()));
     model.normalize();
 
     ValidationResult {
         model: Some(model),
         diagnostics,
-        source_digest: loaded.source_digest.clone(),
-        source_map: decoded.source_map.clone(),
+        source_digest: source_digest.clone(),
+        source_map: source_map.clone(),
     }
 }
 
