@@ -339,3 +339,37 @@ fn hidden_directories_are_not_scanned_for_modules() {
     assert_eq!(workspace.module_files().count(), 2);
     let _ = fs::remove_dir_all(&directory);
 }
+
+#[test]
+fn composition_parts_are_not_merged_in_v01() {
+    let directory = temp_copy("single-entry");
+    let before = load_project(&directory);
+    let parts = directory.join("composition/parts");
+    fs::create_dir_all(&parts).unwrap();
+    fs::write(
+        parts.join("extra.toml"),
+        "[composition]\nschema_version = 1\nid = \"ignored.extra\"\nroot = \"ghost\"\n",
+    )
+    .unwrap();
+    let after = load_project(&directory);
+    assert!(after.is_valid());
+    assert_eq!(before.source_digest, after.source_digest);
+    assert!(after.file("composition/parts/extra.toml").is_none());
+    let _ = fs::remove_dir_all(&directory);
+}
+
+#[test]
+fn unsupported_schema_version_is_rejected_without_migration() {
+    let directory = temp_copy("schema-version-2");
+    let project_file = directory.join("project.toml");
+    let text = fs::read_to_string(&project_file).unwrap();
+    fs::write(
+        &project_file,
+        text.replacen("schema_version = 1", "schema_version = 2", 1),
+    )
+    .unwrap();
+    let workspace = load_project(&directory);
+    assert!(!workspace.is_valid());
+    assert!(codes(&workspace).contains(&ErrorCode::SchemaUnsupportedVersion));
+    let _ = fs::remove_dir_all(&directory);
+}

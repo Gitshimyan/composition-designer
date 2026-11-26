@@ -1,6 +1,6 @@
 # Composition Designer
 
-> v0.1 · M4 完成：M1–M3 已完成；016 Protocol/CLI、017 MCP stdio Adapter、018 Agent Skill 与端到端已完成；M5 完整性与验收未开始。
+> v0.1 完成：M0–M5 已收口；A01–A18 验收报告见 [docs/acceptance-v0.1.md](./docs/acceptance-v0.1.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -34,10 +34,10 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | TOML Schema 与错误码（M0 003） | 已冻结（63 个验证代码 + 6 个预留代码） |
 | 示例项目集（M0 004） | 26 个 `expected.json` 数据集（25 个完整项目 + 入口缺失目录） |
 | Rust 领域层（M1 005） | 已建立：`composition-domain`，58 项测试 |
-| TOML 加载与 Source Map（M1 006） | 已建立：`composition-toml`，27 项测试 |
-| Core：解析 / 验证（M1 007） | 已建立：`composition-core`，26/26 数据集 |
+| TOML 加载与 Source Map（M1 006 / M5 019） | 已建立：`composition-toml`，29 项测试 |
+| Core：解析 / 验证（M1 007 / M5 019） | 已建立：`composition-core`，9 项测试、26/26 数据集 |
 | CLI（M1 008 / M4 016） | 已建立：`composition-cli`，10 项测试 |
-| 编辑命令与事务（M2 009–011） | 已建立：`composition-editor`，30 项测试 |
+| 编辑命令与事务（M2 009–011 / M5 019） | 已建立：`composition-editor`，31 项测试 |
 | Revision / 幂等 / Diff | 已建立（M2 010） |
 | 保留格式 TOML 写回 | 已建立（M2 011） |
 | Designer 外壳（M3 012） | 已建立：Tauri 2 + React 19 + TS + Vite 7 |
@@ -47,12 +47,13 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | Agent Protocol（M4 016） | 已建立：query/transaction/JSONL、CLI query/apply |
 | MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
 | Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
-| 完整性与验收 | 未开始（M5 019） |
+| 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
 Core/Protocol/MCP 通过 `cargo test` / `clippy` / `fmt`，Designer 通过 `npm run build` 与
-Tauri 宿主测试。M4 已完成 Agent Skill 与真实 MCP 端到端；M5 完整性/验收未开始。
+Tauri 宿主测试。M0–M5 已完成；v0.1 验收报告见
+[`docs/acceptance-v0.1.md`](./docs/acceptance-v0.1.md)。
 M1–M3 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代表项目可以运行或部署。
 
 ## 3. 目录结构
@@ -136,6 +137,7 @@ composition-designer/
 - [Designer Layout v1](./docs/spec/designer-layout-v1.md)
 - [Composition Protocol v1](./docs/spec/protocol-v1.md)
 - [MCP Adapter v1](./docs/spec/mcp-adapter-v1.md)
+- [v0.1 验收报告](./docs/acceptance-v0.1.md)
 - [错误代码 v1](./docs/spec/error-codes-v1.md)
 - [ADR-0001 领域模型与 Schema 冻结](./docs/adr/0001-domain-and-schema-freeze.md)
 - [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)

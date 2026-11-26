@@ -50,7 +50,7 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（M4 完成、M5 未开始）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（v0.1 M0–M5 完成）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -105,8 +105,11 @@ cargo run -p composition-cli -- jsonl examples/minimal-project
 cargo run -p composition-mcp -- --project examples/minimal-project
 cargo test -p composition-mcp --test e2e
 
-# M5（019）
-# 完整性与验收
+# M5（019 完成）
+cargo test --workspace
+cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+cargo test -p composition-mcp --test e2e
+# v0.1 验收：docs/acceptance-v0.1.md
 ```
 
 构建与测试通过宿主机任务（host_task）执行；分析、编辑在沙箱内完成。

@@ -162,6 +162,20 @@ fn prepare_does_not_write_the_file() {
 }
 
 #[test]
+fn interrupted_backup_is_recovered_on_open() {
+    let project = copy_example("minimal-project");
+    let composition = project.path().join("composition/main.toml");
+    let backup = composition.with_file_name(".main.toml.bak-999");
+    fs::rename(&composition, &backup).unwrap();
+    assert!(!composition.exists());
+
+    let session = ProjectSession::open(project.path()).expect("recovered session");
+    assert!(composition.exists());
+    assert!(session.source_text().contains("[composition]"));
+    assert_no_temporary_files(project.path());
+}
+
+#[test]
 fn create_instance_and_binding_writes_valid_toml() {
     let project = copy_example("edge-valid/slot-many");
     prepend_comment(project.path());

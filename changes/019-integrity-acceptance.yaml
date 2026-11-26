@@ -1,0 +1,35 @@
+change:
+  id: change.m5-integrity-acceptance
+  intent: 补齐中断写回恢复与性能/多文件/版本边界测试，并输出 v0.1 A01–A18 验收报告
+  authorization: modify
+  targets:
+    - crates/composition-editor
+    - crates/composition-core
+    - crates/composition-toml
+    - docs
+    - README.md
+    - working
+  operations:
+    - modify
+  scope:
+    allowed:
+      - crash_recovery
+      - performance_test
+      - boundary_tests
+      - acceptance_report
+      - documentation
+      - task_card
+    forbidden:
+      - schema_change
+      - design_baseline
+      - second_model
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 不改变冻结 Schema；只补恢复、测试与验收。

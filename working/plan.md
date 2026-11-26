@@ -27,12 +27,12 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 ## 2. 当前状态（2026-11-26）
 
-- 阶段：`M4` 完成（016–018）；`M5` 未开始
-- 已有：M1–M3 的 5 个 crate + `apps/designer`、`composition-protocol`、`composition-mcp`、
-  Agent Skill/MCP 配置、MCP e2e；142 Core + 5 Tauri 测试
-- 未建：M5 019 多文件/性能/崩溃恢复/迁移与 A01–A18 验收报告
-- 门禁：`cargo test` / `clippy` / `fmt`、MCP e2e、Tauri build/test
-- 规模：7 crate + 1 desktop app / 142 Core + 5 host 测试 / 6 MCP tools
+- 阶段：`M5` 完成；**v0.1 M0–M5 全部完成**
+- 已有：7 个 Core/Protocol/MCP crate + `apps/designer` + Agent Skill；146 Core + 5 Tauri 测试；
+  A01–A18 验收报告
+- 验收：`docs/acceptance-v0.1.md`
+- 规模：7 crate + 1 desktop app / 146 Core + 5 host 测试 / 6 MCP tools / 26 样例数据集
+- 后续：post-v0.1 的跨进程 Revision、Source 编辑、多文件、MCP 扩展等未排期
 
 ## 3. 阶段路线图
 
@@ -45,7 +45,7 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 | M2 | ✅ 完成 | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 ✅ 命令 Schema 与事务、010 ✅ Revision/幂等/结构化 Diff、011 ✅ 保留格式 TOML 写回 |
 | M3 | ✅ 完成 | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 ✅ 工程打开与 Designer 外壳、013 ✅ Canvas 与 Tree、014 ✅ Inspector/Source/Diagnostics、015 ✅ 外部修改同步 |
 | M4 | ✅ 完成 | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 ✅ 领域协议与 CLI/JSONL、017 ✅ MCP Adapter、018 ✅ Agent Skill 与端到端 |
-| M5 | 未开始 | 完整性与稳定性 | 设计基线 §12 A01–A18 全部通过 | 019 多文件/性能/崩溃恢复/迁移与验收报告 |
+| M5 | ✅ 完成 | 完整性与稳定性 | 设计基线 §12 A01–A18 全部通过 | 019 ✅ 多文件/性能/崩溃恢复/迁移与验收报告 |
 
 > 卡号为路线图预留；创建时以实际内容为准，不改已存在的编号。
 > M1 的 005–008 尚未创建，进入 M1 时按 `000-template.md` 逐张创建。
@@ -54,14 +54,15 @@ Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Ag
 
 | # | 卡 | 方向 | 说明 | 所需授权 |
 |---|---|---|---|---|
-| 1 | 019 | 完整性与验收 | 多文件/性能/崩溃恢复/迁移检查，汇总 A01–A18 | Rearchitect |
+| — | — | v0.1 已完成 | A01–A18 验收报告：`docs/acceptance-v0.1.md` | — |
 
 > 队列规则：一次只推进一张任务卡；没有用户确认的方向不写入队列，也不开工。
-> M4 已完成；M5 019 待创建任务卡并确认范围。
+> v0.1 M0–M5 已收口；post-v0.1 需求需重新确认范围。
 
 ## 5. 验收映射（设计基线 §12）
 
-A01–A09 已由 M1 覆盖；A10 起进入 M2/M3/M4。
+A01–A18 已在 `docs/acceptance-v0.1.md` 汇总通过，证据包括 146 Core/Protocol/MCP/CLI 测试、
+5 个 Tauri 宿主测试、26 个样例数据集、MCP e2e 与恢复/性能/边界测试。
 
 | 验收 | 项 | 首次可验证卡 |
 |---|---|---|
@@ -104,17 +105,15 @@ A01–A09 已由 M1 覆盖；A10 起进入 M2/M3/M4。
 
 ## 7. 已知限制
 
-- M3 的 Source 只读；直接 Source 编辑、Binding/Connection 编辑 UI、模块 Source 未做；
+- v0.1 的 Source 只读；直接 Source 编辑、Binding/Connection 编辑 UI、模块 Source 未做；
 - 外部修改用 2s 轮询 + 整项目 digest，无文件系统 watcher/三向合并；
-- Reload 丢弃未提交 Review，节点回到自动布局（layout 文件仍保留）；
-- 016 协议无 request 幂等持久化；CLI apply 只接受 transaction 文件；
-- 017 MCP 无 subscriptions/progress/cancellation/分页/认证，单进程单项目；
-- 018 无自动化“LLM 按 Skill 执行”的评测；e2e 覆盖 MCP 工具链；
-- 选择/聚焦/拖动有实现与布局 round-trip 测试，但无前端自动化 UI 测试；
-- Tauri app 不加入根 Cargo workspace，使用独立 `src-tauri/Cargo.lock`；
-- Revision 历史与 request 幂等记录只在当前工作区内存中，进程重启丢失；
-- 写回没有 fsync/崩溃恢复；只支持单 composition 入口；
-- 设计基线仍是 Draft：字段以 `docs/spec/` 为准，修改设计基线需 Rearchitect 授权。
+- 崩溃恢复只处理 composition 写回 `.bak-*`，没有 fsync 级断电保证；
+- Revision 历史与 request 幂等只在进程内；跨进程持久化未实现；
+- 只支持单 composition 入口；多文件/import 是显式不支持项；
+- MCP 无 subscriptions/progress/cancellation/分页/认证，单进程单项目；
+- 无前端自动化 UI 测试；Agent 无自动化 LLM Skill 评测（MCP e2e 覆盖工具链）；
+- 设计基线仍是 Draft；字段以 `docs/spec/` 为准；
+- v0.1 不实现运行时、构建、部署、代码生成与在线模块市场。
 
 ## 8. 执行规则
 
@@ -153,8 +152,14 @@ cargo run -p composition-cli -- jsonl examples/minimal-project
 cargo run -p composition-mcp -- --project examples/minimal-project
 cargo test -p composition-mcp --test e2e
 
-# M5（019）
-# 完整性与验收
+# M5（019 完成）
+cargo test --workspace
+cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+cargo run -p composition-mcp -- --project examples/minimal-project
+cargo test -p composition-mcp --test e2e
+
+# v0.1 验收
+# docs/acceptance-v0.1.md
 ```
 
 ## 10. 行动日志
@@ -180,3 +185,4 @@ cargo test -p composition-mcp --test e2e
 | 2026-11-26 | 016 | 新增 `composition-protocol`：inspect/resolve/validate/source + prepare/apply；CLI query/apply/jsonl；4 protocol + 2 CLI 测试；协议文档；137 Core 测试 |
 | 2026-11-26 | 017 | 新增 `composition-mcp`：JSON-RPC 2.0 stdio、initialize/tools/resources、6 tools/4 resources；4 MCP 测试；141 Core 测试 |
 | 2026-11-26 | 018 | Agent Skill/MCP 配置；真实 MCP stdio e2e（inspect→resolve→prepare→apply→validate→source）；142 Core 测试；**M4 完成** |
+| 2026-11-26 | 019 | 恢复中断写回 `.bak-*`；80 实例性能、单入口、unsupported schema_version、恢复测试；A01–A18 验收报告；146 Core 测试；**M5/v0.1 完成** |

@@ -10,13 +10,13 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1（Draft） |
-| 当前阶段 | M4 完成：M1–M3 + 016 Protocol/CLI + 017 MCP + 018 Agent Skill/e2e；M5 完整性与验收未开始 |
+| 当前阶段 | v0.1 完成（M0–M5）；A01–A18 验收报告已生成；post-v0.1 未排期 |
 | 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
-| 验证入口 | Core：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；Protocol：`cargo run -p composition-cli -- query examples/minimal-project validate`；MCP：`cargo test -p composition-mcp --test e2e`；Designer：`cd apps/designer && npm run build`、`npm run desktop`、`cargo test --manifest-path src-tauri/Cargo.toml` |
+| 验证入口 | Core：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；Protocol：`cargo run -p composition-cli -- query examples/minimal-project validate`；MCP：`cargo test -p composition-mcp --test e2e`；Designer：`cd apps/designer && npm run build`、`npm run desktop`、`cargo test --manifest-path src-tauri/Cargo.toml`；验收：`docs/acceptance-v0.1.md` |
 | working 入口 | [`working/plan.md`](../../working/plan.md) |
 
 ## 2. 目标结构与依赖方向
@@ -106,6 +106,7 @@
 | Core | `crates/composition-domain`（005）、`crates/composition-toml`（006）、`crates/composition-core`（007）、`crates/composition-cli`（008）、`crates/composition-editor`（009） |
 | Designer | `apps/designer/src-tauri`（Tauri 2 host，012）、`apps/designer/src`（React shell，012） |
 | Agent 协议与 Adapter | `crates/composition-protocol`（016）、`crates/composition-mcp`（017–018）、`agent/`（Skill/MCP 配置） |
+| 验收 | `docs/acceptance-v0.1.md` |
 | 决策 | `docs/adr/` |
 | 变更声明 | `changes/` |
 | 计划与任务卡 | `working/` |
@@ -118,8 +119,8 @@
 - M3 012–015 完成：`apps/designer` 的项目/事务/layout/source/external 命令、React
   Explorer/Canvas/Tree/Inspector/Diagnostics、CodeMirror 只读 Source、外部变更轮询/Reload；
   5 个宿主测试；
-- M4 016–018 完成：protocol/CLI、MCP stdio、Agent Skill/MCP 配置、真实 MCP e2e；
-  142 Core 测试；M5 完整性/验收未开始；
+- M5 019 完成：中断写回恢复、80 实例性能、单入口/版本边界、A01–A18 验收报告；
+  v0.1 M0–M5 收口；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- 尚未冻结的是 M5 019 验收范围：多文件/性能/崩溃恢复/迁移与 A01–A18 报告；
+- v0.1 已冻结；post-v0.1 范围（跨进程 Revision、Source 编辑、多文件、MCP 扩展）未排期；
   开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。

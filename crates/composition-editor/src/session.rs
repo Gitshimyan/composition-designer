@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 use composition_core::{validate_loaded, validate_project, ValidationResult};
 use composition_domain::{ConfigValue, Diagnostic, ErrorCode, LocalId, ObjectId, PortRef};
@@ -23,7 +24,15 @@ pub struct ProjectSession {
 impl ProjectSession {
     pub fn open(root: impl AsRef<Path>) -> Result<Self, Vec<Diagnostic>> {
         let root = root.as_ref().to_path_buf();
-        let loaded = load_project(&root);
+        let mut loaded = load_project(&root);
+        if loaded.composition_file().is_none() {
+            if let Some(project) = loaded.project.as_ref() {
+                let entry = project.composition_entry.clone();
+                if recover_composition_file(&root, &entry) {
+                    loaded = load_project(&root);
+                }
+            }
+        }
         let workspace = EditorWorkspace::from_validation(validate_loaded(&loaded))?;
         let Some(project) = loaded.project.as_ref() else {
             return Err(loaded.diagnostics);
@@ -165,6 +174,46 @@ impl ProjectSession {
         let _ = fs::remove_file(&backup);
         Ok(validation)
     }
+}
+
+/// Restore a missing composition entry from an interrupted `.bak-*` write.
+/// Only the newest matching backup is restored; stale `.tmp-*` files are left alone.
+fn recover_composition_file(root: &Path, entry: &str) -> bool {
+    let path = root.join(entry);
+    if path.exists() {
+        return false;
+    }
+    let Some(parent) = path.parent() else {
+        return false;
+    };
+    let Some(file_name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    let prefix = format!(".{file_name}.bak-");
+    let Ok(entries) = fs::read_dir(parent) else {
+        return false;
+    };
+    let mut newest: Option<(SystemTime, PathBuf)> = None;
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if !name.starts_with(&prefix) {
+            continue;
+        }
+        let modified = entry
+            .metadata()
+            .and_then(|metadata| metadata.modified())
+            .unwrap_or(SystemTime::UNIX_EPOCH);
+        if newest
+            .as_ref()
+            .is_none_or(|(current, _)| modified > *current)
+        {
+            newest = Some((modified, entry.path()));
+        }
+    }
+    let Some((_, backup)) = newest else {
+        return false;
+    };
+    fs::rename(backup, &path).is_ok()
 }
 
 fn transaction_failed(message: impl Into<String>) -> Diagnostic {
