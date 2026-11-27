@@ -51,5 +51,7 @@
   - 8 个 change-gate 单元测试 + 1 个真实仓库集成测试；
   - workspace **164 passed**；
   - clippy / fmt 通过。
-- 待 CI 验证：block 模式在 PR 上通过后合并；详见 `docs/reviews/2026-11-27-machine-gate.md`。
+- CI 验证：
+  - PR #4 CI pass（run 46000619083，4m57s），已合并（`b3d6790`）；
+  - 合并后 main push CI pass（run 46001377088）。
 - 下一步：M7 Source Authoring（需重新立卡与授权）。

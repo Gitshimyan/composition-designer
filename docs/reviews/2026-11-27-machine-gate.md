@@ -45,6 +45,8 @@ CI：
 
 - PR #2（`gov/m6-g04`）CI 通过（run 45997141339），已合并到 `main`；
 - 合并后 main push CI 通过（run 45997795133）；
+- G05 block 模式 PR #4 CI pass（run 46000619083），合并为 `b3d6790`；
+- 合并后 main push CI pass（run 46001377088）；
 - 远端仅保留 `main` 分支。
 
 ## 2. 报告结果

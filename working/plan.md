@@ -297,7 +297,7 @@ npm run test:ui
 | 2026-11-27 | 026 | 完整 Change Review：分类、Before/After、命令、依赖影响、全部诊断；28 UI 通过；027 总验收 |
 | 2026-11-27 | 027 | Glide 全链路 CLI/Protocol 测试通过；PR 分支保护 404，UW-029 待配置；M6 功能验收完成 |
 | 2026-11-27 | G04 | change-gate report 接入 CI；分支保护启用；失败探针 PR #1 被 BLOCKED；集成 PR #2 通过并合并；M6 完成 |
-| 2026-11-27 | G05 | change-gate 切换 block；重叠 Manifest 选择修复；UW-030 关闭 |
+| 2026-11-27 | G05 | change-gate 切换 block；重叠 Manifest 选择修复；PR #4 CI 通过并合并；UW-030 关闭 |
 
 ## 10. 下一步
 
