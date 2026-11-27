@@ -1,8 +1,8 @@
 # G04 — 机器授权/覆盖门禁
 
 - 状态：done
-- coverage_status：complete_with_deferred_items
-- open_items：UW-030
+- coverage_status：complete
+- open_items：无
 - 目标：让 Manifest、实际 diff 与需求覆盖状态可自动核对，先报告、后阻断；避免“声明覆盖”继续只靠人工。
 - authorization：
   - required：extend, rearchitect
@@ -66,8 +66,8 @@
   - `changes/000-template.yaml` 增加 `coverage_status`；
   - **UW-010 关闭**（机器门禁 report 实现）。
 - 未启用 / 后续：
-  - CI 仍使用 report 模式；block 模式需先收集误报并审计规则；
-  - 登记 **UW-030**（`deferred`），由后续治理任务切换。
+  - UW-030 已由 G05 关闭：CI 切换为 block 模式；
+  - block 模式仍只检查声明与 diff，不替代 Core/人工评审。
 - 验证：
   - `cargo test --workspace`：163 passed；
   - `cargo clippy --workspace --all-targets -- -D warnings`：通过；

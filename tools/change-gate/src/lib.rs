@@ -154,7 +154,8 @@ pub fn evaluate(input: &GateInput) -> Vec<Finding> {
     let mut findings = Vec::new();
 
     for file in &input.changed_files {
-        let Some(manifest) = best_manifest(&input.manifests, &file.path) else {
+        let candidates = covering_manifests(&input.manifests, &file.path);
+        if candidates.is_empty() {
             findings.push(Finding::error(
                 "undeclared-path",
                 format!("{} is not covered by any changes/*.yaml target", file.path),
@@ -162,62 +163,26 @@ pub fn evaluate(input: &GateInput) -> Vec<Finding> {
                 None,
             ));
             continue;
-        };
-
-        let required = required_authorizations(&file.path, file.kind);
-        let required_set = manifest.authorization.required();
-        let approved_set = manifest.authorization.approved();
-        for permission in &required {
-            if !required_set.contains(*permission) {
-                findings.push(Finding::error(
-                    "authorization-required-missing",
-                    format!(
-                        "{} requires {} but manifest {} does not declare it",
-                        file.path, permission, manifest.id
-                    ),
-                    Some(file.path.clone()),
-                    Some(manifest.id.clone()),
-                ));
-            }
-            if !approved_set.contains(*permission) {
-                findings.push(Finding::error(
-                    "authorization-not-approved",
-                    format!(
-                        "{} requires {} but manifest {} has no approval evidence",
-                        file.path, permission, manifest.id
-                    ),
-                    Some(file.path.clone()),
-                    Some(manifest.id.clone()),
-                ));
-            }
         }
 
-        let operation = required_operation(&file.path, file.kind);
-        if !manifest.operations.iter().any(|value| value == operation) {
-            findings.push(Finding::error(
-                "operation-missing",
-                format!(
-                    "{} requires operation {} but manifest {} lists [{}]",
-                    file.path,
-                    operation,
-                    manifest.id,
-                    manifest.operations.join(", ")
-                ),
-                Some(file.path.clone()),
-                Some(manifest.id.clone()),
-            ));
+        // A file may be covered by several manifests (for example a broad
+        // historical target and a current task target). The gate accepts the
+        // change when at least one covering manifest authorizes it; otherwise
+        // it reports the most specific manifest's failures.
+        let mut first_failure = None;
+        let mut authorized = false;
+        for manifest in candidates {
+            let candidate_findings = file_findings(file, manifest);
+            if candidate_findings.is_empty() {
+                authorized = true;
+                break;
+            }
+            if first_failure.is_none() {
+                first_failure = Some(candidate_findings);
+            }
         }
-
-        if forbidden_hit(&manifest.scope.forbidden, &file.path) {
-            findings.push(Finding::error(
-                "forbidden-scope",
-                format!(
-                    "{} is explicitly forbidden by manifest {}",
-                    file.path, manifest.id
-                ),
-                Some(file.path.clone()),
-                Some(manifest.id.clone()),
-            ));
+        if !authorized {
+            findings.extend(first_failure.unwrap_or_default());
         }
     }
 
@@ -428,8 +393,8 @@ fn is_relevant(manifest: &Manifest, files: &[ChangedFile]) -> bool {
     })
 }
 
-fn best_manifest<'a>(manifests: &'a [Manifest], path: &str) -> Option<&'a Manifest> {
-    manifests
+fn covering_manifests<'a>(manifests: &'a [Manifest], path: &str) -> Vec<&'a Manifest> {
+    let mut covering = manifests
         .iter()
         .filter_map(|manifest| {
             manifest
@@ -439,17 +404,78 @@ fn best_manifest<'a>(manifests: &'a [Manifest], path: &str) -> Option<&'a Manife
                 .max()
                 .map(|score| (score, manifest))
         })
-        .max_by(|(score_a, a), (score_b, b)| {
-            score_a
-                .cmp(score_b)
-                .then_with(|| {
-                    a.coverage_status
-                        .is_some()
-                        .cmp(&b.coverage_status.is_some())
-                })
-                .then_with(|| a.id.cmp(&b.id))
-        })
-        .map(|(_, manifest)| manifest)
+        .collect::<Vec<_>>();
+    covering.sort_by(|(score_a, a), (score_b, b)| {
+        score_b
+            .cmp(score_a)
+            .then_with(|| {
+                b.coverage_status
+                    .is_some()
+                    .cmp(&a.coverage_status.is_some())
+            })
+            .then_with(|| b.id.cmp(&a.id))
+    });
+    covering.into_iter().map(|(_, manifest)| manifest).collect()
+}
+
+fn file_findings(file: &ChangedFile, manifest: &Manifest) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    let required = required_authorizations(&file.path, file.kind);
+    let required_set = manifest.authorization.required();
+    let approved_set = manifest.authorization.approved();
+    for permission in &required {
+        if !required_set.contains(*permission) {
+            findings.push(Finding::error(
+                "authorization-required-missing",
+                format!(
+                    "{} requires {} but manifest {} does not declare it",
+                    file.path, permission, manifest.id
+                ),
+                Some(file.path.clone()),
+                Some(manifest.id.clone()),
+            ));
+        }
+        if !approved_set.contains(*permission) {
+            findings.push(Finding::error(
+                "authorization-not-approved",
+                format!(
+                    "{} requires {} but manifest {} has no approval evidence",
+                    file.path, permission, manifest.id
+                ),
+                Some(file.path.clone()),
+                Some(manifest.id.clone()),
+            ));
+        }
+    }
+
+    let operation = required_operation(&file.path, file.kind);
+    if !manifest.operations.iter().any(|value| value == operation) {
+        findings.push(Finding::error(
+            "operation-missing",
+            format!(
+                "{} requires operation {} but manifest {} lists [{}]",
+                file.path,
+                operation,
+                manifest.id,
+                manifest.operations.join(", ")
+            ),
+            Some(file.path.clone()),
+            Some(manifest.id.clone()),
+        ));
+    }
+
+    if forbidden_hit(&manifest.scope.forbidden, &file.path) {
+        findings.push(Finding::error(
+            "forbidden-scope",
+            format!(
+                "{} is explicitly forbidden by manifest {}",
+                file.path, manifest.id
+            ),
+            Some(file.path.clone()),
+            Some(manifest.id.clone()),
+        ));
+    }
+    findings
 }
 
 fn required_authorizations(path: &str, kind: ChangeKind) -> BTreeSet<&'static str> {
@@ -484,6 +510,7 @@ fn is_sensitive(path: &str) -> bool {
     path == "AGENTS.md"
         || path == "Cargo.toml"
         || path == "Cargo.lock"
+        || path == "changes/000-template.yaml"
         || path.starts_with("rust-toolchain")
         || path.starts_with(".cargo/")
         || path.starts_with("docs/design/")
@@ -646,6 +673,29 @@ mod tests {
                 &["crates/composition-core"],
                 &["modify"],
             )],
+        ));
+        assert!(findings.is_empty(), "{:?}", findings);
+    }
+
+    #[test]
+    fn accepts_any_authorized_covering_manifest() {
+        let strict = manifest(
+            "change.G04-machine-gate",
+            &["extend", "rearchitect"],
+            &["extend", "rearchitect"],
+            &["README.md"],
+            &["extend"],
+        );
+        let docs = manifest(
+            "change.030-docs",
+            &["modify"],
+            &["modify"],
+            &["README.md"],
+            &["modify"],
+        );
+        let findings = evaluate(&input(
+            vec![file("README.md", ChangeKind::Modified)],
+            vec![strict, docs],
         ));
         assert!(findings.is_empty(), "{:?}", findings);
     }

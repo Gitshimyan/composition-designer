@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成 |
-| 当前阶段 | v0.2 M6 完成（020–027）；G01–G04 完成（change-gate report + 分支保护）；M7 候选 |
+| 当前阶段 | v0.2 M6 完成（020–027）；G01–G05 完成（change-gate block 已启用）；M7 候选 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -45,7 +45,7 @@
 
 | 工具 | 状态 | 职责 | 依赖 |
 |---|---|---|---|
-| `composition-change-gate` | 已建立（G04） | Manifest × git diff × task-card coverage 检查；CI report 模式 | serde, serde_yaml, git |
+| `composition-change-gate` | 已建立（G04/G05） | Manifest × git diff × task-card coverage 检查；CI block 模式 | serde, serde_yaml, git |
 
 ### apps/designer/
 
@@ -162,7 +162,8 @@
   全部诊断；28 UI + 154 workspace + 15 Tauri 测试通过；
 - M6 027 完成：Glide 试点副本上的 CLI/Protocol 全链路验证；实例 9、Binding 8、
   Connection 7，写回后重开 valid，Digest 与 Core 一致；workspace 163 测试；
-- G04 完成：`composition-change-gate` report 模式接入 CI；`main` 分支保护启用，
-  失败探针 PR #1 被 BLOCKED；block 模式待 UW-030；
+- G04 完成：`composition-change-gate` 接入 CI；`main` 分支保护启用，
+  失败探针 PR #1 被 BLOCKED；
+- G05 完成：CI 切换 block 模式；重叠 Manifest 任一授权即可；workspace 164 测试；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

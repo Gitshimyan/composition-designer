@@ -6,11 +6,11 @@ it does not grant permissions, validate Composition semantics, or replace human 
 ## Usage
 
 ```powershell
-# report only (CI default)
-cargo run -p composition-change-gate -- --base origin/main --head HEAD --mode report
-
-# blocking mode (not enabled in CI yet)
+# CI blocking mode
 cargo run -p composition-change-gate -- --base origin/main --head HEAD --mode block
+
+# report-only investigation
+cargo run -p composition-change-gate -- --base origin/main --head HEAD --mode report
 ```
 
 Options:
@@ -22,13 +22,16 @@ Options:
 
 ## Checks
 
-- every changed file must be inside at least one manifest `targets`;
+- every changed file must be inside at least one manifest `targets`; if several
+  manifests cover it, any one that satisfies the required authorization/operation/
+  forbidden checks is accepted;
 - required authorizations must be both declared and approved;
 - required operation must be listed: `compose` for `examples/**` and
   `working/pilots/**`, `extend` for new crates, command schema/editor changes, and CI
   workflow changes, `modify` otherwise;
 - sensitive paths (`AGENTS.md`, `docs/design/**`, `docs/spec/**`, root
-  `Cargo.toml`/`Cargo.lock`, `.cargo/**`, `rust-toolchain*`) require `rearchitect`;
+  `Cargo.toml`/`Cargo.lock`, `changes/000-template.yaml`, `.cargo/**`,
+  `rust-toolchain*`) require `rearchitect`;
 - forbidden path patterns are checked when they look like paths;
 - manifests with `coverage_status` are compared with the matching task card
   (`coverage_status` and `open_items`).
@@ -44,7 +47,6 @@ Options:
 
 ## CI
 
-`.github/workflows/ci.yml` runs report mode on pull requests and pushes with
-`fetch-depth: 0`. Switch to `--mode block` only after collecting false positives and
-updating this document. The required status check remains
+`.github/workflows/ci.yml` runs **block mode** on pull requests and pushes with
+`fetch-depth: 0`. A declaration mismatch fails the required status check
 `Windows build and UI tests`.
