@@ -12,5 +12,5 @@ mod paths;
 
 pub use digest::compute_source_digest;
 pub use loaded_file::{FileRole, LoadedFile};
-pub use loader::{load_project, LoadedWorkspace};
+pub use loader::{load_project, load_project_with_composition_text, LoadedWorkspace};
 pub use paths::normalize_relative_path;

@@ -77,6 +77,33 @@ impl EditorWorkspace {
         &self.history
     }
 
+    pub fn has_request(&self, request_id: &str) -> bool {
+        self.requests.contains_key(request_id)
+    }
+
+    /// Source 文本提交后更新模型、digest、历史与 Revision；不经过对象命令。
+    pub(crate) fn record_source_commit(
+        &mut self,
+        validation: ValidationResult,
+        request_id: String,
+        diff: ModelDiff,
+    ) {
+        let seq = self.revision().seq + 1;
+        let digest = validation.source_digest.clone();
+        let mut model = validation
+            .model
+            .expect("committed source validation has a model");
+        model.revision = Some(Revision::new(seq, digest.clone()));
+        model.diagnostics = validation.diagnostics.clone();
+        self.model = model;
+        self.source_map = validation.source_map;
+        self.history.push(RevisionRecord {
+            revision: Revision::new(seq, digest),
+            request_id,
+            diff,
+        });
+    }
+
     /// 011 落盘并重新解析后，用新的 SourceMap/digest 刷新当前 Revision。
     pub(crate) fn refresh_source(&mut self, validation: ValidationResult) {
         let seq = self.revision().seq;
@@ -110,6 +137,7 @@ impl EditorWorkspace {
             model,
             diagnostics,
             diff,
+            ..
         } = &outcome
         {
             self.model = model.as_ref().clone();
@@ -157,6 +185,7 @@ impl EditorWorkspace {
                     model: Box::new(record.model.clone()),
                     diagnostics: record.diagnostics.clone(),
                     diff: record.diff.clone(),
+                    source_diff: None,
                 };
             }
             return rejected(Diagnostic::new(
@@ -211,6 +240,7 @@ impl EditorWorkspace {
             model: Box::new(model),
             diagnostics: result.diagnostics,
             diff,
+            source_diff: None,
         }
     }
 }
@@ -221,11 +251,13 @@ pub enum TransactionOutcome {
         model: Box<CompositionModel>,
         diagnostics: Vec<Diagnostic>,
         diff: ModelDiff,
+        source_diff: Option<crate::SourceDiff>,
     },
     Replayed {
         model: Box<CompositionModel>,
         diagnostics: Vec<Diagnostic>,
         diff: ModelDiff,
+        source_diff: Option<crate::SourceDiff>,
     },
     Rejected {
         diagnostics: Vec<Diagnostic>,
@@ -259,6 +291,15 @@ impl TransactionOutcome {
     pub fn diff(&self) -> Option<&ModelDiff> {
         match self {
             Self::Accepted { diff, .. } | Self::Replayed { diff, .. } => Some(diff),
+            Self::Rejected { .. } => None,
+        }
+    }
+
+    pub fn source_diff(&self) -> Option<&crate::SourceDiff> {
+        match self {
+            Self::Accepted { source_diff, .. } | Self::Replayed { source_diff, .. } => {
+                source_diff.as_ref()
+            }
             Self::Rejected { .. } => None,
         }
     }
@@ -601,6 +642,12 @@ fn apply_command(model: &mut CompositionModel, command: &Command) -> Result<(), 
                 ));
             };
             model.composition.connections.remove(index);
+        }
+        Command::ReplaceSource { .. } => {
+            return Err(invalid_command(
+                "replace_source must be handled by ProjectSession and cannot be mixed with object commands",
+                ObjectId::composition(),
+            ));
         }
     }
     Ok(())

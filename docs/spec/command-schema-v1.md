@@ -1,7 +1,7 @@
 # Command Schema v1（M2 009）
 
 - 状态：M2 009–011 冻结（2026-11-26）；v0.2 025 经用户明确授权 **Extend** 增加
-  Dependency Provider 命令
+  Dependency Provider 命令；v0.3 029 经 ADR-0005 增加 Source 文本命令
 - 范围：`composition-editor` 的编辑命令、原子事务、Revision 历史/幂等、结构化 Diff 与 TOML 写回
 - 关联：[`composition-schema-v1.md`](./composition-schema-v1.md)、[`domain-model-v1.md`](./domain-model-v1.md)
 
@@ -46,6 +46,7 @@ TOML 落盘、`source_digest` 刷新、结构化 Diff 与 request ID 幂等分�
 | `create_connection` | `id`, `from`, `to` | 新增 Port Connection；`from`/`to` 为 `{instance, port}` |
 | `update_connection` | `id`, `from`, `to` | 替换连接端点 |
 | `delete_connection` | `id` | 删除 Connection |
+| `replace_source` | `source` | 替换当前 Composition 入口的完整 TOML 文本；必须独占事务 |
 
 `config.value` 是原生 JSON 值（string / integer / float / boolean / array），与
 `composition-schema-v1.md` 的 v0.1 配置类型一致；不支持 object。
@@ -58,6 +59,15 @@ Dependency Provider 命令（v0.2 025 Extend）：
   → 候选模型 L2–L7 诊断（`contract-dependency-unknown`、`dependency-provider-invalid`、
   `dependency-self` 等）；
 - Unset 后按现有自动解析规则重新计算；是否歧义/无法解析由候选校验给出。
+
+Source 命令（029 / ADR-0005）：
+
+- `replace_source` 的 `source` 是完整 Composition TOML 文本；
+- 必须独占事务，不能与对象命令混合；混合 → `edit-invalid-command`；
+- `prepare` 用候选文本重新加载/验证，返回文本 `source_diff`、对象 `ModelDiff` 与完整诊断；
+- `apply` 校验 base Revision/磁盘 digest，原样写入并备份/替换/重验，失败回滚；
+- 只编辑 `workspace.composition` 指向的入口；模块定义仍只读；
+- 不做自动格式化、隐式修复、三向合并。
 
 模块定义（`modules/**/module.toml`）在 v0.1 是只读的，不在命令范围内。
 
@@ -114,6 +124,7 @@ Dependency Provider 命令（v0.2 025 Extend）：
 ```
 
 - 覆盖实例、Binding、Connection；对象值是该对象的规范化 JSON。
+- `replace_source` 额外返回 `source_diff: { before, after }`（完整文本；行级展示由 UI 负责）。
 - `kind` 为 `added` / `removed` / `modified`；未变化的字段不单独列出，修改时给完整 before/after。
 - 重命名实例表现为旧 ID `removed` + 新 ID `added`；引用它的 Binding/Connection 是 `modified`。
 - Diff 即本次事务的**影响集合**；调用方可用它做预览或影响分析。
@@ -139,7 +150,8 @@ Dependency Provider 命令（v0.2 025 Extend）：
 
 范围：只写 `workspace.composition` 指向的单个 composition 文件；`project.toml`、模块定义与
 `.designer/**` 不写。未编辑部分的注释与排版由 `toml_edit` 保留；新建表使用默认排版。
-写回是备份/替换/回滚，不提供 fsync 级崩溃恢复。
+`replace_source` 直接写入用户文本，不经过 `toml_edit` 重新格式化；写回是备份/替换/回滚，
+不提供 fsync 级崩溃恢复。
 
 ## 8. 未包含（后续卡）
 

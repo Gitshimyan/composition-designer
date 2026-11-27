@@ -5,7 +5,7 @@ use std::sync::Mutex;
 
 use composition_core::{validate_project, ValidationResult};
 use composition_domain::{CompositionModel, Diagnostic, ErrorCode, LocalId, ObjectId, Severity};
-use composition_editor::{ModelDiff, ProjectSession, Transaction};
+use composition_editor::{ModelDiff, ProjectSession, SourceDiff, Transaction};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use toml_edit::{value, DocumentMut, Item, Table};
@@ -41,6 +41,7 @@ pub struct EditResponse {
     pub accepted: bool,
     pub replayed: bool,
     pub diff: Option<ModelDiff>,
+    pub source_diff: Option<SourceDiff>,
     pub diagnostics: Vec<Diagnostic>,
     pub snapshot: ProjectSnapshot,
 }
@@ -153,6 +154,7 @@ fn conflict_response(session: &ProjectSession) -> EditResponse {
         accepted: false,
         replayed: false,
         diff: None,
+        source_diff: None,
         diagnostics: vec![Diagnostic::new(
             ErrorCode::EditRevisionConflict,
             "project changed on disk; reload before editing",
@@ -169,11 +171,13 @@ fn edit_response(
     let accepted = outcome.is_accepted();
     let replayed = outcome.is_replayed();
     let diff = outcome.diff().cloned();
+    let source_diff = outcome.source_diff().cloned();
     let diagnostics = outcome.diagnostics().to_vec();
     EditResponse {
         accepted,
         replayed,
         diff,
+        source_diff,
         diagnostics,
         snapshot: snapshot_from_session(session),
     }
@@ -456,6 +460,34 @@ mod tests {
                 fs::copy(entry.path(), target_path).unwrap();
             }
         }
+    }
+
+    #[test]
+    fn source_transaction_returns_source_diff() {
+        let source = PathBuf::from(example("minimal-project"));
+        let root =
+            std::env::temp_dir().join(format!("composition-source-ui-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        copy_dir(&source, &root);
+        let mut session = ProjectSession::open(&root).unwrap();
+        let before = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        let after = before.replace("title = \"Minimal Project\"", "title = \"Source UI\"");
+        let transaction = Transaction::new(
+            "source-ui-1",
+            session.workspace().revision(),
+            vec![composition_editor::Command::ReplaceSource { source: after.clone() }],
+        );
+        let outcome = session.apply(&transaction);
+        let response = edit_response(&session, outcome);
+        assert!(response.accepted);
+        let diff = response.source_diff.expect("source diff");
+        assert_eq!(diff.before, before);
+        assert_eq!(diff.after, after);
+        assert_eq!(
+            fs::read_to_string(root.join("composition/main.toml")).unwrap(),
+            diff.after
+        );
+        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]

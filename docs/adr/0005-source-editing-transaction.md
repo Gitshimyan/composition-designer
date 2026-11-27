@@ -1,7 +1,7 @@
 # ADR-0005 — Source 编辑事务（M7）
 
-- 状态：**Proposed（2026-11-27；等待用户批准 029 实施）**
-- 授权：设计研究；029 实施需 Extend + Rearchitect
+- 状态：**Accepted（2026-11-27；029 已实现）**
+- 授权：用户 2026-11-27 选择 A（独占 `replace_source`），批准 Extend + Rearchitect
 - 关联：[`028-m7-source-design.md`](../../working/tasks/028-m7-source-design.md)、
   [`v0.1-design.md`](../design/v0.1-design.md) §7.4–§7.5、§8、
   [`command-schema-v1.md`](../spec/command-schema-v1.md)、`ProjectSession`
@@ -109,9 +109,12 @@ M7 需要决定：Source 编辑如何进入统一事务、如何审查、如何�
 - **直接文件写入**：绕过 Core，违反单一权威模型；
 - **只改 UI**：无法覆盖 CLI/MCP，也无法保证原子性。
 
-## 待批准
+## 待批准 / 已确认
 
-- 是否接受 A（独占 `replace_source` + 事务复用）；
-- 是否接受首版只编辑 Composition 入口；
-- 是否接受“外部冲突阻止、Reload 丢弃草稿、无三向合并”的首版边界；
-- 029 实施需用户明确 Extend + Rearchitect 授权。
+用户 2026-11-27 选择 A 并批准继续：
+
+- 接受独占 `replace_source` + 事务复用；
+- 首版只编辑 Composition 入口；
+- 外部冲突阻止、Reload 丢弃草稿、无三向合并。
+
+029 已按此实现；030/031 仍待执行。

@@ -1,0 +1,58 @@
+change:
+  id: change.029-source-transaction
+  intent: 实现 ADR-0005 A：事务内独占 replace_source、候选文本验证、文本+对象 Diff、原子写回与冲突守卫。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - extend
+      - rearchitect
+    approved:
+      - modify
+      - extend
+      - rearchitect
+    evidence: "用户 2026-11-27 选择 A（独占 replace_source）并批准继续；ADR-0005 Accepted"
+  targets:
+    - README.md
+    - crates/composition-toml
+    - crates/composition-editor
+    - crates/composition-protocol
+    - crates/composition-cli
+    - apps/designer/src-tauri/src
+    - apps/designer/src/types.ts
+    - docs/spec/command-schema-v1.md
+    - docs/adr
+    - docs/ai/architecture-entry.md
+    - working
+    - changes/029-source-transaction.yaml
+  operations:
+    - modify
+    - extend
+    - rearchitect
+  scope:
+    allowed:
+      - replace_source_command
+      - source_candidate_loader
+      - source_transaction_prepare_apply
+      - source_diff_response
+      - command_schema_and_docs
+      - backend_tests
+    forbidden:
+      - source_editor_ui
+      - module_file_editing
+      - toml_schema
+      - domain_model
+      - design_baseline
+      - three_way_merge
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - cd apps/designer && npm run build
+  notes: 只实现后端 Source 事务与响应字段；CodeMirror 编辑 UI 属 030。

@@ -283,6 +283,7 @@ export interface EditResponse {
   accepted: boolean;
   replayed: boolean;
   diff?: ModelDiff | null;
+  sourceDiff?: { before: string; after: string } | null;
   diagnostics: Diagnostic[];
   snapshot: ProjectSnapshot;
 }

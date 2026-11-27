@@ -71,6 +71,9 @@ pub enum Command {
     DeleteConnection {
         id: LocalId,
     },
+    ReplaceSource {
+        source: String,
+    },
 }
 
 impl Command {
@@ -90,6 +93,7 @@ impl Command {
             Self::CreateConnection { .. } => "create_connection",
             Self::UpdateConnection { .. } => "update_connection",
             Self::DeleteConnection { .. } => "delete_connection",
+            Self::ReplaceSource { .. } => "replace_source",
         }
     }
 }
@@ -109,6 +113,7 @@ pub const COMMAND_KINDS: &[&str] = &[
     "create_connection",
     "update_connection",
     "delete_connection",
+    "replace_source",
 ];
 
 /// 一次原子事务：一组命令 + 读取时的 Revision。
@@ -156,7 +161,7 @@ mod tests {
     fn command_kinds_are_unique() {
         let unique: std::collections::BTreeSet<&str> = COMMAND_KINDS.iter().copied().collect();
         assert_eq!(unique.len(), COMMAND_KINDS.len());
-        assert_eq!(COMMAND_KINDS.len(), 14);
+        assert_eq!(COMMAND_KINDS.len(), 15);
     }
 
     #[test]
@@ -205,6 +210,16 @@ mod tests {
         };
         let value = serde_json::to_value(&unset).unwrap();
         assert_eq!(value["type"], "unset_dependency_provider");
+    }
+
+    #[test]
+    fn replace_source_serializes_as_text_command() {
+        let command = Command::ReplaceSource {
+            source: "[composition]\nschema_version = 1\n".to_owned(),
+        };
+        let value = serde_json::to_value(&command).unwrap();
+        assert_eq!(value["type"], "replace_source");
+        assert!(value["source"].as_str().unwrap().contains("schema_version"));
     }
 
     #[test]
