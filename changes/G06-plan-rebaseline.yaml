@@ -1,0 +1,41 @@
+change:
+  id: change.G06-plan-rebaseline
+  intent: 在 M6 与 G01–G05 完成后重排 v0.3 路线图、决策门与下一张卡，不实现产品能力。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "用户 2026-11-27 明确要求重新编排计划"
+  targets:
+    - README.md
+    - docs/ai/architecture-entry.md
+    - working/archive
+    - working/plan.md
+    - working/decisions/decision-history.md
+    - working/tasks/G06-plan-rebaseline.md
+    - changes/G06-plan-rebaseline.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - plan_rebaseline
+      - roadmap_and_decision_gates
+      - task_card_and_docs
+    forbidden:
+      - product_code
+      - source_editing_implementation
+      - toml_schema
+      - command_protocol
+      - design_baseline
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - markdown relative link check
+    - git diff --check
+    - confirm no changes under crates/ or apps/
+  notes: 只重排计划与归档旧计划；M7 需 028 设计决议与后续明确授权。
