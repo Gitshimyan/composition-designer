@@ -1,12 +1,14 @@
 # Composition Designer
 
-> v0.1 完成：M0–M5 已收口；A01–A18 验收报告见 [docs/acceptance-v0.1.md](./docs/acceptance-v0.1.md)。
+> v0.2 计划中：v0.1 已冻结；下一阶段为 M6 Complete Composition Authoring。当前下一步是
+> [020 自动化质量门禁与 UI 测试](./working/tasks/020-m6-quality-gates.md)，尚未开工。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
 通过 Composition Core 读取或修改它。
 
-- 设计基线：[composition-designer-v0.1-design.md](./composition-designer-v0.1-design.md)
+- 设计基线：[docs/design/v0.1-design.md](./docs/design/v0.1-design.md)
+- 评审与路线图：[docs/reviews/2026-11-27-project-review-and-roadmap.md](./docs/reviews/2026-11-27-project-review-and-roadmap.md)
 - 下一步行动入口：[working/plan.md](./working/plan.md)
 - AI 工作规则：[AGENTS.md](./AGENTS.md)
 - AI 架构入口：[docs/ai/architecture-entry.md](./docs/ai/architecture-entry.md)
@@ -24,7 +26,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 隐式 Adapter、多 Agent 调度、在 TOML 中执行脚本。边界详见设计基线 §1.2 / §14 与
 [ADR-0002](./docs/adr/0002-v01-unsupported.md)。
 
-## 2. 当前状态（2026-11-26）
+## 2. 当前状态（2026-11-27）
 
 | 项 | 状态 |
 |---|---|
@@ -48,6 +50,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
 | Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
+| v0.2 / M6 | 计划中：020 CI/UI 测试为下一卡；未开工 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
@@ -60,7 +63,6 @@ M1–M3 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代�
 
 ```text
 composition-designer/
-├── composition-designer-v0.1-design.md   # 设计基线（Draft）
 ├── AGENTS.md                              # AI 工作规则
 ├── README.md
 │
@@ -91,6 +93,8 @@ composition-designer/
 │
 ├── docs/
 │   ├── adr/                               # 架构决策（0001 冻结、0002 不支持项）
+│   ├── design/                            # 设计基线（v0.1 冻结）
+│   ├── reviews/                           # 外部评审与路线图
 │   ├── ai/                                # AI 入口
 │   ├── spec/                              # M0 冻结规范
 │   └── glossary.md                        # 术语表
@@ -127,7 +131,8 @@ composition-designer/
 
 ## 6. 文档索引
 
-- [设计基线](./composition-designer-v0.1-design.md)
+- [设计基线 v0.1](./docs/design/v0.1-design.md)
+- [2026-11-27 项目评审与路线图](./docs/reviews/2026-11-27-project-review-and-roadmap.md)
 - [AI 架构入口](./docs/ai/architecture-entry.md)
 - [AI 工作规则](./AGENTS.md)
 - [术语表](./docs/glossary.md)

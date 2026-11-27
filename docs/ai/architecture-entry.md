@@ -9,9 +9,10 @@
 | 项 | 值 |
 |---|---|
 | 项目 | Composition Designer |
-| 版本 | v0.1（Draft） |
-| 当前阶段 | v0.1 完成（M0–M5）；A01–A18 验收报告已生成；post-v0.1 未排期 |
-| 设计基线 | [`composition-designer-v0.1-design.md`](../../composition-designer-v0.1-design.md) |
+| 版本 | v0.1 冻结；v0.2 计划中 |
+| 当前阶段 | v0.2 计划中：M6 Complete Composition Authoring；020 CI/UI 测试为下一卡，未开工 |
+| 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
+| 外部评审 | [`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../reviews/2026-11-27-project-review-and-roadmap.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
@@ -97,7 +98,8 @@
 
 | 要改什么 | 去哪里 |
 |---|---|
-| 设计基线（Rearchitect） | `composition-designer-v0.1-design.md` |
+| 设计基线（Rearchitect） | `docs/design/v0.1-design.md` |
+| 评审与路线图 | `docs/reviews/2026-11-27-project-review-and-roadmap.md` |
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
 | TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
 | 编辑命令 Schema | `docs/spec/command-schema-v1.md`（M2 009） |
@@ -122,5 +124,8 @@
 - M5 019 完成：中断写回恢复、80 实例性能、单入口/版本边界、A01–A18 验收报告；
   v0.1 M0–M5 收口；
 - v0.1 显式不支持项见 [`composition-schema-v1.md`](../spec/composition-schema-v1.md) §12；
-- v0.1 已冻结；post-v0.1 范围（跨进程 Revision、Source 编辑、多文件、MCP 扩展）未排期；
-  开始前先取对应任务卡，不要根据设计基线里的示例 TOML 猜字段语义。
+- v0.1 已冻结；评审建议已归档到 `docs/reviews/2026-11-27-project-review-and-roadmap.md`；
+- v0.2 以 M6 Complete Composition Authoring 为第一阶段：020 CI/UI 测试、021 真实项目试点，
+  再做 Instance/Binding/Connection/Dependency 编辑与完整 Change Review；
+- M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
+- 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

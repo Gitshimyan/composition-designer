@@ -1,7 +1,7 @@
 # v0.1 验收报告（M5 019）
 
 - 状态：完成（2026-11-26）
-- 设计基线：[composition-designer-v0.1-design.md](../composition-designer-v0.1-design.md) §12
+- 设计基线：[v0.1-design.md](./design/v0.1-design.md) §12
 - 测试：**146 Core/Protocol/MCP/CLI + 5 Tauri**
 - 验证命令：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、
   `cargo fmt --all --check`、`cargo test --manifest-path apps/designer/src-tauri/Cargo.toml`、

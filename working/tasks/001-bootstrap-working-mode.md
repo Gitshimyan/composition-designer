@@ -8,7 +8,7 @@
 
 ## 背景
 
-本仓库此前只有 `composition-designer-v0.1-design.md`。Composition-First 的 working 模式是：
+本仓库此前只有 `docs/design/v0.1-design.md`。Composition-First 的 working 模式是：
 `working/plan.md` 作为唯一行动入口，`working/tasks/NNN-*.md` 一次一张卡，`working/tmp/`
 放过程文件；配合 `AGENTS.md` 的五级授权（Inspect / Modify / Compose / Extend / Rearchitect）
 与 `changes/` 变更声明。v0.1 设计基线已给出 M0–M5 阶段，可直接映射成任务卡编号。

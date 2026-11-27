@@ -1,188 +1,138 @@
-# Working Plan — Composition Designer v0.1
+# Composition Designer — v0.2 执行计划
 
-> 本文件是**唯一的“下一步行动”入口**。开始行动前先读这里，只从行动队列取一件事做；
-> 做完后回写状态、补行动日志，再规划下一步。
->
-> - 设计基线：`composition-designer-v0.1-design.md`（Draft；修改需 Rearchitect 授权）
-> - 冻结规范：`docs/spec/`（M0 产物，修改需 Rearchitect）
-> - 任务卡（每次行动）：`working/tasks/NNN-<slug>.md`，模板 `working/tasks/000-template.md`
-> - 过程文件（日志、草稿、临时产物）：`working/tmp/`（不提交）
-> - 工作规则：`AGENTS.md`
+> 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）  
+> 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)  
+> 测试基线：146 Core/Protocol/MCP/CLI + 5 Tauri 测试  
+> 当前阶段：v0.2 计划中；M6 未开工  
+> 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
----
+## 1. 目标
 
-## 1. 目标与边界
+v0.2 的目标是 **Complete Composition Authoring**：
 
-**目标**：v0.1 能**正确描述、修改、解析和验证一个完整项目**——TOML 声明 → 规范化
-Composition Model → 可定位诊断 → 原子编辑事务 → Designer 与 Agent 共用同一 Core。
+> 让人类用户和 Agent 都能通过明确、可验证、可审查的方式，完成一个项目的完整声明式组合设计。
 
-**边界**：
+重点不是增加运行时、构建、部署或模块市场，而是把已经存在的领域命令完整、安全地交付到
+Designer、Source 与 Agent 入口。
 
-- Composition Model 是唯一权威模型；Canvas / TOML Source / Agent / CLI 只能通过 Core 读写；
-- TOML 是持久化声明格式，不是执行语言；v0.1 只解析与验证，不运行项目；
-- Binding（结构组合）、Dependency（依赖要求）、Connection（数据/控制）必须分离；
-- 明确不做：运行/构建/部署/代码生成、在线模块市场、复杂版本求解、隐式 Adapter、
-  多 Agent 调度、在 TOML 中执行脚本；
-- 验收以设计基线 §12 的 A01–A18 为准，不以“画布能显示”为标准。
+## 2. 当前状态（2026-11-27）
 
-## 2. 当前状态（2026-11-26）
+- v0.1 M0–M5 已冻结并通过 A01–A18 验收；
+- 评审已归档；v0.1 领域模型、TOML Schema、命令协议不因 v0.2 UI 需求直接修改；
+- 当前 GUI：Canvas/Tree 查看、Inspector 配置编辑、Change Review、只读 Source、外部变更 Reload；
+- 缺口：Instance/Binding/Connection/Dependency 完整编辑、Source 编辑、CI/UI 自动化；
+- 当前没有 M6 代码改动；020 卡处于 planned。
 
-- 阶段：`M5` 完成；**v0.1 M0–M5 全部完成**
-- 已有：7 个 Core/Protocol/MCP crate + `apps/designer` + Agent Skill；146 Core + 5 Tauri 测试；
-  A01–A18 验收报告
-- 验收：`docs/acceptance-v0.1.md`
-- 规模：7 crate + 1 desktop app / 146 Core + 5 host 测试 / 6 MCP tools / 26 样例数据集
-- 后续：post-v0.1 的跨进程 Revision、Source 编辑、多文件、MCP 扩展等未排期
+## 3. 路线图
 
-## 3. 阶段路线图
-
-设计基线 §11 的 M0–M5 与 §16 的执行顺序。一次只推进一张卡；后续阶段的卡在进入该阶段时创建。
-
-| 阶段 | 状态 | 目标 | 退出条件 | 任务卡 |
-|---|---|---|---|---|
-| M0 | ✅ 完成 | Schema 与语义冻结 | 不同实现者只依赖规范与样例也能判断项目是否合法 | 002 领域模型、003 TOML/契约 Schema、004 示例项目集 |
-| M1 | ✅ 完成 | TOML Engine + Core | Core 能独立稳定解析并给出可复现验证结果，不依赖 GUI/Agent | 005 ✅ Rust 工程与领域类型、006 ✅ TOML 加载与 Source Map、007 ✅ 解析与 L1–L7 校验、008 ✅ CLI 与确定性 |
-| M2 | ✅ 完成 | 统一编辑命令与事务 | 非法变更整体失败；合法变更只改预期声明；旧 Revision 不覆盖新修改 | 009 ✅ 命令 Schema 与事务、010 ✅ Revision/幂等/结构化 Diff、011 ✅ 保留格式 TOML 写回 |
-| M3 | ✅ 完成 | 可视化 Designer | GUI 无独立模型，所有编辑经 Core，画布布局不改语义 | 012 ✅ 工程打开与 Designer 外壳、013 ✅ Canvas 与 Tree、014 ✅ Inspector/Source/Diagnostics、015 ✅ 外部修改同步 |
-| M4 | ✅ 完成 | Agent Interface | Agent 不直接改文件即可完成可复现的组合修改 | 016 ✅ 领域协议与 CLI/JSONL、017 ✅ MCP Adapter、018 ✅ Agent Skill 与端到端 |
-| M5 | ✅ 完成 | 完整性与稳定性 | 设计基线 §12 A01–A18 全部通过 | 019 ✅ 多文件/性能/崩溃恢复/迁移与验收报告 |
-
-> 卡号为路线图预留；创建时以实际内容为准，不改已存在的编号。
-> M1 的 005–008 尚未创建，进入 M1 时按 `000-template.md` 逐张创建。
-
-## 4. 下一步行动队列
-
-| # | 卡 | 方向 | 说明 | 所需授权 |
-|---|---|---|---|---|
-| — | — | v0.1 已完成 | A01–A18 验收报告：`docs/acceptance-v0.1.md` | — |
-
-> 队列规则：一次只推进一张任务卡；没有用户确认的方向不写入队列，也不开工。
-> v0.1 M0–M5 已收口；post-v0.1 需求需重新确认范围。
-
-## 5. 验收映射（设计基线 §12）
-
-A01–A18 已在 `docs/acceptance-v0.1.md` 汇总通过，证据包括 146 Core/Protocol/MCP/CLI 测试、
-5 个 Tauri 宿主测试、26 个样例数据集、MCP e2e 与恢复/性能/边界测试。
-
-| 验收 | 项 | 首次可验证卡 |
-|---|---|---|
-| A01 | 项目加载 | 006 |
-| A02 | TOML 解析 | 006 |
-| A03 | Schema 验证 | 007 |
-| A04 | 模块解析 | 007 |
-| A05 | 引用完整性 | 007 |
-| A06 | 组合合法性 | 007 |
-| A07 | 配置验证 | 007 |
-| A08 | 依赖检查 | 007 |
-| A09 | 确定性 | 008 |
-| A10 | 编辑一致性 | 012 / 016（同一 Core 命令） |
-| A11 | 事务安全 | 009 |
-| A12 | Revision 冲突 | 010 |
-| A13 | TOML 保留 | 011 |
-| A14 | 外部变更 | 015 |
-| A15 | Canvas 隔离 | 013 |
-| A16 | Agent 闭环 | 018 |
-| A17 | 错误可操作 | 007 起持续；019 汇总 |
-| A18 | 无隐式兼容 | 全程；007 / 009 / 019 重点检查 |
-
-## 6. 待冻结决策（设计基线 §15）
-
-前 7 项已由 002 / 003 冻结（依据 ADR-0001 与 `docs/spec/`）；后 2 项留待 M2 / M3。
-
-| 决策项 | 结论 | 冻结位置 | 冻结时需要明确 |
+| 阶段 | 目标 | 状态 | 主要交付 |
 |---|---|---|---|
-| 模块版本策略 | 精确版本，不支持范围/预发布 | 003 / ADR-0001 | 已明确 |
-| 模块来源 | 项目内本地目录，`module_roots` 递归扫描 | 003 / ADR-0001 | 已明确 |
-| Composition 拆分 | 单入口，不支持 include/`parts/` | 003 / ADR-0001 | 已明确 |
-| Slot 基数 | `one` / `optional_one` / `many`，`required` 组合固定 | 003 / ADR-0001 | 已明确 |
-| Port Connection | 简单方向/类型/协议/multi 校验；不协商 | 003 / ADR-0001 | 已明确 |
-| Dependency | 模块 ID 依赖；实例映射或唯一匹配；允许环 | 003 / ADR-0001 | 已明确 |
-| 默认值 | 解析时计算，不写回源文件 | 003 / schema §5.3 | 已明确 |
-| Revision | `seq` + `source_digest`（声明文件字节） | 003 / schema §9；持久化实现留 010 | 010 |
-| 模块定义编辑 | 初期只读 | 003 / ADR-0002；入口决策留 012 | 012 |
+| M6 | Complete Composition Authoring | planned | CI、真实项目试点、Instance/Binding/Connection/Dependency、完整 Review |
+| M7 | Source Authoring & Consistency | later | 可编辑 Source、统一提交、外部修改/草稿冲突 |
+| M8 | Agent Authoring Experience | later | 上下文查询、影响分析、事务批处理、Skill 评测 |
+| M9 | Composition Ecosystem | deferred | Module Registry/Versioning、多文件、模板、Adapter；不承诺进入 v0.2 |
 
-未冻结的能力必须显式标记 unsupported，不用隐式行为代替。
+## 4. M6 队列
 
-## 7. 已知限制
+| 顺序 | 卡 | 方向 | 依赖 | 状态 |
+|---|---|---|---|---|
+| 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | planned |
+| 2 | 021 | 真实项目试点与 Schema 复核 | 020；需用户提供代表性子系统 | planned |
+| 3 | 022 | Instance 编辑 | 021 结论 | queued |
+| 4 | 023 | Binding 编辑 | 022 | queued |
+| 5 | 024 | Connection / Dependency 视图 | 022–023 | queued |
+| 6 | 025 | 完整 Change Review | 022–024 | queued |
 
-- v0.1 的 Source 只读；直接 Source 编辑、Binding/Connection 编辑 UI、模块 Source 未做；
-- 外部修改用 2s 轮询 + 整项目 digest，无文件系统 watcher/三向合并；
-- 崩溃恢复只处理 composition 写回 `.bak-*`，没有 fsync 级断电保证；
-- Revision 历史与 request 幂等只在进程内；跨进程持久化未实现；
-- 只支持单 composition 入口；多文件/import 是显式不支持项；
-- MCP 无 subscriptions/progress/cancellation/分页/认证，单进程单项目；
-- 无前端自动化 UI 测试；Agent 无自动化 LLM Skill 评测（MCP e2e 覆盖工具链）；
-- 设计基线仍是 Draft；字段以 `docs/spec/` 为准；
-- v0.1 不实现运行时、构建、部署、代码生成与在线模块市场。
+### 020 — 自动化质量门禁与 UI 测试基础
 
-## 8. 执行规则
+交付：
 
-1. **一次只推进一张任务卡**；卡内清单勾完、验收条件满足才算 done。
-2. 每张卡开始前把状态改成 `in_progress`；结束时写“结果 / 遗留问题”。
-3. 过程文件一律放 `working/tmp/`，可随时删除；不要污染 `crates/`、`apps/`、`examples/`。
-4. 修改范围遵循 Change Manifest：普通实现只动目标 crate 内部与测试；
-   领域模型 / Schema / 命令协议 / 设计基线变化必须 `extend` / `rearchitect`。
-5. 构建 / 测试通过宿主机任务执行；分析、编辑在沙箱内完成。
-6. 阶段完成时更新本文件第 2、3、4 节与行动日志，保持“下一步”只有少数几项。
+- Windows-first GitHub Actions workflow；
+- `cargo test` / clippy / fmt、Tauri host tests；
+- TypeScript 检查、Vite production build；
+- MCP e2e；
+- 前端 UI 自动化基础与首批关键链路；
+- 本地可运行的 `npm run test:ui`（即使尚未推送到 GitHub，也要本地通过）。
 
-## 9. 快速命令
+UI 测试选型在卡内确认：优先 Playwright + 受控 IPC fixture，覆盖前端行为；Tauri 真实宿主
+仍由 host tests 与手动 smoke 覆盖。若真实 WebView2 自动化成本可控，再补 tauri-driver smoke。
 
-```powershell
-# M1（已完成，005–008）
-cargo test --workspace
-cargo test -p composition-cli
-cargo clippy --workspace --all-targets -- -D warnings
-cargo fmt --all --check
-cargo run -p composition-cli -- validate examples/minimal-project --json
+### 021 — 真实项目试点
 
-# M2（009–011 完成）
-cargo test -p composition-editor
-cargo run -p composition-cli -- inspect examples/minimal-project
+需要一个真实项目的代表性子系统，完整声明 Module/Instance/Binding/Dependency/Connection；
+先验证现有 Schema，不先加字段。输出表达能力不足清单与 Extend / Rearchitect 建议。
+此卡在用户提供试点项目前不能开始。
 
-# M3（012–015 完成）
-cd apps/designer
-npm run setup
-npm run build
-npm run desktop
-npm start
+### 022–025 — 完整编辑链
 
-# M4（016–018 完成）
-cargo run -p composition-cli -- query examples/minimal-project validate
-cargo run -p composition-cli -- jsonl examples/minimal-project
-cargo run -p composition-mcp -- --project examples/minimal-project
-cargo test -p composition-mcp --test e2e
+- Instance：创建/删除/重命名/换模块与版本/配置；
+- Binding：Slot 感知的父子结构编辑；
+- Connection / Dependency：三个独立视图，共享同一 Composition Model；
+- Change Review：Before/After、级联影响、完整诊断、确认/取消。
 
-# M5（019 完成）
-cargo test --workspace
-cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
-cargo run -p composition-mcp -- --project examples/minimal-project
-cargo test -p composition-mcp --test e2e
+所有操作必须经 `composition-editor` 事务；GUI 不复制 Slot/Port/Dependency 规则。
 
-# v0.1 验收
-# docs/acceptance-v0.1.md
+## 5. 决策与约束
+
+1. **v0.1 冻结**：M6 优先用现有 Domain/Schema/Commands；试点发现不足再走 Extend/Rearchitect。
+2. **单一权威模型**：Designer、Source、CLI、MCP 都经 Core/ProjectSession；不建第二模型/写入路径。
+3. **三类关系分离**：Binding、Dependency、Connection 不画成同一种无类型边。
+4. **一个修改意图，一个完整事务**：相关命令批量；不同意图分开；prepare 后审查整体 Diff。
+5. **每阶段独立验收**：M6 未完成前不启动 M7/M8；M9 不进入 v0.2 承诺。
+6. **推送规则**：默认只本地 commit；只有用户明确说“推送到远端/发布”时才 push。
+   阶段性评审推送前先确认仓库与分支。
+
+## 6. M6 总验收链路
+
+```text
+选择模块 → 创建 Instance → 建立 Binding → 配置 Property
+→ 建立 Connection / 显式 Dependency Provider
+→ 预览完整 Diff 与影响 → Core 验证 → 确认事务
+→ TOML 保留格式写回 → 重新打开
+→ GUI / CLI / MCP 结果一致
 ```
 
-## 10. 行动日志
+M6 完成标准：至少一个真实项目子系统完成该链路；关键操作可由 UI 自动化或可重复集成测试验证；
+CI 在 PR 上执行并阻止失败合并（推送后生效）。
 
-| 时间 | 卡 | 结果 |
+## 7. 已知限制（v0.1 遗留）
+
+- Source 只读；
+- Binding/Connection/Dependency 编辑 UI 未完成；
+- 无 GitHub Actions、无前端 UI 自动化；
+- 外部修改用 2s 轮询 + 整项目 digest，无 watcher/三向合并；
+- Revision 历史与 request 幂等只在进程内；
+- 单 composition 入口；
+- MCP 无 subscriptions/progress/cancel/auth；
+- 崩溃恢复仅处理 composition `.bak-*`，无 fsync 级保证。
+
+## 8. 常用命令
+
+```powershell
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all --check
+cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+cargo test -p composition-mcp --test e2e
+
+cd apps/designer
+npm run build
+npm run desktop
+# 020 增加后：
+# npm run test:ui
+```
+
+构建、测试、桌面启动通过 `host_task` 执行；分析、编辑在沙箱内完成。
+
+## 9. 日志
+
+| 日期 | 变更 | 结果 |
 |---|---|---|
-| 2026-11-26 | 001 | 建立 working 工作模式（plan / tasks / tmp）、AGENTS 规则、Change Manifest 模板、AI 入口与基础目录；无代码、无门禁 |
-| 2026-11-26 | git | 初始化本地仓库（main），首个提交 `58713e2`（bootstrap） |
-| 2026-11-26 | 002 | 冻结 9 类对象、48 条编号不变量、Binding/Dependency/Connection 对照与对象标识；产出 `domain-model-v1.md`、`glossary.md`、ADR-0001/0002 |
-| 2026-11-26 | 003 | 冻结 `project.toml` / Composition / `module.toml` / `.designer` 字段表、L1–L7 校验顺序、Revision 摘要；63 个验证代码 + 6 个预留代码 |
-| 2026-11-26 | 004 | 建立 26 个数据集（25 个完整项目 + 入口缺失目录），覆盖设计基线 §12.1 的 12 类；临时校验器 26/26 与 `expected.json` 匹配；编辑/外部修改场景留 M2/M3 |
-| 2026-11-26 | 005 | 建立 Cargo workspace 与 `composition-domain`（ID / SchemaVersion / ConfigValue / 契约 / 模块 / 组合 / 诊断 / Revision / 模型）；58 项测试、clippy、fmt 全绿；无 TOML I/O；下一步 006 |
-| 2026-11-26 | 006 | 建立 `composition-toml`（LoadedFile + ImDocument span、路径规则、模块发现、project L2、source_digest）；12 单元 + 15 集成测试；workspace 85 项测试；L3–L7 留给 007 |
-| 2026-11-26 | 007 | 建立 `composition-core`（解码 + L2–L7 + SourceMap + CompositionModel + effective_config）；26/26 数据集代码集合与 expected.json 一致；8 项集成测试；workspace 93 项测试 |
-| 2026-11-26 | 008 | 建立 `composition-cli`（inspect/resolve/validate、JSON、退出码、4 个 golden）；domain serde 序列化；8 项 CLI 测试；workspace 101 项测试；**M1 完成** |
-| 2026-11-26 | 009 | 建立 `composition-editor`（12 命令 + Transaction + EditorWorkspace 原子候选替换）；core 新增 `validate_model`；命令 Schema 文档；3 单元 + 12 集成测试；workspace 116 项测试 |
-| 2026-11-26 | 010 | 加入 Revision 历史、request_id 幂等重放、`edit-duplicate-request`、结构化 Diff/影响集合；4 单元 + 18 集成测试；workspace 123 项测试 |
-| 2026-11-26 | 011 | 新增 `ProjectSession`：`toml_edit` 保留格式局部写回、备份/替换/回滚、写后重新校验与 `source_digest` 刷新；7 个 session 测试；workspace 130 项测试；**M2 完成** |
-| 2026-11-26 | 012 | 建立 `apps/designer`：Tauri 2 + React 19 + TS + Vite 7；`open_project`/`initial_project` 只读快照；Explorer/Composition/Inspector/Diagnostics 外壳；前端构建 + 2 个宿主测试；真机验证 minimal 与 connection errors |
-| 2026-11-26 | 013 | 接入 `@xyflow/react`：实例节点/Binding 边、结构 Tree、选择/聚焦、fit/reset；Tauri `load_layout`/`save_layout` + `.designer/layout.toml`；4 个宿主测试；前端构建 + 真机验证 Canvas |
-| 2026-11-26 | 014 | ProjectSession 编辑 IPC、Inspector 配置编辑、Change Review、只读 CodeMirror Source、诊断跳转；契约 JSON 显式 id；131 Core + 4 host 测试；前端/桌面构建 |
-| 2026-11-26 | 015 | `check_external_changes` / `reload_project`、写前 digest 冲突守卫、2s 轮询/横幅/Reload；5 个宿主测试；**M3 完成** |
-| 2026-11-26 | 016 | 新增 `composition-protocol`：inspect/resolve/validate/source + prepare/apply；CLI query/apply/jsonl；4 protocol + 2 CLI 测试；协议文档；137 Core 测试 |
-| 2026-11-26 | 017 | 新增 `composition-mcp`：JSON-RPC 2.0 stdio、initialize/tools/resources、6 tools/4 resources；4 MCP 测试；141 Core 测试 |
-| 2026-11-26 | 018 | Agent Skill/MCP 配置；真实 MCP stdio e2e（inspect→resolve→prepare→apply→validate→source）；142 Core 测试；**M4 完成** |
-| 2026-11-26 | 019 | 恢复中断写回 `.bak-*`；80 实例性能、单入口、unsupported schema_version、恢复测试；A01–A18 验收报告；146 Core 测试；**M5/v0.1 完成** |
+| 2026-11-26 | M0–M5 | v0.1 完成；146 Core + 5 Tauri 测试；A01–A18 通过 |
+| 2026-11-27 | 结构迁移 | 设计基线 → `docs/design/`；评审 → `docs/reviews/`；根目录清理 |
+| 2026-11-27 | v0.2 计划 | 采纳 M6 为下一阶段；020 质量门禁卡进入 planned；未开工 |
+
+## 10. 下一步
+
+先创建并执行 **020 — 自动化质量门禁与 UI 测试基础**。在此之前不启动 021，也不修改
+v0.1 领域模型。

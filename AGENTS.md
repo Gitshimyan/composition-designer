@@ -7,7 +7,7 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 ## 0. 开始任何行动前
 
 1. 读 [`working/plan.md`](./working/plan.md)，只取其中一张任务卡。
-2. 读设计基线 [`composition-designer-v0.1-design.md`](./composition-designer-v0.1-design.md)
+2. 读设计基线 [`docs/design/v0.1-design.md`](./docs/design/v0.1-design.md)
    的相关章节（执行顺序见 §16，阶段见 §11），以及 [`docs/spec/`](./docs/spec/README.md)
    中与目标对象相关的冻结规范。
 3. 读 [`docs/ai/architecture-entry.md`](./docs/ai/architecture-entry.md) 与目标目录的 README，
@@ -30,7 +30,7 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 
 ## 2. 默认禁止
 
-- 未经 Rearchitect 授权修改 `composition-designer-v0.1-design.md`（设计基线）；
+- 未经 Rearchitect 授权修改 `docs/design/v0.1-design.md`（设计基线）；
 - 在 TOML 中嵌入脚本、命令或任意可执行逻辑；
 - 让 GUI / Agent / CLI 各自维护项目模型；所有读写必须经 Composition Core；
 - 让 GUI 或 Agent 直接写项目文件，绕过解析、验证与事务；
@@ -50,7 +50,13 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 3. 实现前确认影响范围（M2 起用命令生成计划 / 影响分析）；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
-当前阶段（v0.1 M0–M5 完成）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+### 3.1 远端推送规则
+
+默认只在本地 `git commit` 管理历史。**只有用户明确说明“推送到远端/发布到 GitHub”时才执行
+`git push`**；阶段评审需要推送时，先确认目标仓库与分支。不得在普通实现、修文档或结卡后
+自动推送。
+
+当前阶段（v0.1 M0–M5 完成、v0.2 计划中）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
