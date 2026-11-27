@@ -146,3 +146,7 @@ composition-designer/
 - [Agent Skill / MCP 配置](./agent/README.md)
 - [示例项目约定与覆盖矩阵](./examples/README.md)
 - [ADR 模板](./docs/adr/0000-template.md)
+
+## License
+
+MIT © 2026 Gitshimyan. See [LICENSE](./LICENSE).
