@@ -1,6 +1,7 @@
 change:
   id: change.G02-historical-audit
   intent: 将 001–025 授权审计结论固化为记录，修正 Manifest 事实性遗漏，并在相关任务卡追加审计备注；不追溯改写历史授权。
+  coverage_status: complete
   authorization:
     required:
       - modify

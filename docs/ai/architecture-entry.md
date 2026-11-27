@@ -41,6 +41,12 @@
 008 建立 `composition-cli`，009 建立 `composition-editor`；resolver/validator 暂并入 core，
 其余在 M3/M4 按依赖方向加入。
 
+### tools/
+
+| 工具 | 状态 | 职责 | 依赖 |
+|---|---|---|---|
+| `composition-change-gate` | 已建立（G04） | Manifest × git diff × task-card coverage 检查；CI report 模式 | serde, serde_yaml, git |
+
 ### apps/designer/
 
 | 区域 | 职责 |

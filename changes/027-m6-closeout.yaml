@@ -1,6 +1,7 @@
 change:
   id: change.027-m6-closeout
   intent: 按 M6 完成标准验证 Glide 试点副本上的完整编辑链，并核实 CI PR/合并门禁；只补验证与记录。
+  coverage_status: complete_with_deferred_items
   authorization:
     required:
       - modify

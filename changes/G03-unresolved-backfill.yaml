@@ -1,6 +1,7 @@
 change:
   id: change.G03-unresolved-backfill
   intent: 对 001–025 做历史未实现工作回溯，建立逐卡去向、扩展未决登记、补充 coverage_status/open_items，不实现任何未决能力。
+  coverage_status: complete
   authorization:
     required:
       - modify

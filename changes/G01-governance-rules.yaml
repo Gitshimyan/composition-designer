@@ -1,6 +1,7 @@
 change:
   id: change.G01-governance-rules
   intent: 将授权改为可组合权限集合，建立工程配置/文档/Compose/副作用边界，并引入未实现工作披露、覆盖状态与未决登记规则。
+  coverage_status: complete
   authorization:
     required:
       - rearchitect

@@ -1,6 +1,7 @@
 change:
   id: change.G00-review-intake
   intent: 归档 2026-11-27 评审，建立整改计划、任务卡队列与未决工作登记，并修正事实性 Manifest 覆盖。
+  coverage_status: complete
   authorization: modify
   targets:
     - README.md

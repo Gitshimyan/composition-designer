@@ -97,7 +97,7 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 
 1. 从 [`changes/000-template.yaml`](./changes/000-template.yaml) 复制一份 Change Manifest；
 2. 填写 `authorization.required/approved/evidence`、`targets`、`operations`、`scope`、
-   `unresolved_items`、`impact`、`validation`；
+   `unresolved_items`、`coverage_status`、`impact`、`validation`；
 3. 实现前确认影响范围与所需权限；
 4. 结卡时逐项核对实际改动文件与声明范围。
 
@@ -113,9 +113,13 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 
 ### 3.2 当前校验状态
 
-当前**没有自动授权/覆盖门禁**；声明仍是书面契约，结卡时必须人工核对。
-机器门禁（Manifest × diff × coverage）是后续 G04 任务，不在本规则生效时自动存在。
-在此之前的“通过”只能指已实际执行的检查，不能声称越权已被系统阻断。
+CI 已运行 `composition-change-gate` 的 **report 模式**（G04）：它比较
+`changes/*.yaml` 的 `targets`/授权与 git diff，检查敏感路径、Compose、Extend、
+coverage_status 与 `unresolved_items`，输出可解释的错误/警告，但不阻断合并。
+
+`--mode block` 已实现，可在收集误报、完成规则审计后启用。机器门禁只检查声明与 diff
+的一致性，不替代 Core 语义校验或人工评审；在 block 模式启用前，“通过”仍只指已实际
+执行的检查，不能声称越权已被系统阻断。
 
 旧 Change Manifest 保留原有单值 `authorization` 格式；新任务使用
 `changes/000-template.yaml` 的权限集合格式。历史格式差异由 G02 审计记录，不追溯改写。

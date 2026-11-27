@@ -1,6 +1,7 @@
 change:
   id: change.<name>
   intent: 描述本次改动要达成的结果（一句话）
+  coverage_status: complete
 
   # 实际需要的全部权限；不是取最高一项。
   authorization:

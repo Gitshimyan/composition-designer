@@ -1,6 +1,7 @@
 change:
   id: change.026-change-review
   intent: 将 Change Review 升级为按对象类别分组、含 Before/After、命令、Dependency 影响与完整诊断的完整审阅界面。
+  coverage_status: complete
   authorization:
     required:
       - modify

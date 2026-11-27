@@ -1,0 +1,11 @@
+[package]
+name = "composition-change-gate"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Manifest × diff × coverage checks for Composition Designer changes"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"

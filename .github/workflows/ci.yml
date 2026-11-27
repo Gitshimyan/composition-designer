@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -38,6 +40,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: ". -> target"
+
+      - name: Change gate (report)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: cargo run -p composition-change-gate -- --base "$env:BASE_SHA" --head "${{ github.sha }}" --mode report
 
       - name: Rust format
         run: cargo fmt --all --check
