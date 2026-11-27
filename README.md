@@ -1,7 +1,7 @@
 # Composition Designer
 
-> v0.2 M6 与 G01–G08 完成；ADR-0004 Accepted（v2.0 接口+service，v2.1 Profile+多入口）。
-> 028 Source 设计完成（ADR-0005 Proposed）；下一步 029 需 Extend + Rearchitect 授权。
+> v0.2 M6 与 G01–G08 完成；ADR-0004/0005 Accepted。
+> 029 Source 后端完成（`replace_source`、文本+对象 Diff、冲突守卫）；下一步 030 Source UI。
 > 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition

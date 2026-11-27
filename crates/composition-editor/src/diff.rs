@@ -30,6 +30,12 @@ pub struct DiffSummary {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct SourceDiff {
+    pub before: String,
+    pub after: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ModelDiff {
     pub summary: DiffSummary,
     pub changes: Vec<ObjectChange>,

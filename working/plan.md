@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：164 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri。
-> 当前阶段：**ADR-0004 已确认；028 Source 设计完成（ADR-0005 Proposed）**；下一步 **029 实现需授权**。
+> 测试基线：172 Core/Protocol/MCP/CLI + 28 UI + 16 Tauri。
+> 当前阶段：**M7 Source 后端完成（029）**；下一步 **030 CodeMirror Source UI**；ADR-0004/0005 已确认。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -50,8 +50,8 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 |---|---|---|---|---|
 | R0 | 计划重排（G06） | done | v0.3 队列、决策门、验收标准 | Modify |
 | G7 | 领域缺口研究（UW-002/003/004） | done | [研究](../docs/reviews/2026-11-27-g7-domain-gaps.md)、[ADR-0004](../docs/adr/0004-schema-v2-direction.md) Accepted | Modify（研究） |
-| R1 | M7 Source 设计决议（028） | done | [ADR-0005](../docs/adr/0005-source-editing-transaction.md) Proposed | Modify（研究） |
-| M7 | Source Authoring（029–031） | planned | 可编辑 Source、统一事务、草稿冲突、真实项目验收 | Extend + Rearchitect（029） |
+| R1 | M7 Source 设计决议（028） | done | [ADR-0005](../docs/adr/0005-source-editing-transaction.md) Accepted | Modify（研究） |
+| M7 | Source Authoring（029–031） | in_progress | 029 后端完成；030/031 待做 | Extend + Rearchitect（029 已完成） |
 | S1 | Schema v2.0（032–035） | pending_decision | G1 接口身份 + G2 service scope；v1 兼容 | Rearchitect + Extend |
 | M8 | Agent Authoring（036–038） | later | 基于 v2 的上下文/影响、批处理、Skill 评测 | Extend / Modify |
 | S2 | Schema v2.1（039–041） | pending_decision | G3 Profile + 多 Composition 入口 | Rearchitect + Extend |
@@ -59,8 +59,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 | M9 | Composition Ecosystem（047+） | deferred | 模块库/版本、模板、Adapter | Rearchitect / Extend |
 
 顺序建议：`R0 → G7 → 028 → 029–031 → S1 → M8 → S2 → H1 → M9`。
-S1/S2 需要用户对 ADR-0004 的明确 Rearchitect 批准；M9 不能先于 S1/S2。
-028 已完成；029 需用户明确批准 ADR-0005（Extend + Rearchitect）。
+029 已完成；030/031 继续；S1/S2 需按 ADR-0004 逐卡授权；M9 不能先于 S1/S2。
 
 ## 4. 队列
 
@@ -73,18 +72,18 @@ S1/S2 需要用户对 ADR-0004 的明确 Rearchitect 批准；M9 不能先于 S1
 
 ### R1 — 028 M7 Source 设计决议（done）
 
-- 研究完成：[ADR-0005](../docs/adr/0005-source-editing-transaction.md)（Proposed）；
+- 研究完成：[ADR-0005](../docs/adr/0005-source-editing-transaction.md)（Accepted）；
 - 推荐：事务内独占 `replace_source`，复用 Revision/幂等/Review；prepare 返回文本+对象 Diff；
 - 首版仅 Composition 入口；外部冲突阻止，Reload 丢弃草稿；无三向合并；
-- 029 实施需 Extend + Rearchitect 批准。
+- 029 已完成；030/031 继续。
 
 ### M7 — Source Authoring（029–031）
 
-| 卡 | 方向 | 授权 | 依赖 |
+| 卡 | 方向 | 授权 | 状态 |
 |---|---|---|---|
-| 029 | Source 编辑事务 + 写回 + 冲突守卫 | Extend + Rearchitect（以 028 ADR 为准） | 028 |
-| 030 | CodeMirror 可编辑 Source、草稿、Diff/Review、冲突 UI | Modify | 029 |
-| 031 | Source 验收：Glide 试点编辑、外部修改、CLI/MCP 一致 | Modify | 030 |
+| 029 | Source 编辑事务 + 写回 + 冲突守卫 | Extend + Rearchitect | done |
+| 030 | CodeMirror 可编辑 Source、草稿、Diff/Review、冲突 UI | Modify | next |
+| 031 | Source 验收：Glide 试点编辑、外部修改、CLI/MCP 一致 | Modify | planned |
 
 M7 验收：
 
@@ -208,13 +207,15 @@ npm run desktop
 | 2026-11-27 | R0/G06 | v0.3 计划重排；M7 设计决议为下一卡；旧计划归档 |
 | 2026-11-27 | G07 | G1/G2/G3 设计研究；ADR-0004 获用户确认，状态 Accepted；S1/S2 排入路线图 |
 | 2026-11-27 | 028 | Source 编辑设计；ADR-0005 Proposed；029 需 Extend + Rearchitect 授权 |
+| 2026-11-27 | 029 | replace_source 后端、source prepare/apply、文本+对象 Diff、冲突守卫；172 tests |
 
 ## 11. 下一步
 
-028 已完成，ADR-0005 仍为 Proposed。下一步：
+029 已完成。下一步：
 
-1. 等待用户批准 ADR-0005（`replace_source` 独占命令 + 事务复用）；
-2. 批准后创建 029（Extend + Rearchitect），再顺序 030/031；
-3. S1 Schema v2.0（032–035）在 M7 后启动；ADR-0004 已接受但实施仍逐卡授权。
+1. **030 — Source UI**：CodeMirror 可编辑、草稿、Change Review（文本+对象 Diff）、
+   外部冲突提示；Modify 级；
+2. 031 — Source 验收：Glide 试点编辑、CLI/MCP 一致；
+3. S1 Schema v2.0 在 M7 后启动；ADR-0004 已接受但实施逐卡授权。
 
-若用户决定先做 S1，则 028 保持完成、M7 暂停，先执行 032–035。
+030 不新增命令/协议；只消费 029 的 `source_diff` 与现有 `prepare/apply`。

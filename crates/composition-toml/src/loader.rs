@@ -50,7 +50,19 @@ impl LoadedWorkspace {
 
 /// 加载项目声明。不 panic；所有失败以 `Diagnostic` 返回。
 pub fn load_project(root: impl AsRef<Path>) -> LoadedWorkspace {
-    let requested = root.as_ref();
+    load_project_inner(root.as_ref(), None)
+}
+
+/// 使用给定的 Composition 文本替代磁盘文件，用于 Source 编辑的候选验证。
+/// 其余项目文件仍从项目根读取；不会写入磁盘。
+pub fn load_project_with_composition_text(
+    root: impl AsRef<Path>,
+    composition_text: &str,
+) -> LoadedWorkspace {
+    load_project_inner(root.as_ref(), Some(composition_text))
+}
+
+fn load_project_inner(requested: &Path, composition_override: Option<&str>) -> LoadedWorkspace {
     let root = fs::canonicalize(requested).unwrap_or_else(|_| requested.to_path_buf());
     let mut workspace = LoadedWorkspace {
         root: root.clone(),
@@ -125,18 +137,21 @@ pub fn load_project(root: impl AsRef<Path>) -> LoadedWorkspace {
         );
         return workspace;
     }
-    let composition_text = match read_text(&composition_path) {
-        Ok(text) => text,
-        Err((code, message)) => {
-            push_path(
-                &mut workspace.diagnostics,
-                code,
-                message,
-                &composition_relative,
-                Some(&ObjectId::file(&composition_relative)),
-            );
-            return workspace;
-        }
+    let composition_text = match composition_override {
+        Some(text) => text.to_owned(),
+        None => match read_text(&composition_path) {
+            Ok(text) => text,
+            Err((code, message)) => {
+                push_path(
+                    &mut workspace.diagnostics,
+                    code,
+                    message,
+                    &composition_relative,
+                    Some(&ObjectId::file(&composition_relative)),
+                );
+                return workspace;
+            }
+        },
     };
     let (composition_document, composition_failure) = parse_toml(&composition_text);
     let composition_file = LoadedFile::new(

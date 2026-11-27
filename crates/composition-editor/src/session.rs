@@ -1,15 +1,27 @@
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 use composition_core::{validate_loaded, validate_project, ValidationResult};
-use composition_domain::{ConfigValue, Diagnostic, ErrorCode, LocalId, ObjectId, PortRef};
-use composition_toml::load_project;
+use composition_domain::{
+    CompositionModel, ConfigValue, Diagnostic, ErrorCode, LocalId, ObjectId, PortRef, Revision,
+};
+use composition_toml::{load_project, load_project_with_composition_text};
 use toml_edit::{Array, ArrayOfTables, DocumentMut, Item, Table, Value};
 
 use crate::command::{Command, Transaction};
-use crate::diff::ModelDiff;
+use crate::diff::{ModelDiff, SourceDiff};
 use crate::workspace::{EditorWorkspace, TransactionOutcome};
+
+#[derive(Debug, Clone)]
+struct SourceCommitted {
+    transaction: Transaction,
+    model: CompositionModel,
+    diagnostics: Vec<Diagnostic>,
+    diff: ModelDiff,
+    source_diff: SourceDiff,
+}
 
 /// 011 的项目会话：在 010 的模型事务之上做保留格式 TOML 写回。
 #[derive(Debug)]
@@ -19,6 +31,7 @@ pub struct ProjectSession {
     current_text: String,
     document: DocumentMut,
     workspace: EditorWorkspace,
+    source_requests: BTreeMap<String, SourceCommitted>,
 }
 
 impl ProjectSession {
@@ -53,6 +66,7 @@ impl ProjectSession {
             current_text,
             document,
             workspace,
+            source_requests: BTreeMap::new(),
         })
     }
 
@@ -73,11 +87,22 @@ impl ProjectSession {
     }
 
     pub fn prepare(&self, transaction: &Transaction) -> TransactionOutcome {
-        self.workspace.prepare(transaction)
+        if has_replace_source(transaction) {
+            self.prepare_source(transaction)
+        } else {
+            self.workspace.prepare(transaction)
+        }
     }
 
     /// 先在模型上原子提交，再写回保留格式的 TOML；写回或重新校验失败时回滚文件与工作区。
     pub fn apply(&mut self, transaction: &Transaction) -> TransactionOutcome {
+        if has_replace_source(transaction) {
+            return self.apply_source(transaction);
+        }
+        self.apply_object(transaction)
+    }
+
+    fn apply_object(&mut self, transaction: &Transaction) -> TransactionOutcome {
         let snapshot_workspace = self.workspace.clone();
         let snapshot_document = self.document.clone();
         let snapshot_text = self.current_text.clone();
@@ -99,7 +124,7 @@ impl ProjectSession {
         }
 
         let new_text = document.to_string();
-        match self.commit_document(&new_text) {
+        match self.commit_text(&new_text) {
             Ok(validation) => {
                 self.document = document;
                 self.current_text = new_text;
@@ -110,6 +135,7 @@ impl ProjectSession {
                     model: Box::new(model),
                     diagnostics,
                     diff,
+                    source_diff: None,
                 }
             }
             Err(diagnostics) => {
@@ -121,7 +147,165 @@ impl ProjectSession {
         }
     }
 
-    fn commit_document(&self, new_text: &str) -> Result<ValidationResult, Vec<Diagnostic>> {
+    fn prepare_source(&self, transaction: &Transaction) -> TransactionOutcome {
+        if let Some(outcome) = self.replay_source(transaction) {
+            return outcome;
+        }
+        if transaction.request_id.trim().is_empty() {
+            return rejected_source("transaction request_id must not be empty");
+        }
+        if transaction.commands.is_empty() {
+            return rejected_source("transaction must contain at least one command");
+        }
+        let source = match source_text(transaction) {
+            Ok(source) => source,
+            Err(diagnostic) => {
+                return TransactionOutcome::Rejected {
+                    diagnostics: vec![diagnostic],
+                }
+            }
+        };
+        if transaction.commands.len() != 1 {
+            return rejected_source("replace_source must be the only command in a transaction");
+        }
+        if self.workspace.has_request(&transaction.request_id) {
+            return rejected_duplicate(&transaction.request_id);
+        }
+
+        let current = self.workspace.revision();
+        let known_base = self
+            .workspace
+            .history()
+            .iter()
+            .any(|record| record.revision == transaction.base_revision);
+        if transaction.base_revision != current || !known_base {
+            return TransactionOutcome::Rejected {
+                diagnostics: vec![Diagnostic::new(
+                    ErrorCode::EditRevisionConflict,
+                    format!(
+                        "base revision seq {} does not match current seq {}",
+                        transaction.base_revision.seq, current.seq
+                    ),
+                )
+                .with_object_id(ObjectId::composition())],
+            };
+        }
+
+        let loaded = load_project_with_composition_text(&self.root, source);
+        let validation = validate_loaded(&loaded);
+        if !validation.is_valid() {
+            return TransactionOutcome::Rejected {
+                diagnostics: validation.diagnostics,
+            };
+        }
+        let mut model = validation
+            .model
+            .expect("valid source candidate has a model");
+        let diff = ModelDiff::between(self.workspace.model(), &model);
+        let source_diff = SourceDiff {
+            before: self.current_text.clone(),
+            after: source.to_owned(),
+        };
+        model.revision = Some(Revision::new(
+            current.seq + 1,
+            current.source_digest.clone(),
+        ));
+        model.diagnostics = validation.diagnostics.clone();
+        TransactionOutcome::Accepted {
+            model: Box::new(model),
+            diagnostics: validation.diagnostics,
+            diff,
+            source_diff: Some(source_diff),
+        }
+    }
+
+    fn apply_source(&mut self, transaction: &Transaction) -> TransactionOutcome {
+        if let Some(outcome) = self.replay_source(transaction) {
+            return outcome;
+        }
+        let prepared = self.prepare_source(transaction);
+        if !prepared.is_accepted() {
+            return prepared;
+        }
+        let Ok(source) = source_text(transaction) else {
+            return rejected_source("replace_source must be the only command in a transaction");
+        };
+
+        let disk_digest = validate_project(&self.root).source_digest;
+        if disk_digest != self.workspace.revision().source_digest {
+            return TransactionOutcome::Rejected {
+                diagnostics: vec![Diagnostic::new(
+                    ErrorCode::EditRevisionConflict,
+                    "project changed on disk; reload the session before applying",
+                )
+                .with_object_id(ObjectId::composition())],
+            };
+        }
+
+        let document = match source.parse::<DocumentMut>() {
+            Ok(document) => document,
+            Err(error) => {
+                return rejected_source(format!("cannot parse source: {error}"));
+            }
+        };
+        let validation = match self.commit_text(source) {
+            Ok(validation) => validation,
+            Err(diagnostics) => {
+                return TransactionOutcome::Rejected { diagnostics };
+            }
+        };
+        let diff = prepared.diff().cloned().unwrap_or_else(ModelDiff::empty);
+        let source_diff = SourceDiff {
+            before: self.current_text.clone(),
+            after: source.to_owned(),
+        };
+        self.workspace.record_source_commit(
+            validation,
+            transaction.request_id.clone(),
+            diff.clone(),
+        );
+        self.document = document;
+        self.current_text = source.to_owned();
+
+        let model = self.workspace.model().clone();
+        let diagnostics = model.diagnostics.clone();
+        self.source_requests.insert(
+            transaction.request_id.clone(),
+            SourceCommitted {
+                transaction: transaction.clone(),
+                model: model.clone(),
+                diagnostics: diagnostics.clone(),
+                diff: diff.clone(),
+                source_diff: source_diff.clone(),
+            },
+        );
+        TransactionOutcome::Accepted {
+            model: Box::new(model),
+            diagnostics,
+            diff,
+            source_diff: Some(source_diff),
+        }
+    }
+
+    fn replay_source(&self, transaction: &Transaction) -> Option<TransactionOutcome> {
+        if let Some(record) = self.source_requests.get(&transaction.request_id) {
+            if record.transaction == *transaction {
+                return Some(TransactionOutcome::Replayed {
+                    model: Box::new(record.model.clone()),
+                    diagnostics: record.diagnostics.clone(),
+                    diff: record.diff.clone(),
+                    source_diff: Some(record.source_diff.clone()),
+                });
+            }
+            return Some(rejected_duplicate(&transaction.request_id));
+        }
+        if self.workspace.has_request(&transaction.request_id) {
+            return Some(rejected_duplicate(&transaction.request_id));
+        }
+        None
+    }
+
+    fn commit_text(&self, new_text: &str) -> Result<ValidationResult, Vec<Diagnostic>> {
         let path = self.root.join(&self.composition_entry);
         let file_name = path
             .file_name()
@@ -176,8 +360,41 @@ impl ProjectSession {
     }
 }
 
-/// Restore a missing composition entry from an interrupted `.bak-*` write.
-/// Only the newest matching backup is restored; stale `.tmp-*` files are left alone.
+fn has_replace_source(transaction: &Transaction) -> bool {
+    transaction
+        .commands
+        .iter()
+        .any(|command| matches!(command, Command::ReplaceSource { .. }))
+}
+
+#[allow(clippy::result_large_err)]
+fn source_text(transaction: &Transaction) -> Result<&str, Diagnostic> {
+    match transaction.commands.as_slice() {
+        [Command::ReplaceSource { source }] => Ok(source),
+        _ => Err(Diagnostic::new(
+            ErrorCode::EditInvalidCommand,
+            "replace_source must be the only command in a transaction",
+        )
+        .with_object_id(ObjectId::composition())),
+    }
+}
+
+fn rejected_source(message: impl Into<String>) -> TransactionOutcome {
+    TransactionOutcome::Rejected {
+        diagnostics: vec![transaction_failed(message)],
+    }
+}
+
+fn rejected_duplicate(request_id: &str) -> TransactionOutcome {
+    TransactionOutcome::Rejected {
+        diagnostics: vec![Diagnostic::new(
+            ErrorCode::EditDuplicateRequest,
+            format!("request_id {request_id:?} was already used with a different payload"),
+        )],
+    }
+}
+
+/// Restore a missing composition entry from an interrupted `.bak-*` write./// Only the newest matching backup is restored; stale `.tmp-*` files are left alone.
 fn recover_composition_file(root: &Path, entry: &str) -> bool {
     let path = root.join(entry);
     if path.exists() {
@@ -399,6 +616,11 @@ fn edit_document(document: &mut DocumentMut, command: &Command) -> Result<(), St
             let index =
                 find_index(array, id).ok_or_else(|| format!("connection {id} is not present"))?;
             array.remove(index);
+        }
+        Command::ReplaceSource { .. } => {
+            return Err(
+                "replace_source must be handled by ProjectSession, not edit_document".to_owned(),
+            );
         }
     }
     Ok(())

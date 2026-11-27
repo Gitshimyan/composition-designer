@@ -87,6 +87,135 @@ fn assert_no_temporary_files(project: &Path) {
     }
 }
 
+fn source_transaction(session: &ProjectSession, source: String) -> Transaction {
+    Transaction::new(
+        "source-1",
+        session.workspace().revision(),
+        vec![Command::ReplaceSource { source }],
+    )
+}
+
+#[test]
+fn prepare_source_is_pure_and_apply_writes_exact_text() {
+    let project = copy_example("minimal-project");
+    prepend_comment(project.path());
+    let mut session = ProjectSession::open(project.path()).unwrap();
+    let before_text = composition_text(project.path());
+    let after_text = before_text.replace("title = \"Minimal Project\"", "title = \"Source Edit\"");
+
+    let prepared = session.prepare(&source_transaction(&session, after_text.clone()));
+    assert!(prepared.is_accepted(), "{:?}", prepared.diagnostics());
+    assert_eq!(composition_text(project.path()), before_text);
+    assert_eq!(session.workspace().revision().seq, 0);
+    let diff = prepared.source_diff().expect("source diff");
+    assert_eq!(diff.before, before_text);
+    assert_eq!(diff.after, after_text);
+
+    let applied = session.apply(&source_transaction(&session, after_text.clone()));
+    assert!(applied.is_accepted(), "{:?}", applied.diagnostics());
+    assert_eq!(composition_text(project.path()), after_text);
+    assert!(composition_text(project.path()).contains("# keep this comment"));
+    assert_eq!(session.workspace().revision().seq, 1);
+    assert_eq!(session.workspace().history().len(), 2);
+    assert_no_temporary_files(project.path());
+
+    let validation = validate_project(project.path());
+    assert!(validation.is_valid());
+    assert_eq!(
+        session.workspace().revision().source_digest,
+        validation.source_digest
+    );
+}
+
+#[test]
+fn invalid_source_is_rejected_without_writing() {
+    let project = copy_example("minimal-project");
+    let mut session = ProjectSession::open(project.path()).unwrap();
+    let before_text = composition_text(project.path());
+    let invalid = before_text.replace("title = \"Minimal Project\"", "title = 42");
+
+    let outcome = session.apply(&source_transaction(&session, invalid));
+    assert!(!outcome.is_accepted());
+    assert!(outcome
+        .diagnostics()
+        .iter()
+        .any(|diagnostic| diagnostic.code == ErrorCode::ContractPropertyTypeMismatch));
+    assert_eq!(composition_text(project.path()), before_text);
+    assert_eq!(session.workspace().revision().seq, 0);
+}
+
+#[test]
+fn source_apply_rejects_external_change() {
+    let project = copy_example("minimal-project");
+    let mut session = ProjectSession::open(project.path()).unwrap();
+    let before_text = composition_text(project.path());
+    let after_text = before_text.replace("title = \"Minimal Project\"", "title = \"Edited\"");
+    let prepared = session.prepare(&source_transaction(&session, after_text.clone()));
+    assert!(prepared.is_accepted(), "{:?}", prepared.diagnostics());
+
+    fs::write(
+        project.path().join("composition/main.toml"),
+        format!("{before_text}\n# external change\n"),
+    )
+    .unwrap();
+    let outcome = session.apply(&source_transaction(&session, after_text));
+    assert!(!outcome.is_accepted());
+    assert!(outcome
+        .diagnostics()
+        .iter()
+        .any(|diagnostic| diagnostic.code == ErrorCode::EditRevisionConflict));
+    assert!(composition_text(project.path()).contains("# external change"));
+}
+
+#[test]
+fn source_request_replays_without_second_write() {
+    let project = copy_example("minimal-project");
+    let mut session = ProjectSession::open(project.path()).unwrap();
+    let before_text = composition_text(project.path());
+    let after_text = before_text.replace("title = \"Minimal Project\"", "title = \"Replay\"");
+    let transaction = source_transaction(&session, after_text);
+
+    let first = session.apply(&transaction);
+    assert!(first.is_accepted(), "{:?}", first.diagnostics());
+    let second = session.apply(&transaction);
+    assert!(second.is_accepted());
+    assert!(second.is_replayed());
+    assert_eq!(session.workspace().revision().seq, 1);
+    assert_eq!(
+        composition_text(project.path()),
+        before_text.replace("title = \"Minimal Project\"", "title = \"Replay\"")
+    );
+}
+
+#[test]
+fn replace_source_cannot_mix_with_object_commands() {
+    let project = copy_example("minimal-project");
+    let session = ProjectSession::open(project.path()).unwrap();
+    let before_text = composition_text(project.path());
+    let transaction = Transaction::new(
+        "source-mixed",
+        session.workspace().revision(),
+        vec![
+            Command::ReplaceSource {
+                source: before_text.clone(),
+            },
+            Command::SetConfig {
+                instance: local("app"),
+                property: local("title"),
+                value: ConfigValue::String("Mixed".into()),
+            },
+        ],
+    );
+
+    let outcome = session.prepare(&transaction);
+    assert!(!outcome.is_accepted());
+    assert!(outcome
+        .diagnostics()
+        .iter()
+        .any(|diagnostic| diagnostic.code == ErrorCode::EditInvalidCommand));
+    assert_eq!(composition_text(project.path()), before_text);
+}
+
 #[test]
 fn set_config_preserves_comments_and_refreshes_digest() {
     let project = copy_example("minimal-project");

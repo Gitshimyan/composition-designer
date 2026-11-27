@@ -11,6 +11,6 @@ mod session;
 mod workspace;
 
 pub use command::{Command, Transaction, COMMAND_KINDS};
-pub use diff::{ChangeKind, DiffSummary, ModelDiff, ObjectChange};
+pub use diff::{ChangeKind, DiffSummary, ModelDiff, ObjectChange, SourceDiff};
 pub use session::ProjectSession;
 pub use workspace::{EditorWorkspace, RevisionRecord, TransactionOutcome};

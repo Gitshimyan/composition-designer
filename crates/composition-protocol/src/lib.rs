@@ -4,7 +4,7 @@ use composition_core::validate_project;
 use composition_domain::{
     CompositionModel, Diagnostic, ErrorCode, ModuleDefinition, ObjectId, Project, Severity,
 };
-use composition_editor::{ModelDiff, ProjectSession, Transaction};
+use composition_editor::{ModelDiff, ProjectSession, SourceDiff, Transaction};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -61,6 +61,7 @@ pub struct TransactionView {
     pub accepted: bool,
     pub replayed: bool,
     pub diff: Option<ModelDiff>,
+    pub source_diff: Option<SourceDiff>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -234,6 +235,7 @@ impl ProtocolSession {
             accepted,
             replayed: outcome.is_replayed(),
             diff: outcome.diff().cloned(),
+            source_diff: outcome.source_diff().cloned(),
         };
         if accepted {
             success(
@@ -404,6 +406,40 @@ mod tests {
             .diagnostics
             .iter()
             .any(|diagnostic| diagnostic.code == ErrorCode::EditRevisionConflict));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn replace_source_transaction_is_accepted_and_writes_exact_text() {
+        let root = temp_project("source");
+        let mut session = ProtocolSession::new(&root);
+        let (_, _, digest, _) = session.current();
+        let digest = digest.expect("digest");
+        let before = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        let after = before.replace("title = \"Minimal Project\"", "title = \"Source\"");
+        let transaction = json!({
+            "request_id": "protocol-source-1",
+            "base_revision": { "seq": 0, "source_digest": digest },
+            "commands": [{
+                "type": "replace_source",
+                "source": after
+            }]
+        });
+        let applied = session.dispatch(request(
+            "apply_transaction",
+            json!({ "transaction": transaction }),
+        ));
+        assert!(applied.ok, "{:?}", applied.diagnostics);
+        assert_eq!(
+            applied.result.unwrap()["source_diff"]["after"]
+                .as_str()
+                .unwrap(),
+            after
+        );
+        assert_eq!(
+            fs::read_to_string(root.join("composition/main.toml")).unwrap(),
+            after
+        );
         let _ = fs::remove_dir_all(&root);
     }
 
