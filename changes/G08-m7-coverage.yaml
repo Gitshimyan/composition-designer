@@ -1,0 +1,42 @@
+change:
+  id: change.G08-m7-coverage
+  intent: M7 完成后回查未决登记，关闭 UW-011 并登记模块文件 Source 编辑 UW-031，不修改产品能力。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "M7 覆盖审计；仅登记与文档"
+  targets:
+    - README.md
+    - docs/ai/architecture-entry.md
+    - docs/reviews/2026-11-27-m7-source-closeout.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/G08-m7-coverage.md
+    - changes/G08-m7-coverage.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - uw_register_audit
+      - m7_boundary_docs
+      - plan_update
+    forbidden:
+      - product_code
+      - command_protocol
+      - toml_schema
+      - design_baseline
+  unresolved_items:
+    - UW-031
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - markdown relative link check
+    - git diff --check
+    - confirm no changes under crates/ or apps/
+  notes: 只回收/登记 UW；UW-031 仍 deferred，不实施模块文件编辑。

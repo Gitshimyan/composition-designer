@@ -8,8 +8,8 @@
 
 | 指标 | 数量 |
 |---|---:|
-| 登记事项 | 30 |
-| 已实现 / 已关闭 | 10 |
+| 登记事项 | 31 |
+| 已实现 / 已关闭 | 11 |
 | 等待用户决策（pending_decision） | 5 |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 3 |
@@ -29,7 +29,7 @@
 | UW-008 | 授权审计 | 001–025 历史授权审计记录与 Manifest 事实性修正 | Modify | implemented | Modify | 历史分类可追溯 | G02 已关闭 |
 | UW-009 | 披露评审 | 001–025 历史未实现工作回溯与登记 | Modify | implemented | Modify | 历史遗留线索有去向 | G03 已关闭 |
 | UW-010 | 授权审计 | 机器授权/覆盖门禁 | Extend + Rearchitect | implemented | Extend + Rearchitect | `composition-change-gate` report 模式已接入 CI | G04 已关闭；block 模式转 UW-030 |
-| UW-011 | 014 / 015 / 路线图 | Source 编辑与草稿冲突处理 | 产品能力 | deferred | 待 M7 评估 | Source 仍只读 | M7 排期时重新确认 |
+| UW-011 | 014 / 015 / 路线图 | Source 编辑与草稿冲突处理（Composition 入口） | 产品能力 | implemented | Modify + Extend/Rearchitect（029） | Composition Source 已可编辑；外部冲突阻止 | 029–031 已关闭；模块文件编辑转 UW-031 |
 | UW-012 | 020 | 真实 WebView2 / Tauri GUI 自动化 | 工程能力 | deferred | 待评估 | Playwright 使用 IPC fixture | M6 后评估 tauri-driver/smoke |
 | UW-013 | 021 | Glide G4–G8：kind、技术元数据、Port wire、Profile-scoped task、模板 | Rearchitect / 后续 | deferred | Rearchitect | 拓扑够用，运行细节不足 | 出现真实需求时再评估 |
 | UW-014 | 009 / 010 / 011 | 撤销 / 重做 | 产品能力 | deferred | Modify（事务协议变更再评估 Rearchitect） | 误操作只能手工回退 | 后续独立评估 |
@@ -49,6 +49,7 @@
 | UW-028 | M6 总验收 | 真实项目子系统完整 M6 链路（Glide 试点上的编辑链） | 验收 | implemented | Modify | 已由 CLI/Protocol 全链路测试验证 | 027 已关闭 |
 | UW-029 | 020 / M6 总验收 | CI PR 触发与分支保护/失败合并阻止的验证 | 工程流程 | implemented | Modify；仓库设置需管理员 | `main` 已启用分支保护；失败探针 PR #1 被 BLOCKED | 027/G04 已关闭 |
 | UW-030 | G04 | CI 切换到 change-gate block 模式 | 治理流程 | implemented | Modify + Rearchitect | CI 声明违规会阻止合并 | G05 已关闭 |
+| UW-031 | 029 / 031 | 模块文件 Source 编辑（module.toml） | 产品能力 | deferred | Rearchitect + Extend | 首版只编辑 Composition 入口，模块仍只读 | 出现模块编辑需求时评估 |
 
 ## 3. 已关闭事项证据
 
@@ -118,6 +119,18 @@
 - 修复重叠 Manifest 误报：任一覆盖 Manifest 满足约束即通过；
 - 验证：G05 单元/仓库测试 + PR #4 CI pass（46000619083），合并后 main CI pass（46001377088）；
 - 状态：`implemented`；关闭日期：2026-11-27（G05）。
+
+### UW-011 — Composition Source 编辑
+
+- 实现：029 `replace_source` 事务；030 CodeMirror 编辑/Review；031 Glide 验收；
+- 外部冲突阻止、Reload 丢弃草稿；无三向合并（UW-017）；
+- 关闭日期：2026-11-27（M7）。
+
+### UW-031 — 模块文件 Source 编辑
+
+- 首版只编辑 `workspace.composition` 入口；`modules/**/module.toml` 仍只读；
+- 需要模块定义/契约编辑语义、命令与 UI，属 Rearchitect + Extend；
+- 状态：`deferred`；出现真实模块编辑需求时评估。
 
 ## 4. 维护规则
 
