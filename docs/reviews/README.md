@@ -22,7 +22,7 @@ M6 020–025 已完成：CI/UI 测试、Glide 试点、Instance/Binding 编辑�
 2. 任务卡/Manifest 模板与未实现披露制度（G01，done）；
 3. 001–025 历史授权审计记录与 Manifest 事实性修正（G02，done）；
 4. 历史未实现工作回溯与登记（G03，done）；
-5. 026 完整 Change Review（next）；
-6. 机器授权/覆盖门禁（G04，026 之后）。
+5. 026 完整 Change Review（done）；
+6. 机器授权/覆盖门禁（G04，待授权）。
 
 未决事项见 [`working/decisions/unresolved-work.md`](../../working/decisions/unresolved-work.md)。

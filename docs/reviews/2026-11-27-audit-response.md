@@ -1,6 +1,6 @@
 # 评审响应与整改计划（2026-11-27）
 
-- 状态：Adopted（G01 已批准；G02/G03 已完成；026 Change Review 下一步）
+- 状态：Adopted（G01 已批准；G02/G03 与 026 已完成；G04 待授权）
 - 来源评审：
   - [`2026-11-27-authorization-audit.md`](./2026-11-27-authorization-audit.md)
   - [`2026-11-27-unimplemented-work-transparency.md`](./2026-11-27-unimplemented-work-transparency.md)
@@ -48,7 +48,7 @@ G00（评审归档与整改计划）已在本轮完成；下表为后续执行�
 | 1 | [G01 — 授权规范与披露制度](../../working/tasks/G01-governance-rules.md) | Rearchitect + Modify | done | AGENTS、任务卡模板、Manifest 模板、未实现披露规则生效 |
 | 2 | [G02 — 历史授权审计记录与 Manifest 修正](../../working/tasks/G02-historical-audit.md) | Modify | done | 001–025 审计分类；不伪造历史授权 |
 | 3 | [G03 — 历史未实现工作回溯](../../working/tasks/G03-unresolved-backfill.md) | Modify | done | 填充未决工作登记册与覆盖状态 |
-| 4 | 026 — 完整 Change Review | Modify | next | M6-006 功能卡 |
+| 4 | 026 — 完整 Change Review | Modify | done | M6-006 功能卡 |
 | 5 | [G04 — 机器授权/覆盖门禁](../../working/tasks/G04-machine-gate.md) | Extend + Rearchitect | deferred | 026 后先报告、再阻断 |
 
 ## 4. 授权与执行状态
@@ -66,7 +66,7 @@ G00（评审归档与整改计划）已在本轮完成；下表为后续执行�
 
 ### 4.2 执行顺序
 
-`G01 → G02 → G03 → 026 → G04`。G01–G03 已完成；026 下一步；G04 仍需 Extend + Rearchitect。
+`G01 → G02 → G03 → 026 → G04`。G01–G03 与 026 已完成；G04 仍需 Extend + Rearchitect。
 
 ### 4.3 历史分类的处理方式
 
@@ -81,4 +81,4 @@ G00（评审归档与整改计划）已在本轮完成；下表为后续执行�
 - 每个未实现/阻塞事项有稳定 UW ID、影响、所需授权与后续处理；
 - G01 已在用户明确批准后执行，G02/G03 已完成；
 - 025/020 Manifest 的事实性修正与实际 diff 一致；
-- 026 及机器门禁不被提前标记为完成。
+- 026 已按 M6-006 完成；G04 机器门禁尚未完成。

@@ -1,6 +1,6 @@
 # 未决工作登记册
 
-> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯。
+> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -9,10 +9,10 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 27 |
-| 已实现 / 已关闭 | 5 |
+| 已实现 / 已关闭 | 6 |
 | 等待用户决策（pending_decision） | 9 |
 | 等待授权（pending_authorization） | 0 |
-| 已接受待排期（accepted） | 1 |
+| 已接受待排期（accepted） | 0 |
 | 明确延期（deferred） | 12 |
 
 ## 2. 登记表
@@ -43,7 +43,7 @@
 | UW-022 | 022 | 模块库/版本发现与下载 | 产品能力 | deferred | Extend / Rearchitect | 只能选已加载模块 | M9 方向 |
 | UW-023 | 023 | Binding 向导/Move 的 UX 限制（child 固定、required many 只建一个、MAX_DEPTH） | UX 能力 | pending_decision | Modify | 复杂结构需多次操作/改写 child | 026 后按反馈评估 |
 | UW-024 | 012 / 013 / 014 | 窗口自适应、bundle/installer、大 bundle 拆分 | 工程/UI | deferred | Modify / Extend | 仅固定 DPI/示例路径；无安装包 | 后续评估 |
-| UW-025 | 010 / 014 / 024 | Diff/Review 覆盖 Dependency 与模块影响 | Change Review | accepted | Modify | 当前 Diff 缺依赖/模块影响 | 026 承接 |
+| UW-025 | 010 / 014 / 024 | Diff/Review 覆盖 Dependency 与模块影响 | Change Review | implemented | Modify | 完整 Review 已展示分类/Before-After/依赖影响/全部诊断 | 026 已关闭 |
 | UW-026 | 004 | edit-cases / external-change-cases 具体载荷 | 示例/测试 | pending_decision | Compose + Modify | 场景说明无具体请求载荷 | 后续补示例 |
 | UW-027 | 003 / 006 / 007 | 边界测试补充（大小写路径、符号链接、级联抑制、重复 SourceMap、session 部分命令） | 测试 | pending_decision | Modify | 边界行为缺少回归保护 | 后续测试卡 |
 
@@ -78,6 +78,13 @@
 - 实现：[`2026-11-27-unimplemented-work-backfill.md`](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)；
 - 001–025 线索去向与本登记册 UW-014–UW-027；
 - 关闭日期：2026-11-27（G03）。
+
+### UW-025 — 完整 Change Review
+
+- 实现：[`ChangeReview.tsx`](../../apps/designer/src/review/ChangeReview.tsx)；
+- 分类、Before/After、命令列表、Dependency 影响、全部诊断；
+- 验证：28 UI + 154 workspace + 15 Tauri，详见 026 卡；
+- 关闭日期：2026-11-27（026）。
 
 ## 4. 维护规则
 

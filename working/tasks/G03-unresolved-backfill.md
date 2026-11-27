@@ -63,7 +63,8 @@
 
 - 结果：
   - 新建 `docs/reviews/2026-11-27-unimplemented-work-backfill.md`，覆盖 001–025 的遗留线索去向；
-  - 登记册扩展到 27 项：5 项已关闭、9 项等待决策、1 项 accepted（026）、12 项延期、0 项等待授权；
+  - 登记册扩展到 27 项：当时 5 项已关闭、9 项等待决策、1 项 accepted（026）、12 项延期、0 项等待授权；
+    后续 026 已关闭 UW-025，当前为 6 已关闭、0 accepted；
   - 新增 UW-014–UW-027：撤销/重做、历史持久化、array 编辑、外部 watcher/合并、多入口、fsync、
     MCP 高级能力、Skill 评测、模块库、Binding UX、窗口/安装包、Review 依赖影响、示例载荷、边界测试；
   - 001–025 任务卡补充 `coverage_status` / `open_items` / 回溯链接，不改原始范围与验收；

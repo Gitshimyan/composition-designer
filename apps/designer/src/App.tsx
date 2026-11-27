@@ -25,6 +25,7 @@ import ConnectionView from "./relations/ConnectionView";
 import DependencyProviderDialog from "./relations/DependencyProviderDialog";
 import DependencyView from "./relations/DependencyView";
 import type { DependencyDetail } from "./relations/relationModel";
+import ChangeReview from "./review/ChangeReview";
 import SourceView from "./source/SourceView";
 import type {
   CompositionModel,
@@ -1343,88 +1344,6 @@ function reconcilePositions(
   return next;
 }
 
-
-function ChangeReview({
-  transaction,
-  preview,
-  description,
-  busy,
-  error,
-  onApply,
-  onClose,
-}: {
-  transaction: Transaction;
-  preview: EditResponse;
-  description: string;
-  busy: boolean;
-  error: string | null;
-  onApply: () => void;
-  onClose: () => void;
-}) {
-  const summary = preview.diff?.summary;
-  return (
-    <div className="review-veil" role="presentation">
-      <section className="review-card" role="dialog" aria-modal="true" aria-labelledby="review-title">
-        <div className="review-head">
-          <div>
-            <div className="eyebrow">Change review</div>
-            <h2 id="review-title">{description}</h2>
-          </div>
-          <span className={`review-status ${preview.accepted ? "is-ok" : "is-bad"}`}>
-            {preview.accepted ? "validated" : "rejected"}
-          </span>
-        </div>
-        <div className="review-summary">
-          <span>{transaction.commands.length} command{transaction.commands.length === 1 ? "" : "s"}</span>
-          {summary && (
-            <span>
-              +{summary.added} / -{summary.removed} / ~{summary.modified}
-            </span>
-          )}
-          <span className="mono">seq {transaction.base_revision.seq}</span>
-        </div>
-        {preview.diff && preview.diff.changes.length > 0 && (
-          <ul className="review-changes">
-            {preview.diff.changes.slice(0, 8).map((change) => (
-              <li key={`${change.object_id}-${change.kind}`}>
-                <code>{change.object_id}</code>
-                <span className={`change-kind kind-${change.kind}`}>{change.kind}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {preview.diagnostics.length > 0 && (
-          <ul className="review-diagnostics">
-            {preview.diagnostics.slice(0, 6).map((diagnostic, index) => (
-              <li key={`${diagnostic.code}-${index}`}>
-                <code>{diagnostic.code}</code>
-                <span>{diagnostic.message}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {error && <div className="review-error">{error}</div>}
-        <div className="review-actions">
-          <button type="button" className="button button-ghost" onClick={onClose} disabled={busy}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="button button-primary"
-            onClick={onApply}
-            disabled={busy || !preview.accepted}
-          >
-            {busy ? "Applying…" : "Apply transaction"}
-          </button>
-        </div>
-        <p className="review-note">
-          Applying writes the composition entry through Core, revalidates, and refreshes the
-          source digest. Layout positions are unaffected.
-        </p>
-      </section>
-    </div>
-  );
-}
 
 function EmptyState({ onChoose, onPath }: { onChoose: () => void; onPath: () => void }) {
   return (

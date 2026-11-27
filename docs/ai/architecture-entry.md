@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020–025 完成；G01–G03 完成，026 Change Review 下一步 |
+| 当前阶段 | v0.2 M6 已完成（020–026）；G01–G03 完成；G04 机器门禁需另行授权 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -49,6 +49,7 @@
 | `src/explorer/` | 项目目录、composition 文件、模块来源 |
 | `src/inspector/` | 实例配置、Slot、Port、依赖 |
 | `src/relations/` | Structure/Connection/Dependency 视图投影与 Connection 编辑（024） |
+| `src/review/` | Change Review：分类、Before/After、命令、Dependency 影响与诊断（026） |
 | `src/source/` | TOML Source（CodeMirror） |
 | `src/diagnostics/` | 诊断与源码定位 |
 | `src/agent-status/` | Agent 会话、Revision、操作记录 |
@@ -149,8 +150,9 @@
 - M6 025 完成（Extend）：`set_dependency_provider` / `unset_dependency_provider`
   命令、命令 Schema、TOML `[instances.dependencies]` 写回与 Designer 编辑入口；
   154 + 24 UI + 15 Tauri 测试；设计基线未改；
-- 2026-11-27 评审整改：G01（权限集合、边界、模板、披露）与 G02（历史授权审计记录）
-  已完成；G03（001–025 未实现工作回溯，登记册 27 项）已完成；026 → G04 进行中；
-  未决事项登记 `working/decisions/unresolved-work.md`；
+- 2026-11-27 评审整改：G01（权限集合、边界、模板、披露）、G02（历史授权审计记录）、
+  G03（001–025 未实现工作回溯，27 项登记）已完成；G04 机器门禁待授权；
+- M6 026 完成：Change Review 按对象分类展示 Before/After、命令、Dependency 影响与
+  全部诊断；28 UI + 154 workspace + 15 Tauri 测试通过；M6 收口；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

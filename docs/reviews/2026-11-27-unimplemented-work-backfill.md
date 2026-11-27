@@ -60,7 +60,7 @@
 - **UW-022 模块库/版本发现与下载**：022；M9 方向，deferred。
 - **UW-023 Binding 向导 UX 限制**：child 固定、required many 只建一个、MAX_DEPTH；pending_decision。
 - **UW-024 窗口自适应 / bundle·installer / 大 bundle 拆分**：012/013/014；deferred。
-- **UW-025 Diff/Review 覆盖 Dependency 与模块影响**：010/014/024；026 承接，accepted。
+- **UW-025 Diff/Review 覆盖 Dependency 与模块影响**：010/014/024；026 已完成关闭。
 - **UW-026 edit-cases / external-change-cases 具体载荷**：004；Compose+Modify，pending_decision。
 - **UW-027 边界测试补充**：006 符号链接、007 级联/重复 SourceMap、003 大小写路径；Modify，pending_decision。
 

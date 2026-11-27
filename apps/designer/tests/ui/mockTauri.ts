@@ -119,7 +119,7 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           case "create_instance": {
             const id = String(command.id);
             const config = (command.config ?? {}) as Record<string, unknown>;
-            composition.instances.push({
+            const instance = {
               id,
               module: {
                 id: String(command.module),
@@ -129,21 +129,31 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               effective_config: structuredClone(config),
               dependency_providers: {},
               source: { file: "composition/main.toml" },
+            };
+            composition.instances.push(instance);
+            changes.push({
+              object_id: `instance:${id}`,
+              kind: "added",
+              after: structuredClone(instance),
             });
-            changes.push({ object_id: `instance:${id}`, kind: "added" });
             summary.added += 1;
             break;
           }
           case "create_binding": {
             const id = String(command.id);
-            composition.bindings.push({
+            const binding = {
               id,
               parent: String(command.parent),
               slot: String(command.slot),
               child: String(command.child),
               source: { file: "composition/main.toml" },
+            };
+            composition.bindings.push(binding);
+            changes.push({
+              object_id: `binding:${id}`,
+              kind: "added",
+              after: structuredClone(binding),
             });
-            changes.push({ object_id: `binding:${id}`, kind: "added" });
             summary.added += 1;
             break;
           }
@@ -153,10 +163,16 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (candidate) => candidate.id === id,
             );
             if (!binding) throw new Error(`missing binding ${id}`);
+            const before = structuredClone(binding);
             binding.parent = String(command.parent);
             binding.slot = String(command.slot);
             binding.child = String(command.child);
-            changes.push({ object_id: `binding:${id}`, kind: "modified" });
+            changes.push({
+              object_id: `binding:${id}`,
+              kind: "modified",
+              before,
+              after: structuredClone(binding),
+            });
             summary.modified += 1;
             break;
           }
@@ -166,20 +182,29 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (binding) => binding.id === id,
             );
             if (index < 0) throw new Error(`missing binding ${id}`);
-            composition.bindings.splice(index, 1);
-            changes.push({ object_id: `binding:${id}`, kind: "removed" });
+            const [removed] = composition.bindings.splice(index, 1);
+            changes.push({
+              object_id: `binding:${id}`,
+              kind: "removed",
+              before: structuredClone(removed),
+            });
             summary.removed += 1;
             break;
           }
           case "create_connection": {
             const id = String(command.id);
-            composition.connections.push({
+            const connection = {
               id,
               from: command.from as { instance: string; port: string },
               to: command.to as { instance: string; port: string },
               source: { file: "composition/main.toml" },
+            };
+            composition.connections.push(connection);
+            changes.push({
+              object_id: `connection:${id}`,
+              kind: "added",
+              after: structuredClone(connection),
             });
-            changes.push({ object_id: `connection:${id}`, kind: "added" });
             summary.added += 1;
             break;
           }
@@ -189,6 +214,7 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (candidate) => candidate.id === id,
             );
             if (!connection) throw new Error(`missing connection ${id}`);
+            const before = structuredClone(connection);
             connection.from = command.from as {
               instance: string;
               port: string;
@@ -197,7 +223,12 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               instance: string;
               port: string;
             };
-            changes.push({ object_id: `connection:${id}`, kind: "modified" });
+            changes.push({
+              object_id: `connection:${id}`,
+              kind: "modified",
+              before,
+              after: structuredClone(connection),
+            });
             summary.modified += 1;
             break;
           }
@@ -207,8 +238,12 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (connection) => connection.id === id,
             );
             if (index < 0) throw new Error(`missing connection ${id}`);
-            composition.connections.splice(index, 1);
-            changes.push({ object_id: `connection:${id}`, kind: "removed" });
+            const [removed] = composition.connections.splice(index, 1);
+            changes.push({
+              object_id: `connection:${id}`,
+              kind: "removed",
+              before: structuredClone(removed),
+            });
             summary.removed += 1;
             break;
           }
@@ -221,7 +256,7 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (instance) => instance.id === id,
             );
             if (index < 0) throw new Error(`missing instance ${id}`);
-            composition.instances.splice(index, 1);
+            const [removed] = composition.instances.splice(index, 1);
             composition.bindings = composition.bindings.filter(
               (binding) => binding.parent !== id && binding.child !== id,
             );
@@ -237,7 +272,11 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
                 if (provider === id) delete instance.dependency_providers[key];
               }
             }
-            changes.push({ object_id: `instance:${id}`, kind: "removed" });
+            changes.push({
+              object_id: `instance:${id}`,
+              kind: "removed",
+              before: structuredClone(removed),
+            });
             summary.removed += 1;
             break;
           }
@@ -253,6 +292,7 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
             ) {
               throw new Error(`instance ${to} already exists`);
             }
+            const before = structuredClone(instance);
             instance.id = to;
             if (composition.root === from) composition.root = to;
             for (const binding of composition.bindings) {
@@ -277,8 +317,16 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               }
             }
             changes.push(
-              { object_id: `instance:${from}`, kind: "removed" },
-              { object_id: `instance:${to}`, kind: "added" },
+              {
+                object_id: `instance:${from}`,
+                kind: "removed",
+                before,
+              },
+              {
+                object_id: `instance:${to}`,
+                kind: "added",
+                after: structuredClone(instance),
+              },
             );
             summary.modified += 1;
             break;
@@ -289,11 +337,17 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (candidate) => candidate.id === id,
             );
             if (!instance) throw new Error(`missing instance ${id}`);
+            const before = structuredClone(instance);
             instance.module = {
               id: String(command.module),
               version: String(command.version),
             };
-            changes.push({ object_id: `instance:${id}`, kind: "modified" });
+            changes.push({
+              object_id: `instance:${id}`,
+              kind: "modified",
+              before,
+              after: structuredClone(instance),
+            });
             summary.modified += 1;
             break;
           }
@@ -302,11 +356,14 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (candidate) => candidate.id === command.instance,
             );
             if (!instance) throw new Error(`missing instance ${command.instance}`);
+            const before = structuredClone(instance);
             instance.config[String(command.property)] = command.value;
             instance.effective_config[String(command.property)] = command.value;
             changes.push({
               object_id: `instance:${command.instance}`,
               kind: "modified",
+              before,
+              after: structuredClone(instance),
             });
             summary.modified += 1;
             break;
@@ -316,11 +373,14 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (candidate) => candidate.id === command.instance,
             );
             if (!instance) throw new Error(`missing instance ${command.instance}`);
+            const before = structuredClone(instance);
             delete instance.config[String(command.property)];
             delete instance.effective_config[String(command.property)];
             changes.push({
               object_id: `instance:${command.instance}`,
               kind: "modified",
+              before,
+              after: structuredClone(instance),
             });
             summary.modified += 1;
             break;
@@ -330,12 +390,15 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (candidate) => candidate.id === command.instance,
             );
             if (!instance) throw new Error(`missing instance ${command.instance}`);
+            const before = structuredClone(instance);
             instance.dependency_providers[String(command.requirement)] =
               String(command.provider);
             refreshDependencies(model);
             changes.push({
               object_id: `instance:${command.instance}`,
               kind: "modified",
+              before,
+              after: structuredClone(instance),
             });
             summary.modified += 1;
             break;
@@ -345,11 +408,14 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
               (candidate) => candidate.id === command.instance,
             );
             if (!instance) throw new Error(`missing instance ${command.instance}`);
+            const before = structuredClone(instance);
             delete instance.dependency_providers[String(command.requirement)];
             refreshDependencies(model);
             changes.push({
               object_id: `instance:${command.instance}`,
               kind: "modified",
+              before,
+              after: structuredClone(instance),
             });
             summary.modified += 1;
             break;
