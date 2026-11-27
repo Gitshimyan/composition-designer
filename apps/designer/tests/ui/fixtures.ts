@@ -80,6 +80,14 @@ const instances: Instance[] = [
     dependency_providers: {},
     source: { file: "composition/main.toml" },
   },
+  {
+    id: "logger-2",
+    module: { id: "svc.logger", version: "1.0.0" },
+    config: {},
+    effective_config: {},
+    dependency_providers: {},
+    source: { file: "composition/main.toml" },
+  },
 ];
 
 const bindings: Binding[] = [
@@ -109,6 +117,13 @@ const bindings: Binding[] = [
     parent: "app",
     slot: "content",
     child: "logger",
+    source: { file: "composition/main.toml" },
+  },
+  {
+    id: "app-content-logger-2",
+    parent: "app",
+    slot: "content",
+    child: "logger-2",
     source: { file: "composition/main.toml" },
   },
 ];

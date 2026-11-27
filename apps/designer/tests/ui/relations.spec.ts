@@ -53,6 +53,29 @@ async function composition(page: Page) {
   );
 }
 
+async function dependencySnapshot(page: Page) {
+  return page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __COMPOSITION_TEST__: {
+            snapshot: {
+              model: {
+                dependencies: Array<{
+                  requirement_id: string;
+                  from_instance: string;
+                  provider_instance?: string | null;
+                  optional: boolean;
+                  status: string;
+                }>;
+              };
+            };
+          };
+        }
+      ).__COMPOSITION_TEST__.snapshot.model.dependencies,
+  );
+}
+
 test("switches between relation views without losing selection", async ({
   page,
 }) => {
@@ -161,13 +184,11 @@ test("deletes a port connection after review", async ({ page }) => {
   ]);
 });
 
-test("projects dependency requirements and providers read-only", async ({
-  page,
-}) => {
+test("projects dependency requirements and providers", async ({ page }) => {
   await openProject(page);
   await showView(page, "Dependencies");
 
-  await expect(page.locator(".relation-readonly")).toHaveText("read-only");
+  await expect(page.locator(".relation-badge")).toHaveText("provider editing");
   const group = page.locator(".dependency-group").filter({ hasText: "box" });
   await expect(group).toContainText("logger");
   await expect(group).toContainText("svc.logger@1.0.0");
@@ -175,8 +196,61 @@ test("projects dependency requirements and providers read-only", async ({
   await expect(group).toContainText("resolved");
   await expect(group).toContainText("provider:");
   await expect(group).toContainText("explicit");
-  await expect(group).toContainText("candidates: logger");
+  await expect(group).toContainText("candidates: logger, logger-2");
   await expect(page.locator(".relation-note")).toContainText(
-    "Provider mapping cannot be edited",
+    "Setting an explicit provider writes",
   );
+});
+
+test("sets and clears an explicit dependency provider", async ({ page }) => {
+  await openProject(page);
+  await showView(page, "Dependencies");
+
+  const group = page.locator(".dependency-group").filter({ hasText: "box" });
+  await group.getByRole("button", { name: "Set provider…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "box · logger" });
+  await expect(dialog).toContainText("svc.logger@1.0.0");
+  await dialog.getByRole("radio", { name: /logger-2/ }).check();
+  await dialog.getByRole("button", { name: "Review provider" }).click();
+
+  const review = page.getByRole("dialog", {
+    name: "Set box.logger provider to logger-2",
+  });
+  await expect(review).toContainText("validated");
+  await review.getByRole("button", { name: "Apply transaction" }).click();
+  await expect(review).toBeHidden();
+
+  let dependencies = await dependencySnapshot(page);
+  expect(
+    dependencies.find(
+      (dependency) =>
+        dependency.requirement_id === "logger" &&
+        dependency.from_instance === "box",
+    )?.provider_instance,
+  ).toBe("logger-2");
+  let commands = await lastCommands(page);
+  expect(commands.map((command) => command.type)).toEqual([
+    "set_dependency_provider",
+  ]);
+
+  await group.getByRole("button", { name: "Clear explicit" }).click();
+  const clearReview = page.getByRole("dialog", {
+    name: "Clear box.logger provider",
+  });
+  await clearReview.getByRole("button", { name: "Apply transaction" }).click();
+  await expect(clearReview).toBeHidden();
+
+  dependencies = await dependencySnapshot(page);
+  const cleared = dependencies.find(
+    (dependency) =>
+      dependency.requirement_id === "logger" &&
+      dependency.from_instance === "box",
+  );
+  expect(cleared?.provider_instance ?? null).toBeNull();
+  expect(cleared?.status).toBe("ambiguous");
+  commands = await lastCommands(page);
+  expect(commands.map((command) => command.type)).toEqual([
+    "unset_dependency_provider",
+  ]);
 });

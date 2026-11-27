@@ -203,6 +203,17 @@ export type EditCommand =
       property: string;
     }
   | {
+      type: "set_dependency_provider";
+      instance: string;
+      requirement: string;
+      provider: string;
+    }
+  | {
+      type: "unset_dependency_provider";
+      instance: string;
+      requirement: string;
+    }
+  | {
       type: "create_binding";
       id: string;
       parent: string;

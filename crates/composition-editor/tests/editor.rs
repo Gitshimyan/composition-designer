@@ -417,3 +417,149 @@ fn opening_an_invalid_project_returns_diagnostics() {
         .iter()
         .any(|d| d.code == ErrorCode::FileProjectMissing));
 }
+
+#[test]
+fn set_dependency_provider_updates_resolution() {
+    let mut workspace = open("edge-valid/dependency-provider");
+    let outcome = workspace.apply(&transaction(
+        &workspace,
+        vec![Command::SetDependencyProvider {
+            instance: local("engine"),
+            requirement: local("logger"),
+            provider: local("logger-1"),
+        }],
+    ));
+    assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+    let engine = workspace
+        .model()
+        .composition
+        .instances
+        .iter()
+        .find(|instance| instance.id.as_str() == "engine")
+        .unwrap();
+    assert_eq!(
+        engine.dependency_providers.get(&local("logger")),
+        Some(&local("logger-1"))
+    );
+    let resolution = workspace
+        .model()
+        .dependencies
+        .iter()
+        .find(|dependency| {
+            dependency.from_instance.as_str() == "engine"
+                && dependency.requirement_id.as_str() == "logger"
+        })
+        .unwrap();
+    assert_eq!(
+        resolution.provider_instance.as_ref().map(LocalId::as_str),
+        Some("logger-1")
+    );
+    assert_eq!(workspace.revision().seq, 1);
+    assert_eq!(outcome.diff().unwrap().summary.modified, 1);
+}
+
+#[test]
+fn unset_dependency_provider_falls_back_to_auto_resolution() {
+    let mut workspace = open("edge-valid/dependency-provider");
+    let outcome = workspace.apply(&transaction(
+        &workspace,
+        vec![Command::UnsetDependencyProvider {
+            instance: local("app"),
+            requirement: local("logger"),
+        }],
+    ));
+    assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+    let app = workspace
+        .model()
+        .composition
+        .instances
+        .iter()
+        .find(|instance| instance.id.as_str() == "app")
+        .unwrap();
+    assert!(app.dependency_providers.is_empty());
+    let resolution = workspace
+        .model()
+        .dependencies
+        .iter()
+        .find(|dependency| {
+            dependency.from_instance.as_str() == "app"
+                && dependency.requirement_id.as_str() == "logger"
+        })
+        .unwrap();
+    assert_eq!(
+        resolution.provider_instance.as_ref().map(LocalId::as_str),
+        Some("logger-1")
+    );
+}
+
+#[test]
+fn invalid_dependency_providers_are_rejected() {
+    let workspace = open("edge-valid/dependency-provider");
+    let cases = [
+        (
+            Command::SetDependencyProvider {
+                instance: local("engine"),
+                requirement: local("logger"),
+                provider: local("app"),
+            },
+            ErrorCode::DependencyProviderInvalid,
+        ),
+        (
+            Command::SetDependencyProvider {
+                instance: local("engine"),
+                requirement: local("logger"),
+                provider: local("engine"),
+            },
+            ErrorCode::DependencySelf,
+        ),
+        (
+            Command::SetDependencyProvider {
+                instance: local("engine"),
+                requirement: local("unknown"),
+                provider: local("logger-1"),
+            },
+            ErrorCode::ContractDependencyUnknown,
+        ),
+        (
+            Command::SetDependencyProvider {
+                instance: local("engine"),
+                requirement: local("logger"),
+                provider: local("ghost"),
+            },
+            ErrorCode::RefInstanceNotFound,
+        ),
+    ];
+    for (command, code) in cases {
+        let outcome = workspace.prepare(&transaction(&workspace, vec![command]));
+        assert!(!outcome.is_accepted(), "expected rejection for {code:?}");
+        assert!(
+            codes(&outcome).contains(&code),
+            "expected {code:?}, got {:?}",
+            codes(&outcome)
+        );
+    }
+    assert_eq!(workspace.revision().seq, 0);
+}
+
+#[test]
+fn dependency_provider_command_errors() {
+    let workspace = open("edge-valid/dependency-provider");
+    let missing_mapping = workspace.prepare(&transaction(
+        &workspace,
+        vec![Command::UnsetDependencyProvider {
+            instance: local("engine"),
+            requirement: local("logger"),
+        }],
+    ));
+    assert_eq!(codes(&missing_mapping), [ErrorCode::EditInvalidCommand]);
+
+    let missing_instance = workspace.prepare(&transaction(
+        &workspace,
+        vec![Command::SetDependencyProvider {
+            instance: local("ghost"),
+            requirement: local("logger"),
+            provider: local("logger-1"),
+        }],
+    ));
+    assert_eq!(codes(&missing_instance), [ErrorCode::EditInvalidCommand]);
+}

@@ -5,14 +5,17 @@ import type {
   ModuleDefinition,
 } from "../types";
 import { moduleKey } from "../inspector/instanceEditing";
-import { dependencyDetails } from "./relationModel";
+import { dependencyDetails, type DependencyDetail } from "./relationModel";
 
 interface DependencyViewProps {
   instances: Instance[];
   modules: ModuleDefinition[];
   dependencies: DependencyResolution[];
   selectedId: string | null;
+  canEdit: boolean;
   onSelectInstance: (id: string) => void;
+  onSetProvider: (detail: DependencyDetail) => void;
+  onClearProvider: (detail: DependencyDetail) => void;
 }
 
 export default function DependencyView({
@@ -20,7 +23,10 @@ export default function DependencyView({
   modules,
   dependencies,
   selectedId,
+  canEdit,
   onSelectInstance,
+  onSetProvider,
+  onClearProvider,
 }: DependencyViewProps) {
   const details = useMemo(
     () => dependencyDetails(instances, modules, dependencies),
@@ -39,20 +45,23 @@ export default function DependencyView({
   const resolved = dependencies.filter(
     (dependency) => dependency.status === "resolved",
   ).length;
+  const explicitCount = details.filter((detail) => detail.explicit).length;
 
   return (
     <div className="relation-view">
       <div className="relation-toolbar">
         <div className="relation-toolbar-copy">
           <strong>
-            {dependencies.length} dependency resolutions · {resolved} resolved
+            {dependencies.length} dependency resolutions · {resolved} resolved ·{" "}
+            {explicitCount} explicit
           </strong>
           <span>
-            Requirements, candidates and providers are derived from the same
-            Composition Model; provider mapping is read-only in v0.1.
+            Requirements, candidates and providers come from the same
+            Composition Model; explicit mappings are written through Core
+            transactions.
           </span>
         </div>
-        <span className="relation-readonly">read-only</span>
+        <span className="relation-badge">provider editing</span>
       </div>
 
       <div className="relation-scroll">
@@ -138,6 +147,28 @@ export default function DependencyView({
                             : "none"}
                         </span>
                       </div>
+                      <div className="dependency-row-actions">
+                        <button
+                          type="button"
+                          className="config-action"
+                          disabled={
+                            !canEdit || detail.candidates.length === 0
+                          }
+                          onClick={() => onSetProvider(detail)}
+                        >
+                          Set provider…
+                        </button>
+                        {detail.explicit && (
+                          <button
+                            type="button"
+                            className="config-action is-muted"
+                            disabled={!canEdit}
+                            onClick={() => onClearProvider(detail)}
+                          >
+                            Clear explicit
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -147,9 +178,10 @@ export default function DependencyView({
         )}
 
         <div className="relation-note">
-          Provider mapping cannot be edited in v0.1: the frozen command set has
-          no dependency command. Adding one is an Extend decision (command
-          Schema + Core + adapter parity), not a UI-only change.
+          Setting an explicit provider writes{" "}
+          <code>[instances.dependencies]</code> through Core; clearing it falls
+          back to automatic resolution. Unknown targets, wrong modules,
+          self-provision and ambiguity are still rejected by Core validation.
         </div>
       </div>
     </div>

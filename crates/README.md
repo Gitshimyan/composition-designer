@@ -10,7 +10,7 @@ M3 012–015 建立 `apps/designer`（Tauri 2 + React + xyflow + CodeMirror）�
 | `composition-toml` | 已建立（006/019，29 项测试） | TOML 加载、Source Map、source_digest | domain, toml_edit, sha2 |
 | `composition-core` | 已建立（007/019，9 项测试） | 解码、模块注册、L1–L7 校验、CompositionModel | domain, toml, toml_edit |
 | `composition-cli` | 已建立（008/016，10 项测试） | inspect / resolve / validate、query / apply / jsonl | core, domain, protocol, serde, serde_json |
-| `composition-editor` | 已建立（009–011/019，31 项测试） | 命令、事务、Revision/幂等、Diff、TOML 写回、恢复 | core, domain, toml, toml_edit, serde, serde_json |
+| `composition-editor` | 已建立（009–011/019/025，38 项测试） | 命令、事务、Revision/幂等、Diff、TOML 写回、恢复 | core, domain, toml, toml_edit, serde, serde_json |
 | `composition-protocol` | 已建立（016，4 项测试） | Query/Command 协议、JSONL、外部冲突守卫 | core, domain, editor, serde, serde_json |
 | `composition-mcp` | 已建立（017–018，5 项测试） | MCP stdio、6 tools / 4 resources、e2e | protocol, serde, serde_json |
 | `composition-resolver` | 暂并入 core | 模块解析与规范化结果 | domain, toml |

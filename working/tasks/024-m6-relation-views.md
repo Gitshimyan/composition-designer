@@ -84,7 +84,7 @@ M6-005 要求三个投影共享同一模型：Structure（Instance/Slot/Binding�
   - Dependency 只读：冻结命令集没有 provider 命令，不在 UI 静默扩展。
 - 遗留 / 明确的 Extend 缺口：
   - Dependency Provider 编辑需要新命令（输入/前置条件/结果/错误码/Schema）并同步
-    Core、CLI、MCP、Designer；本卡未做，需用户明确授权；
+    Core、CLI、MCP、Designer；本卡未做，需用户明确授权（**025 已获授权并补齐**）；
   - Connection View 不是图形化 Port Graph，列表/端口投影优先；
   - 视图切换保留选择，但不保留 React Flow 的 pan/zoom；
   - 完整 Before/After 分类与影响摘要属于 025。

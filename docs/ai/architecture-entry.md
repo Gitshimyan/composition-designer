@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020 CI/UI、021 Glide 试点、022 Instance、023 Binding、024 Connection/Dependency 视图完成；025 Change Review 下一步 |
+| 当前阶段 | v0.2 M6 进行中：020 CI/UI、021 Glide 试点、022 Instance、023 Binding、024 关系视图、025 Dependency Provider（Extend）完成；026 Change Review 下一步 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../reviews/2026-11-27-project-review-and-roadmap.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -139,6 +139,8 @@
   18 UI + 12 Tauri 测试；复用 009 冻结命令；
 - M6 024 完成：Structure/Connections/Dependencies 三视图共享模型；Connection 创建/
   修改/删除经事务；Dependency 只读投影；23 UI + 14 Tauri 测试；
-  Dependency Provider 编辑缺少冻结命令，属 Extend 缺口；
+- M6 025 完成（Extend）：`set_dependency_provider` / `unset_dependency_provider`
+  命令、命令 Schema、TOML `[instances.dependencies]` 写回与 Designer 编辑入口；
+  154 + 24 UI + 15 Tauri 测试；设计基线未改；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

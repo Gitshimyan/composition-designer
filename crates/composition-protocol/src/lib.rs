@@ -408,6 +408,38 @@ mod tests {
     }
 
     #[test]
+    fn dependency_provider_transaction_is_accepted() {
+        let root = std::env::temp_dir().join(format!(
+            "composition-protocol-provider-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        copy_dir(&example("edge-valid/dependency-provider"), &root);
+        let mut session = ProtocolSession::new(&root);
+        let (_, _, digest, _) = session.current();
+        let digest = digest.expect("digest");
+        let transaction = json!({
+            "request_id": "protocol-provider",
+            "base_revision": { "seq": 0, "source_digest": digest },
+            "commands": [{
+                "type": "set_dependency_provider",
+                "instance": "engine",
+                "requirement": "logger",
+                "provider": "logger-1"
+            }]
+        });
+        let applied = session.dispatch(request(
+            "apply_transaction",
+            json!({ "transaction": transaction }),
+        ));
+        assert!(applied.ok, "{:?}", applied.diagnostics);
+        assert_eq!(applied.result.unwrap()["accepted"], true);
+        let composition = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        assert_eq!(composition.matches("[instances.dependencies]").count(), 2);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
     fn unknown_operation_is_a_protocol_error() {
         let mut session = ProtocolSession::new(example("minimal-project"));
         let response = session.dispatch(request("nope", json!({})));

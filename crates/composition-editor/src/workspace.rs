@@ -447,6 +447,52 @@ fn apply_command(model: &mut CompositionModel, command: &Command) -> Result<(), 
                 ));
             }
         }
+        Command::SetDependencyProvider {
+            instance,
+            requirement,
+            provider,
+        } => {
+            let instance_id = instance.clone();
+            let Some(target) = model
+                .composition
+                .instances
+                .iter_mut()
+                .find(|item| item.id == instance_id)
+            else {
+                return Err(invalid_command(
+                    format!("instance {instance_id} does not exist"),
+                    ObjectId::instance(&instance_id),
+                ));
+            };
+            target
+                .dependency_providers
+                .insert(requirement.clone(), provider.clone());
+        }
+        Command::UnsetDependencyProvider {
+            instance,
+            requirement,
+        } => {
+            let instance_id = instance.clone();
+            let Some(target) = model
+                .composition
+                .instances
+                .iter_mut()
+                .find(|item| item.id == instance_id)
+            else {
+                return Err(invalid_command(
+                    format!("instance {instance_id} does not exist"),
+                    ObjectId::instance(&instance_id),
+                ));
+            };
+            if target.dependency_providers.remove(requirement).is_none() {
+                return Err(invalid_command(
+                    format!(
+                        "instance {instance_id} has no explicit dependency provider {requirement}"
+                    ),
+                    ObjectId::instance(&instance_id),
+                ));
+            }
+        }
         Command::CreateBinding {
             id,
             parent,

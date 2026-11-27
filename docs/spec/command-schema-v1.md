@@ -1,6 +1,7 @@
 # Command Schema v1（M2 009）
 
-- 状态：M2 009–011 冻结（2026-11-26）
+- 状态：M2 009–011 冻结（2026-11-26）；v0.2 025 经用户明确授权 **Extend** 增加
+  Dependency Provider 命令
 - 范围：`composition-editor` 的编辑命令、原子事务、Revision 历史/幂等、结构化 Diff 与 TOML 写回
 - 关联：[`composition-schema-v1.md`](./composition-schema-v1.md)、[`domain-model-v1.md`](./domain-model-v1.md)
 
@@ -37,6 +38,8 @@ TOML 落盘、`source_digest` 刷新、结构化 Diff 与 request ID 幂等分�
 | `update_instance_module` | `id`, `module`, `version` | 更换模块/版本；保留实例配置，候选模型重新校验 |
 | `set_config` | `instance`, `property`, `value` | 设置实例配置项（可新增未知属性，由候选校验拒绝） |
 | `unset_config` | `instance`, `property` | 删除已有配置项；不存在则命令错误 |
+| `set_dependency_provider` | `instance`, `requirement`, `provider` | 设置显式依赖 Provider 映射；候选模型重新校验 |
+| `unset_dependency_provider` | `instance`, `requirement` | 删除显式映射并回退自动解析；不存在则命令错误 |
 | `create_binding` | `id`, `parent`, `slot`, `child` | 新增结构 Binding；ID 不得重复 |
 | `update_binding` | `id`, `parent`, `slot`, `child` | 替换 Binding 的 parent/slot/child |
 | `delete_binding` | `id` | 删除 Binding |
@@ -46,6 +49,15 @@ TOML 落盘、`source_digest` 刷新、结构化 Diff 与 request ID 幂等分�
 
 `config.value` 是原生 JSON 值（string / integer / float / boolean / array），与
 `composition-schema-v1.md` 的 v0.1 配置类型一致；不支持 object。
+
+Dependency Provider 命令（v0.2 025 Extend）：
+
+- `set_dependency_provider` / `unset_dependency_provider` 只改实例的显式映射；
+- 命令级错误：实例不存在、Unset 时没有显式映射 → `edit-invalid-command`；
+- requirement 不在模块契约、provider 实例不存在/不满足目标模块与版本、provider 指向自身
+  → 候选模型 L2–L7 诊断（`contract-dependency-unknown`、`dependency-provider-invalid`、
+  `dependency-self` 等）；
+- Unset 后按现有自动解析规则重新计算；是否歧义/无法解析由候选校验给出。
 
 模块定义（`modules/**/module.toml`）在 v0.1 是只读的，不在命令范围内。
 

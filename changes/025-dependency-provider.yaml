@@ -1,0 +1,50 @@
+change:
+  id: change.025-dependency-provider
+  intent: 补齐 Dependency Provider 编辑能力：新增 set/unset 命令、TOML 写回与 Designer 编辑入口。
+  authorization: extend
+  targets:
+    - crates/composition-editor
+    - crates/README.md
+    - docs/spec/command-schema-v1.md
+    - docs/spec/README.md
+    - docs/adr/0003-dependency-provider-command.md
+    - apps/designer/src
+    - apps/designer/tests
+    - apps/designer/src-tauri/src
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - working
+    - AGENTS.md
+    - changes
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - new_editor_command
+      - command_schema_extension
+      - editor_transaction
+      - toml_writeback
+      - designer_react_ui
+      - designer_tauri_host_tests
+      - playwright_ui_tests
+      - task_card_and_plan
+    forbidden:
+      - design_baseline
+      - toml_schema_fields
+      - schema_version
+      - domain_object_model
+      - module_definitions
+      - cargo_workspace_config
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - cd apps/designer && npm run build
+    - cd apps/designer && npm run test:ui
+  notes: 用户已明确授权补齐 Dependency Provider 编辑（Extend）；仅扩展编辑命令与命令 Schema，不改 TOML 字段/领域模型/设计基线。G1–G3 等 Rearchitect 缺口不在本 Manifest 范围内。

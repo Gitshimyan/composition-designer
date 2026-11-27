@@ -311,6 +311,47 @@ fn edit_document(document: &mut DocumentMut, command: &Command) -> Result<(), St
                 table.remove("config");
             }
         }
+        Command::SetDependencyProvider {
+            instance,
+            requirement,
+            provider,
+        } => {
+            let table = instance_mut(document, instance)?;
+            if table.get("dependencies").is_none() {
+                table.insert("dependencies", Item::Table(Table::new()));
+            }
+            let dependencies = table
+                .get_mut("dependencies")
+                .and_then(Item::as_table_mut)
+                .ok_or_else(|| format!("instance {instance} dependencies is not a table"))?;
+            dependencies.insert(
+                requirement.as_str(),
+                Item::Value(Value::from(provider.as_str())),
+            );
+        }
+        Command::UnsetDependencyProvider {
+            instance,
+            requirement,
+        } => {
+            let table = instance_mut(document, instance)?;
+            let remove_table = if let Some(dependencies) =
+                table.get_mut("dependencies").and_then(Item::as_table_mut)
+            {
+                if dependencies.remove(requirement.as_str()).is_none() {
+                    return Err(format!(
+                        "instance {instance} has no explicit dependency provider {requirement}"
+                    ));
+                }
+                dependencies.is_empty()
+            } else {
+                return Err(format!(
+                    "instance {instance} has no dependency provider table"
+                ));
+            };
+            if remove_table {
+                table.remove("dependencies");
+            }
+        }
         Command::CreateBinding {
             id,
             parent,

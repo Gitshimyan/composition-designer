@@ -2,8 +2,8 @@
 
 > 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）
 > 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)
-> 测试基线：146 Core/Protocol/MCP/CLI + 23 UI + 14 Tauri 测试
-> 当前阶段：v0.2 M6 进行中；020–024 完成，025 待开始
+> 测试基线：154 Core/Protocol/MCP/CLI + 24 UI + 15 Tauri 测试
+> 当前阶段：v0.2 M6 进行中；020–025 完成，026 待开始
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -26,8 +26,10 @@ Designer、Source 与 Agent 入口。
 - 023 已完成：Binding Move/Detach/required Slot 子树创建，Slot 信息与影响可审查；
 - 024 已完成：Structure/Connections/Dependencies 三视图共享模型，Connection 可编辑，
   Dependency 只读投影；
-- 缺口：CI 尚未远端执行；Dependency Provider 编辑需要 Extend；Source 编辑；
-- 下一步 025：完整 Change Review。
+- 025 已完成：Dependency Provider 编辑（Extend）：`set_dependency_provider` /
+  `unset_dependency_provider`、命令 Schema、TOML 写回与 Designer 入口；
+- 缺口：CI 尚未远端执行；G1–G3 等 Rearchitect 缺口；ConfigValue 整数 float 的 wire 限制；Source 编辑；
+- 下一步 026：完整 Change Review。
 
 ## 3. 路线图
 
@@ -47,7 +49,8 @@ Designer、Source 与 Agent 入口。
 | 3 | 022 | Instance 编辑 | 021 结论 | done |
 | 4 | 023 | Binding 编辑 | 022 | done |
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | done |
-| 6 | 025 | 完整 Change Review | 022–024 | next |
+| 6 | 025 | Dependency Provider 编辑（Extend） | 024；用户明确授权 | done |
+| 7 | 026 | 完整 Change Review | 022–025 | next |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
 
@@ -119,10 +122,22 @@ Designer、Source 与 Agent 入口。
   （新增 Connection 创建/修改/删除、非法方向拒绝）；
 - 复用冻结命令，不新增 Schema/命令。
 
-明确的 Extend 缺口：v0.1 没有设置 Dependency Provider 的命令，Dependency 视图只读；
-Provider 编辑需要新增命令 Schema + Core + Adapter 一致，不能仅靠 UI。
+明确的 Extend 缺口（025 已补齐）：v0.1 没有设置 Dependency Provider 的命令；
+Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-only 改动。
 
-### 022–025 — 完整编辑链
+### 025 — Dependency Provider 编辑（Extend，done）
+
+已完成（用户明确授权）：
+
+- 新增 `set_dependency_provider` / `unset_dependency_provider`，`COMMAND_KINDS` 12 → 14；
+- 事务级错误：实例不存在、Unset 无映射 → `edit-invalid-command`；
+  requirement/provider 合法性、自引用、歧义仍由 L2–L7 校验；
+- `ProjectSession` 写回 `[instances.dependencies]`，空表移除，保留格式；
+- Designer Dependency 视图：显式 Provider 设置/清空、候选列表、状态刷新，全部经 Review；
+- 154 Core/Protocol/MCP/CLI + 24 UI + 15 Tauri 测试通过；
+- 命令 Schema 已在 `docs/spec/command-schema-v1.md` 标注 v0.2 025 Extend。
+
+### 022–026 — 完整编辑链
 
 - Instance：创建/删除/重命名/换模块与版本/配置；
 - Binding：Slot 感知的父子结构编辑；
@@ -194,10 +209,11 @@ npm run test:ui
 | 2026-11-27 | 022 | Instance 创建/删除/重命名/换模块/配置调整；15 UI + 9 Tauri 测试通过；复用冻结命令 |
 | 2026-11-27 | 023 | Binding Move/Detach/required Slot 递归子树创建；18 UI + 12 Tauri 测试通过 |
 | 2026-11-27 | 024 | 三视图 + Connection 编辑 + Dependency 只读投影；23 UI + 14 Tauri 测试通过 |
+| 2026-11-27 | 025 | Extend：Dependency Provider Set/Unset 命令、写回与 UI；154 + 24 UI + 15 Tauri 测试通过 |
 
 ## 10. 下一步
 
-024 已完成。下一步 **025 — 完整 Change Review**：按对象类别展示新增/删除/修改、
-Before/After、Binding/Connection/Dependency 影响与完整诊断，支持取消/确认；
-Dependency Provider 编辑如需进入 v0.2，应先单独评估 Extend（新命令与 Schema），
-不能混在 Review 卡里静默扩展。
+025 已完成。下一步 **026 — 完整 Change Review**：按对象类别展示新增/删除/修改、
+Before/After、Binding/Connection/Dependency 影响与完整诊断，支持取消/确认。
+G1–G3 等 Rearchitect 缺口（接口身份、runtime 容器、项目级 Profile）仍需单独设计，
+不在本次 Extend 授权内自动展开。

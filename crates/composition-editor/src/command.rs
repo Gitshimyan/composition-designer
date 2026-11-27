@@ -34,6 +34,15 @@ pub enum Command {
         instance: LocalId,
         property: LocalId,
     },
+    SetDependencyProvider {
+        instance: LocalId,
+        requirement: LocalId,
+        provider: LocalId,
+    },
+    UnsetDependencyProvider {
+        instance: LocalId,
+        requirement: LocalId,
+    },
     CreateBinding {
         id: LocalId,
         parent: LocalId,
@@ -73,6 +82,8 @@ impl Command {
             Self::UpdateInstanceModule { .. } => "update_instance_module",
             Self::SetConfig { .. } => "set_config",
             Self::UnsetConfig { .. } => "unset_config",
+            Self::SetDependencyProvider { .. } => "set_dependency_provider",
+            Self::UnsetDependencyProvider { .. } => "unset_dependency_provider",
             Self::CreateBinding { .. } => "create_binding",
             Self::UpdateBinding { .. } => "update_binding",
             Self::DeleteBinding { .. } => "delete_binding",
@@ -90,6 +101,8 @@ pub const COMMAND_KINDS: &[&str] = &[
     "update_instance_module",
     "set_config",
     "unset_config",
+    "set_dependency_provider",
+    "unset_dependency_provider",
     "create_binding",
     "update_binding",
     "delete_binding",
@@ -143,7 +156,7 @@ mod tests {
     fn command_kinds_are_unique() {
         let unique: std::collections::BTreeSet<&str> = COMMAND_KINDS.iter().copied().collect();
         assert_eq!(unique.len(), COMMAND_KINDS.len());
-        assert_eq!(COMMAND_KINDS.len(), 12);
+        assert_eq!(COMMAND_KINDS.len(), 14);
     }
 
     #[test]
@@ -171,6 +184,27 @@ mod tests {
                 value: ConfigValue::String("Hello".into()),
             }
         );
+    }
+
+    #[test]
+    fn dependency_provider_commands_serialize_with_type_tags() {
+        let set = Command::SetDependencyProvider {
+            instance: LocalId::parse("engine").unwrap(),
+            requirement: LocalId::parse("logger").unwrap(),
+            provider: LocalId::parse("logger-1").unwrap(),
+        };
+        let value = serde_json::to_value(&set).unwrap();
+        assert_eq!(value["type"], "set_dependency_provider");
+        assert_eq!(value["instance"], "engine");
+        assert_eq!(value["requirement"], "logger");
+        assert_eq!(value["provider"], "logger-1");
+
+        let unset = Command::UnsetDependencyProvider {
+            instance: LocalId::parse("engine").unwrap(),
+            requirement: LocalId::parse("logger").unwrap(),
+        };
+        let value = serde_json::to_value(&unset).unwrap();
+        assert_eq!(value["type"], "unset_dependency_provider");
     }
 
     #[test]

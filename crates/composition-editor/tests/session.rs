@@ -337,3 +337,106 @@ port = "text"
     assert!(validation.is_valid(), "{:?}", validation.diagnostics);
     assert_eq!(validation.model.unwrap().composition.connections.len(), 2);
 }
+
+#[test]
+fn dependency_provider_set_and_unset_write_back() {
+    let project = copy_example("edge-valid/dependency-provider");
+    prepend_comment(project.path());
+    let mut session = ProjectSession::open(project.path()).unwrap();
+
+    let outcome = session.apply(&Transaction::new(
+        "set-engine-provider",
+        session.workspace().revision(),
+        vec![Command::SetDependencyProvider {
+            instance: local("engine"),
+            requirement: local("logger"),
+            provider: local("logger-1"),
+        }],
+    ));
+    assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+    let text = composition_text(project.path());
+    assert!(text.contains("# keep this comment"));
+    assert_eq!(text.matches("[instances.dependencies]").count(), 2);
+    let engine = session
+        .workspace()
+        .model()
+        .composition
+        .instances
+        .iter()
+        .find(|instance| instance.id.as_str() == "engine")
+        .unwrap();
+    assert_eq!(
+        engine.dependency_providers.get(&local("logger")),
+        Some(&local("logger-1"))
+    );
+
+    let outcome = session.apply(&Transaction::new(
+        "clear-app-provider",
+        session.workspace().revision(),
+        vec![Command::UnsetDependencyProvider {
+            instance: local("app"),
+            requirement: local("logger"),
+        }],
+    ));
+    assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+    let text = composition_text(project.path());
+    assert_eq!(text.matches("[instances.dependencies]").count(), 1);
+
+    let outcome = session.apply(&Transaction::new(
+        "clear-engine-provider",
+        session.workspace().revision(),
+        vec![Command::UnsetDependencyProvider {
+            instance: local("engine"),
+            requirement: local("logger"),
+        }],
+    ));
+    assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+    let text = composition_text(project.path());
+    assert!(!text.contains("[instances.dependencies]"));
+
+    let validation = validate_project(project.path());
+    assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+    let model = validation.model.unwrap();
+    assert!(model
+        .composition
+        .instances
+        .iter()
+        .all(|instance| instance.dependency_providers.is_empty()));
+    let resolution = model
+        .dependencies
+        .iter()
+        .find(|dependency| {
+            dependency.from_instance.as_str() == "engine"
+                && dependency.requirement_id.as_str() == "logger"
+        })
+        .unwrap();
+    assert_eq!(
+        resolution.provider_instance.as_ref().map(LocalId::as_str),
+        Some("logger-1")
+    );
+    assert_no_temporary_files(project.path());
+}
+
+#[test]
+fn invalid_dependency_provider_leaves_file_untouched() {
+    let project = copy_example("edge-valid/dependency-provider");
+    let mut session = ProjectSession::open(project.path()).unwrap();
+    let before = composition_text(project.path());
+    let outcome = session.apply(&Transaction::new(
+        "invalid-engine-provider",
+        session.workspace().revision(),
+        vec![Command::SetDependencyProvider {
+            instance: local("engine"),
+            requirement: local("logger"),
+            provider: local("app"),
+        }],
+    ));
+    assert!(!outcome.is_accepted());
+    assert!(outcome
+        .diagnostics()
+        .iter()
+        .any(|diagnostic| diagnostic.code == ErrorCode::DependencyProviderInvalid));
+    assert_eq!(composition_text(project.path()), before);
+    assert_eq!(session.workspace().revision().seq, 0);
+    assert_no_temporary_files(project.path());
+}

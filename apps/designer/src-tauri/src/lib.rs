@@ -920,4 +920,65 @@ mod tests {
         );
         let _ = fs::remove_dir_all(&root);
     }
+
+    #[test]
+    fn dependency_provider_set_and_clear_round_trip() {
+        let root = example_copy(
+            "edge-valid/dependency-provider",
+            "composition-provider",
+        );
+        let mut session = ProjectSession::open(&root).unwrap();
+        let path = root.join("composition/main.toml");
+
+        let outcome = session.apply(&Transaction::new(
+            "set-engine-provider",
+            session.workspace().revision(),
+            vec![Command::SetDependencyProvider {
+                instance: local("engine"),
+                requirement: local("logger"),
+                provider: local("logger-1"),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+        let text = fs::read_to_string(&path).unwrap();
+        assert_eq!(text.matches("[instances.dependencies]").count(), 2);
+
+        let outcome = session.apply(&Transaction::new(
+            "clear-app-provider",
+            session.workspace().revision(),
+            vec![Command::UnsetDependencyProvider {
+                instance: local("app"),
+                requirement: local("logger"),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+        let model = validation.model.expect("model");
+        let app = model
+            .composition
+            .instances
+            .iter()
+            .find(|instance| instance.id.as_str() == "app")
+            .expect("app");
+        assert!(app.dependency_providers.is_empty());
+
+        let before = fs::read_to_string(&path).unwrap();
+        let outcome = session.apply(&Transaction::new(
+            "invalid-engine-provider",
+            session.workspace().revision(),
+            vec![Command::SetDependencyProvider {
+                instance: local("engine"),
+                requirement: local("logger"),
+                provider: local("app"),
+            }],
+        ));
+        assert!(!outcome.is_accepted());
+        assert!(outcome
+            .diagnostics()
+            .iter()
+            .any(|diagnostic| diagnostic.code.as_str() == "dependency-provider-invalid"));
+        assert_eq!(fs::read_to_string(&path).unwrap(), before);
+        let _ = fs::remove_dir_all(&root);
+    }
 }

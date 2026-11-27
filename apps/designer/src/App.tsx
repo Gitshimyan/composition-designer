@@ -22,7 +22,9 @@ import { parseDraft, toDraftValue } from "./inspector/configDraft";
 import { autoLayout, buildStructure } from "./layout";
 import ConnectionDialog from "./relations/ConnectionDialog";
 import ConnectionView from "./relations/ConnectionView";
+import DependencyProviderDialog from "./relations/DependencyProviderDialog";
 import DependencyView from "./relations/DependencyView";
+import type { DependencyDetail } from "./relations/relationModel";
 import SourceView from "./source/SourceView";
 import type {
   CompositionModel,
@@ -83,6 +85,10 @@ export default function App() {
   const [stageView, setStageView] = useState<
     "structure" | "connections" | "dependencies"
   >("structure");
+  const [providerDraft, setProviderDraft] = useState<{
+    instanceId: string;
+    requirementId: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,6 +190,7 @@ export default function App() {
     setCreateDraft(null);
     setBindingDraft(null);
     setConnectionDraft(null);
+    setProviderDraft(null);
     setStageView("structure");
     void loadLayout(snapshot.root)
       .then((saved) => {
@@ -292,6 +299,7 @@ export default function App() {
       setCreateDraft(null);
       setBindingDraft(null);
       setConnectionDraft(null);
+      setProviderDraft(null);
       setBottomTab("diagnostics");
       setRevealLine(null);
       if (next.model) {
@@ -412,6 +420,7 @@ export default function App() {
       setCreateDraft(null);
       setBindingDraft(null);
       setConnectionDraft(null);
+      setProviderDraft(null);
       if (response.snapshot.canEdit) {
         try {
           setSource(await readSource());
@@ -443,6 +452,29 @@ export default function App() {
       [{ type: "delete_connection", id: connection.id }],
       `Delete connection ${connection.id}`,
       { selectAfter: connection.from.instance },
+    );
+  }
+
+  function handleSetDependencyProvider(detail: DependencyDetail) {
+    setProviderDraft({
+      instanceId: detail.resolution.from_instance,
+      requirementId: detail.resolution.requirement_id,
+    });
+  }
+
+  function handleClearDependencyProvider(detail: DependencyDetail) {
+    const instanceId = detail.resolution.from_instance;
+    const requirementId = detail.resolution.requirement_id;
+    void reviewCommands(
+      [
+        {
+          type: "unset_dependency_provider",
+          instance: instanceId,
+          requirement: requirementId,
+        },
+      ],
+      `Clear ${instanceId}.${requirementId} provider`,
+      { selectAfter: instanceId },
     );
   }
 
@@ -750,7 +782,10 @@ export default function App() {
                   modules={modules}
                   dependencies={dependencies}
                   selectedId={selectedId}
+                  canEdit={canEdit && !externalDirty}
                   onSelectInstance={handleSelectTree}
+                  onSetProvider={handleSetDependencyProvider}
+                  onClearProvider={handleClearDependencyProvider}
                 />
               )}
               <footer className="stage-footer">
@@ -759,7 +794,7 @@ export default function App() {
                     ? "Drag to arrange · positions write to .designer/layout.toml · structure edits go through Core transactions"
                     : stageView === "connections"
                       ? "Port connections · direction/type/protocol come from module contracts · edits go through Core transactions"
-                      : "Dependency resolutions · read-only projection · provider editing requires an Extend decision"}
+                      : "Dependency resolutions · explicit providers are editable through Core transactions"}
                 </span>
                 <div className="stage-counts">
                   {stageView === "structure" ? (
@@ -995,6 +1030,22 @@ export default function App() {
             }
           />
         )}
+
+      {providerDraft && (
+        <DependencyProviderDialog
+          key={`${providerDraft.instanceId}:${providerDraft.requirementId}`}
+          instanceId={providerDraft.instanceId}
+          requirementId={providerDraft.requirementId}
+          instances={instances}
+          modules={modules}
+          dependencies={dependencies}
+          suspended={pendingReview !== null}
+          onCancel={() => setProviderDraft(null)}
+          onReview={(commands, description, options) =>
+            void reviewCommands(commands, description, options)
+          }
+        />
+      )}
 
       {pendingReview && (
         <ChangeReview

@@ -60,6 +60,52 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
       return { changes, summary };
     }
 
+    function refreshDependencies(
+      model: NonNullable<MockSnapshot["model"]>,
+    ) {
+      const composition = model.composition;
+      for (const resolution of model.dependencies) {
+        const instance = composition.instances.find(
+          (candidate) => candidate.id === resolution.from_instance,
+        );
+        if (!instance) continue;
+        const module = model.modules.find(
+          (candidate) =>
+            candidate.id === instance.module.id &&
+            candidate.version === instance.module.version,
+        );
+        const requirement = module?.contract.dependencies.find(
+          (candidate) => candidate.id === resolution.requirement_id,
+        );
+        const explicit =
+          instance.dependency_providers?.[resolution.requirement_id];
+        if (explicit) {
+          resolution.provider_instance = explicit;
+          resolution.status = "resolved";
+          continue;
+        }
+        const candidates = requirement
+          ? composition.instances.filter(
+              (candidate) =>
+                candidate.id !== instance.id &&
+                candidate.module.id === requirement.module &&
+                (!requirement.version ||
+                  candidate.module.version === requirement.version),
+            )
+          : [];
+        resolution.provider_instance =
+          candidates.length === 1 ? candidates[0].id : null;
+        resolution.status =
+          candidates.length === 1
+            ? "resolved"
+            : candidates.length === 0
+              ? resolution.optional
+                ? "optional_unresolved"
+                : "unresolved"
+              : "ambiguous";
+      }
+    }
+
     function applyCommands(commands: MockCommand[]) {
       const next: MockSnapshot = structuredClone(current);
       const model = next.model;
@@ -272,6 +318,35 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
             if (!instance) throw new Error(`missing instance ${command.instance}`);
             delete instance.config[String(command.property)];
             delete instance.effective_config[String(command.property)];
+            changes.push({
+              object_id: `instance:${command.instance}`,
+              kind: "modified",
+            });
+            summary.modified += 1;
+            break;
+          }
+          case "set_dependency_provider": {
+            const instance = composition.instances.find(
+              (candidate) => candidate.id === command.instance,
+            );
+            if (!instance) throw new Error(`missing instance ${command.instance}`);
+            instance.dependency_providers[String(command.requirement)] =
+              String(command.provider);
+            refreshDependencies(model);
+            changes.push({
+              object_id: `instance:${command.instance}`,
+              kind: "modified",
+            });
+            summary.modified += 1;
+            break;
+          }
+          case "unset_dependency_provider": {
+            const instance = composition.instances.find(
+              (candidate) => candidate.id === command.instance,
+            );
+            if (!instance) throw new Error(`missing instance ${command.instance}`);
+            delete instance.dependency_providers[String(command.requirement)];
+            refreshDependencies(model);
             changes.push({
               object_id: `instance:${command.instance}`,
               kind: "modified",

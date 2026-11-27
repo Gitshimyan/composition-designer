@@ -2379,6 +2379,18 @@ code,
   text-transform: uppercase;
 }
 
+.relation-badge {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid rgba(94, 224, 189, 0.3);
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
 .relation-scroll {
   flex: 1;
   min-height: 0;
@@ -2681,6 +2693,12 @@ code,
 
 .dependency-row-meta code {
   color: var(--muted);
+}
+
+.dependency-row-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
 }
 
 .endpoint-fields {
