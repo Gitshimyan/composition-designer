@@ -1,10 +1,15 @@
 # G02 — 历史授权审计记录与 Manifest 修正
 
-- 状态：proposed（G01 之后执行；可先做记录不改规则）
+- 状态：next
+- coverage_status：partial
+- open_items：无
 - 目标：把 001–025 的授权审计结论固化为可追溯记录，并修正 Manifest 的事实性覆盖遗漏；不伪造历史授权。
-- 授权：Modify（`docs/reviews/`、`changes/`、`working/`）
+- authorization：
+  - required：modify
+  - approval：
+    - modify：default
 - 来源：`docs/reviews/2026-11-27-authorization-audit.md`
-- 变更声明：`changes/G02-historical-audit.yaml`（待开始后创建）
+- 变更声明：`changes/G02-historical-audit.yaml`（开始后创建）
 
 ## 范围
 

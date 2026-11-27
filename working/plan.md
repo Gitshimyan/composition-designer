@@ -6,7 +6,7 @@
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)
 > 测试基线：154 Core/Protocol/MCP/CLI + 24 UI + 15 Tauri 测试
-> 当前阶段：v0.2 M6 进行中；020–025 完成；评审整改 G01 等待 Rearchitect 授权，026 顺延
+> 当前阶段：v0.2 M6 进行中；020–025 完成；G01 治理规则生效，G02 历史审计下一步，026 顺延
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -31,11 +31,12 @@ Designer、Source 与 Agent 入口。
 - 024 已完成：Structure/Connections/Dependencies 三视图共享模型，Connection 可编辑；
 - 025 已完成：Dependency Provider 编辑（Extend）：`set_dependency_provider` /
   `unset_dependency_provider`、命令 Schema、TOML 写回与 Designer 入口；
-- 2026-11-27 收到两份评审：授权体系审计、未实现工作披露；已归档到 `docs/reviews/`，
-  整改队列为 G00–G04；未决事项登记在 `working/decisions/unresolved-work.md`；
+- 2026-11-27 收到两份评审：授权体系审计、未实现工作披露；已归档到 `docs/reviews/`；
+- G01 已完成：权限集合、工程配置/文档/Compose/副作用边界、任务卡与 Manifest 模板、
+  未实现披露与 UW 登记制度生效；G02 历史审计下一步；
 - 缺口：G1–G3 等 Rearchitect 缺口；ConfigValue 整数 float 的 wire 限制；Source 编辑；
 - CI 已在远端 main 执行并通过（run 45984567517，5m9s）；
-- 下一步：先获得 G01 的 Rearchitect 授权，再按 G01 → G02 → G03 → 026 → G04 推进。
+- 下一步：G02 → G03 → 026 → G04。
 
 ## 3. 路线图
 
@@ -66,13 +67,14 @@ Designer、Source 与 Agent 入口。
 | 顺序 | 卡 | 方向 | 授权 | 状态 | 依赖 |
 |---|---|---|---|---|---|
 | 0 | [G00 — 评审归档与整改计划](tasks/G00-review-intake.md) | 归档评审、整改队列、UW 登记、Manifest 事实性修正 | Modify | done | 无 |
-| 1 | [G01 — 授权规范与披露制度](tasks/G01-governance-rules.md) | 权限集合、工程配置/文档/Compose 边界、任务卡与 Manifest 模板、未实现汇报规则 | Rearchitect + Modify | **等待授权** | 用户批准 Rearchitect |
-| 2 | [G02 — 历史授权审计记录与 Manifest 修正](tasks/G02-historical-audit.md) | 001–025 审计分类、Manifest 事实性修正、不追溯授权 | Modify | proposed | G01 |
-| 3 | [G03 — 历史未实现工作回溯](tasks/G03-unresolved-backfill.md) | 全量回溯、UW 登记、覆盖状态 | Modify | proposed | G01 |
+| 1 | [G01 — 授权规范与披露制度](tasks/G01-governance-rules.md) | 权限集合、工程配置/文档/Compose 边界、任务卡与 Manifest 模板、未实现汇报规则 | Rearchitect + Modify | done | 用户已批准 |
+| 2 | [G02 — 历史授权审计记录与 Manifest 修正](tasks/G02-historical-audit.md) | 001–025 审计分类、Manifest 事实性修正、不追溯授权 | Modify | next | G01 |
+| 3 | [G03 — 历史未实现工作回溯](tasks/G03-unresolved-backfill.md) | 全量回溯、UW 登记、覆盖状态 | Modify | queued | G01 |
 | 4 | 026 — 完整 Change Review | Before/After、影响、诊断、确认/取消 | Modify | queued | G01–G03 |
 | 5 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | deferred | 026 |
 
-**当前阻塞：** G01 需要修改 `AGENTS.md` 与模板，属 Rearchitect；在用户明确批准前不执行。
+**当前状态：** G01 已生效；G02 可立即开始（Modify）。G04 仍需 Extend + Rearchitect，
+排在 026 之后。
 
 ### 4.2 未决工作总览
 
@@ -81,9 +83,9 @@ Designer、Source 与 Agent 入口。
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 13 |
-| 已实现 / 已关闭 | 1（UW-001 Dependency Provider） |
+| 已实现 / 已关闭 | 3（UW-001 Provider、UW-006 授权、UW-007 披露） |
 | 等待用户决策（pending_decision） | 5（G1–G3、ConfigValue wire、机器门禁） |
-| 等待授权（pending_authorization） | 2（G01 的授权规则、披露制度） |
+| 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 2（G02、G03） |
 | 明确延期（deferred） | 3（Source 编辑、真实 WebView2 自动化、Glide G4–G8） |
 
@@ -246,16 +248,16 @@ npm run test:ui
 | 2026-11-27 | 025 | Extend：Dependency Provider Set/Unset 命令、写回与 UI；154 + 24 UI + 15 Tauri 测试通过 |
 | 2026-11-27 | 远端 CI | push main 后首次执行通过（Windows，run 45984567517，5m9s） |
 | 2026-11-27 | 评审整改规划 | 授权审计 + 未实现披露评审归档；G00–G04 队列、UW 登记册、审计响应写入；G01 等待 Rearchitect 授权 |
+| 2026-11-27 | G01 | 权限集合与边界、任务卡/Manifest 模板、未实现披露与 UW 制度生效；产品代码/Schema 未改 |
 
 ## 10. 下一步
 
-025 已完成。当前先执行 **评审整改**：
+G01 已完成，治理规则生效。下一步：
 
-1. **G01 — 授权规范与披露制度**：需要用户明确批准 Rearchitect；
-2. G02 — 历史授权审计记录与 Manifest 修正（Modify）；
-3. G03 — 历史未实现工作回溯（Modify）；
-4. **026 — 完整 Change Review**（M6-006）；
-5. G04 — 机器授权/覆盖门禁（Extend + Rearchitect）。
+1. **G02 — 历史授权审计记录与 Manifest 修正**（Modify，可立即开始）；
+2. G03 — 历史未实现工作回溯（Modify）；
+3. **026 — 完整 Change Review**（M6-006）；
+4. G04 — 机器授权/覆盖门禁（Extend + Rearchitect）。
 
 G1–G3 等 Schema/领域模型缺口（接口身份、runtime 容器、项目级 Profile）仍是
 pending_decision，不随本次评审自动展开；Source 编辑仍属 M7。

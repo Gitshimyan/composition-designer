@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020–025 完成；评审整改 G01 等待 Rearchitect 授权，026 Change Review 顺延 |
+| 当前阶段 | v0.2 M6 进行中：020–025 完成；G01 治理规则生效，G02 历史审计下一步，026 Change Review 顺延 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -66,24 +66,31 @@
 | `docs/adr/` | 决策与否定方案（0001 冻结、0002 不支持项） |
 | `changes/` | Change Manifest |
 
-## 3. 权限模式
+## 3. 权限模式（权限集合）
+
+权限由实际变更影响决定，不由文件位置决定；一个任务可以同时需要多个模式。
+完整规则见 [`AGENTS.md`](../../AGENTS.md) §1。
 
 | 模式 | 允许改动 | 授权 |
 |---|---|---|
 | Inspect | 只读、计划、影响分析 | 默认允许 |
-| Modify | 目标 crate `src/`、测试、crate 内文档；任务卡指定的 `docs/` 规范与计划 | 默认允许 |
-| Compose | `examples/**` 组合声明、`.designer/**`、docs 组合样例 | 需求涉及组合时 |
-| Extend | 新 crate / TOML 字段 / 命令 / Adapter / 示例类型 | 需用户明确授权 |
-| Rearchitect | 领域模型、Schema 版本、命令协议、工程配置、设计基线 | 需用户明确授权 |
+| Modify | 目标 crate/package/app 的既有契约内实现、测试、任务指定文档 | 默认允许 |
+| Compose | `examples/**` 组合声明、`.designer/**`、docs 组合样例、`working/pilots/**` 声明式试点 | 需求涉及组合时允许 |
+| Extend | 新 crate / TOML 字段 / 命令 / Adapter / 示例类型 / 局部依赖 | 需用户明确授权 |
+| Rearchitect | 领域模型、对象关系、Schema 版本/迁移、共享命令/事务协议、workspace 拓扑、全局工程配置、设计基线、AGENTS 规则 | 需用户明确授权 |
+
+任务卡与 Manifest 用 `authorization.required` 列出全部所需模式，用
+`approval`/`approved` + `evidence` 记录批准状态；不能用“最高一级”替代缺失权限。
 
 ## 4. 标准工作流
 
-1. 从 [`working/plan.md`](../../working/plan.md) 取一张卡；
+1. 从 [`working/plan.md`](../../working/plan.md) 取一张卡，读相关 `UW-*`；
 2. 读本卡相关的规范（`docs/spec/`）与设计基线章节；
-3. 复制 `changes/000-template.yaml` 声明范围（跨目录或高一级授权时必须）；
-4. 实现：先失败用例，再实现；不猜字段与命令；
+3. 复制 `changes/000-template.yaml` 声明 `authorization.required/approved`、
+   `targets`、`operations`、`scope`、`unresolved_items`；
+4. 实现：先失败用例，再实现；不猜字段与命令；受阻部分登记而不是隐藏；
 5. 验证：按任务卡验收条件；当前先跑 `cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；没有门禁就明确写“未执行”；
-6. 回写任务卡与 plan。
+6. 回写任务卡（`status`/`coverage_status`/`open_items`）、plan 与未决登记。
 
 ## 5. 禁止清单
 
@@ -142,7 +149,8 @@
 - M6 025 完成（Extend）：`set_dependency_provider` / `unset_dependency_provider`
   命令、命令 Schema、TOML `[instances.dependencies]` 写回与 Designer 编辑入口；
   154 + 24 UI + 15 Tauri 测试；设计基线未改；
-- 2026-11-27 评审整改：授权审计与未实现披露评审归档；G01（Rearchitect，等待授权）
-  → G02 → G03 → 026 → G04；未决事项登记 `working/decisions/unresolved-work.md`；
+- 2026-11-27 评审整改：授权审计与未实现披露评审归档；G01（权限集合、工程/文档/Compose/
+  副作用边界、任务卡/Manifest 模板、未实现披露）已完成；G02 → G03 → 026 → G04 进行中；
+  未决事项登记 `working/decisions/unresolved-work.md`；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

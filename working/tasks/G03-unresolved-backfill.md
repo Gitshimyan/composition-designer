@@ -1,10 +1,15 @@
 # G03 — 历史未实现工作回溯
 
-- 状态：proposed（G01 之后执行）
+- 状态：queued（G02 之后执行）
+- coverage_status：partial
+- open_items：无
 - 目标：对 001–025 做一次未实现工作回溯，填充 `working/decisions/unresolved-work.md`，并给有未决项的卡补 `coverage_status` / `open_items`。
-- 授权：Modify（`working/`、`docs/reviews/`）
+- authorization：
+  - required：modify
+  - approval：
+    - modify：default
 - 来源：`docs/reviews/2026-11-27-unimplemented-work-transparency.md` §10
-- 变更声明：`changes/G03-unresolved-backfill.yaml`（待开始后创建）
+- 变更声明：`changes/G03-unresolved-backfill.yaml`（开始后创建）
 
 ## 范围
 

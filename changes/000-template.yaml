@@ -1,11 +1,23 @@
 change:
   id: change.<name>
   intent: 描述本次改动要达成的结果（一句话）
-  authorization: modify          # modify | compose | extend | rearchitect（取所需最高一项）
+
+  # 实际需要的全部权限；不是取最高一项。
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "默认 Modify；或用户明确批准的对话/决策记录"
+
+  # 实际改动范围；必须覆盖最终 git diff。
   targets:
     - crates/composition-domain
+
   operations:
     - modify
+
+  # allowed 是允许的具体行为；forbidden 是明确不做的行为。
   scope:
     allowed:
       - crate_internal_implementation
@@ -14,10 +26,16 @@ change:
       - toml_schema
       - command_protocol
       - design_baseline
+
+  # 与本卡相关的未决工作 ID；没有则空列表。
+  unresolved_items: []
+
   impact:
     expected_schema_changes: false
     expected_command_changes: false
     expected_design_baseline_changes: false
+
   validation:
     - cargo test -p composition-domain
-  notes: 普通实现任务默认只允许改目标 crate 内部实现与测试；超出范围必须升级 authorization 并获得授权。
+
+  notes: 普通实现任务默认只允许改目标 crate 内部实现与测试；超出范围必须升级授权并提供批准依据。

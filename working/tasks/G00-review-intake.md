@@ -1,8 +1,13 @@
 # G00 — 评审归档与整改计划
 
 - 状态：done
+- coverage_status：complete
+- open_items：无
 - 目标：归档 2026-11-27 的两份评审，形成整改计划、未决工作登记与任务卡队列；不执行授权规则变更。
-- 授权：Modify（`docs/reviews/`、`working/`、`docs/ai/`、Manifest 事实性修正）
+- authorization：
+  - required：modify
+  - approval：
+    - modify：default
 - 变更声明：`changes/G00-review-intake.yaml`
 - 来源：根目录两份评审文档（已移动归档）
 

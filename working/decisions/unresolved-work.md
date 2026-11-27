@@ -1,6 +1,6 @@
 # 未决工作登记册
 
-> 状态：初始登记（制度正式化由 G01 完成）
+> 状态：**Adopted 2026-11-27（G01）**；本登记册与 `AGENTS.md` §9 配套生效。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -9,9 +9,9 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 13 |
-| 已实现 / 已关闭 | 1 |
+| 已实现 / 已关闭 | 3 |
 | 等待用户决策（pending_decision） | 5 |
-| 等待授权（pending_authorization） | 2 |
+| 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 2 |
 | 明确延期（deferred） | 3 |
 
@@ -24,8 +24,8 @@
 | UW-003 | 021 | 非结构的 runtime / service 容器 | Rearchitect | pending_decision | Rearchitect | 运行时服务只能被近似映射为结构节点，层级失真 | 与 UW-002 联合设计；不提前改 Schema |
 | UW-004 | 021 | 项目级 Profile / 条件组合选择 | Rearchitect | pending_decision | Rearchitect | 无法完整表达 profile、环境、task 变体 | 需要真实 UI/项目需求触发 |
 | UW-005 | 022 / 025 | ConfigValue 整数值 float 的 JSON wire 区分 | Extend（协议方案） | pending_decision | Extend；若改共享协议基线再评估 Rearchitect | Agent/UI 传输可能无法保留原始数值类型 | 单独设计 wire 语义，不做局部 hack |
-| UW-006 | 授权审计 | 五种模式改为可组合权限集合；工程配置/文档/Compose 路径/副作用边界 | Rearchitect | pending_authorization | Rearchitect + Modify | 规则无法准确约束组合权限与越权判断 | G01；等待用户批准 |
-| UW-007 | 披露评审 | 任务卡/Manifest 模板、`coverage_status`、`open_items`、未实现汇报规范 | Rearchitect | pending_authorization | Rearchitect + Modify | `done` 可能掩盖未实现项；登记无强制格式 | G01；等待用户批准 |
+| UW-006 | 授权审计 | 五种模式改为可组合权限集合；工程配置/文档/Compose 路径/副作用边界 | Rearchitect | implemented | Rearchitect + Modify | 已解除；权限按集合声明与审批 | G01 已生效；G02 记录历史分类 |
+| UW-007 | 披露评审 | 任务卡/Manifest 模板、`coverage_status`、`open_items`、未实现汇报规范 | Rearchitect | implemented | Rearchitect + Modify | 已解除；模板与汇报规则生效 | G01 已生效；G03 回溯历史卡 |
 | UW-008 | 授权审计 | 001–025 历史授权审计记录与 Manifest 事实性修正 | Modify | accepted | Modify | 历史授权分类与 Manifest 覆盖不一致 | G02，G01 后执行 |
 | UW-009 | 披露评审 | 001–025 历史未实现工作回溯与登记 | Modify | accepted | Modify | 部分缺口可能只停留在旧卡末尾 | G03，G01 后执行 |
 | UW-010 | 授权审计 | 机器授权/覆盖门禁（targets、operations、授权等级、coverage） | Extend + Rearchitect | pending_decision | Extend + Rearchitect | Manifest 仍只是书面契约，越权靠人工发现 | G04，026 之后；先报告后阻断 |
@@ -43,6 +43,19 @@
 - 文档：`docs/spec/command-schema-v1.md`、ADR-0003；
 - 验证：workspace、Protocol、Tauri host、Playwright 均有覆盖（详见 025 卡）；
 - 关闭日期：2026-11-27。
+
+### UW-006 — 授权规范
+
+- 实现：`AGENTS.md` §1（权限集合、工程配置、文档权限、Compose/副作用边界）、
+  §2、§3、§5；
+- 模板：`working/tasks/000-template.md`、`changes/000-template.yaml`；
+- 关闭日期：2026-11-27（G01）。
+
+### UW-007 — 未实现披露制度
+
+- 实现：`AGENTS.md` §4、§6、§9；任务卡 `coverage_status`/`open_items` 与独立汇报章节；
+- 登记：本文件与 `working/decisions/decision-history.md`；
+- 关闭日期：2026-11-27（G01）。
 
 ## 4. 维护规则
 

@@ -1,10 +1,16 @@
 # G04 — 机器授权/覆盖门禁
 
 - 状态：deferred（026 之后执行）
+- coverage_status：partial
+- open_items：无
 - 目标：让 Manifest、实际 diff 与需求覆盖状态可自动核对，先报告、后阻断；避免“声明覆盖”继续只靠人工。
-- 授权：Extend + Rearchitect（新增门禁工具与工程质量策略）
+- authorization：
+  - required：extend, rearchitect
+  - approval：
+    - extend：pending（工具/依赖）
+    - rearchitect：pending（工程质量门禁策略）
 - 来源：`docs/reviews/2026-11-27-authorization-audit.md` §9.1
-- 变更声明：`changes/G04-machine-gate.yaml`（待开始后创建）
+- 变更声明：`changes/G04-machine-gate.yaml`（开始后创建）
 
 ## 范围
 

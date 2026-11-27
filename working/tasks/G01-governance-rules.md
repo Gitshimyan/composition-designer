@@ -1,10 +1,16 @@
 # G01 — 授权规范与未实现披露制度
 
-- 状态：todo（**等待 Rearchitect 授权**，未开始）
+- 状态：done
+- coverage_status：complete
+- open_items：无
 - 目标：把授权从单值等级改为可组合权限集合，并建立未实现工作的登记、覆盖状态与汇报规则；只改规则和模板，不改产品代码。
-- 授权：Rearchitect + Modify（`AGENTS.md`、任务卡模板、Manifest 模板、汇报规范）
+- authorization：
+  - required：rearchitect, modify
+  - approval：
+    - rearchitect：granted（用户 2026-11-27 确认 G01 范围）
+    - modify：granted（用户指示开始）
 - 来源：`docs/reviews/2026-11-27-authorization-audit.md`、`docs/reviews/2026-11-27-unimplemented-work-transparency.md`
-- 变更声明：`changes/G01-governance-rules.yaml`（待授权后创建）
+- 变更声明：`changes/G01-governance-rules.yaml`
 
 ## 背景
 
@@ -69,16 +75,16 @@
 
 ## 清单
 
-- [ ] 获得用户对 Rearchitect 范围的明确批准
-- [ ] 修订 `AGENTS.md` §1–§3、§6、§8
-- [ ] 修订 `working/tasks/000-template.md`
-- [ ] 修订 `changes/000-template.yaml`
-- [ ] 定义 `working/decisions/unresolved-work.md` 状态机与关闭规则
-- [ ] 定义 `working/decisions/decision-history.md` 记录格式
-- [ ] 定义任务结束汇报模板与阶段结项检查
-- [ ] 更新 `working/plan.md` 未决工作总览与统计口径
-- [ ] 添加迁移说明：旧卡如何补 `coverage_status`/`open_items`，哪些字段不追溯
-- [ ] 创建 `changes/G01-governance-rules.yaml`
+- [x] 获得用户对 Rearchitect 范围的明确批准
+- [x] 修订 `AGENTS.md` §1–§3、§6、§8
+- [x] 修订 `working/tasks/000-template.md`
+- [x] 修订 `changes/000-template.yaml`
+- [x] 定义 `working/decisions/unresolved-work.md` 状态机与关闭规则
+- [x] 定义 `working/decisions/decision-history.md` 记录格式
+- [x] 定义任务结束汇报模板与阶段结项检查
+- [x] 更新 `working/plan.md` 未决工作总览与统计口径
+- [x] 添加迁移说明：旧卡如何补 `coverage_status`/`open_items`，哪些字段不追溯
+- [x] 创建 `changes/G01-governance-rules.yaml`
 
 ## 验收
 
@@ -97,4 +103,25 @@
 
 ## 结果 / 遗留问题
 
-- 尚未开始；等待 Rearchitect 授权。
+- 结果：
+  - `AGENTS.md`：五种模式改为权限集合；新增工程配置/文档/Compose/副作用边界、
+    完成状态与覆盖状态、最终汇报结构与未决登记规则；
+  - `working/tasks/000-template.md`：新增 authorization.required/approval、
+    coverage_status/open_items、原始目标覆盖、未实现事项、范围调整；
+  - `changes/000-template.yaml`：新增 authorization.required/approved/evidence、
+    unresolved_items，保留 targets/operations/scope 分离；
+  - `working/decisions/unresolved-work.md`：制度正式化；UW-006/007 标记 implemented；
+  - `working/decisions/decision-history.md`：记录 D-006 用户批准；
+  - `working/plan.md`、`docs/reviews/2026-11-27-audit-response.md`、
+    `docs/ai/architecture-entry.md`、`README.md` 同步现状；
+  - `changes/G01-governance-rules.yaml` 记录本次 Extend/Rearchitect 声明。
+- 验证：
+  - 实际执行：15 个相关文档的相对链接检查通过、`git diff --check`、
+    确认 `crates/` 与 `apps/` 无改动；
+  - 未执行：`cargo test` / `npm run test:ui`（本卡只改规则/模板，无产品代码变更）；
+  - 未执行机器 YAML 解析：当前环境没有可用的 YAML 解析器；模板字段与缩进已人工核对；
+  - 未执行：G02/G03 的历史回溯与历史授权记录。
+- 遗留（已登记，不阻塞本卡）：
+  - UW-002–004、UW-005、UW-010 仍等待决策；
+  - G02/G03 尚未开始；026 尚未开始。
+- 下一步：G02 — 历史授权审计记录与 Manifest 修正。
