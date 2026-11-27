@@ -116,7 +116,7 @@
 
 - 实现：CI `Change gate` 步骤改为 `--mode block`；
 - 修复重叠 Manifest 误报：任一覆盖 Manifest 满足约束即通过；
-- 验证：G05 单元/仓库测试 + PR CI；
+- 验证：G05 单元/仓库测试 + PR #4 CI pass（46000619083），合并后 main CI pass（46001377088）；
 - 状态：`implemented`；关闭日期：2026-11-27（G05）。
 
 ## 4. 维护规则
