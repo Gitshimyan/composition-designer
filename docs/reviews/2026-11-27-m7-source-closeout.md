@@ -24,9 +24,9 @@
 
 ## 3. 边界
 
-- 仅 Composition 入口；模块文件仍只读；
-- 无三向合并/自动格式化；Reload 丢弃草稿；
-- Source 文本写入不做 fsync 级保证；
+- 仅 Composition 入口；模块文件仍只读（UW-031）；
+- 无三向合并/自动格式化；Reload 丢弃草稿（UW-017）；
+- Source 文本写入不做 fsync 级保证（UW-019）；
 - 未开放模块定义 Source 编辑。
 
 ## 4. 结论

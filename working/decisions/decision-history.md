@@ -24,3 +24,4 @@
 | D-017 | 2026-11-27 | 完成 029 Source 后端 | 用户选择 A 并批准；Extend + Rearchitect | replace_source、source prepare/apply、文本+对象 Diff、冲突守卫；172 tests；030 待做 |
 | D-018 | 2026-11-27 | 完成 030 Source UI | M7；Modify | CodeMirror 编辑、draft、Review/文本 Diff、Discard、冲突只读；30 UI |
 | D-019 | 2026-11-27 | 完成 031 M7 Source 验收 | M7；Modify | Glide 试点 Source 编辑；173 tests/16 Tauri/30 UI；M7 完成 |
+| D-020 | 2026-11-27 | 关闭 UW-011，登记 UW-031 | M7 完成后的覆盖审计 | Composition Source 已实现；模块文件编辑仍只读，转 UW-031 deferred |

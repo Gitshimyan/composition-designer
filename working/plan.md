@@ -35,7 +35,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 - M6 完成（020–027）：Instance/Binding/Connection/Dependency 编辑、完整 Change Review、
   Glide 试点全链路、PR 强制门禁；证据见
   [`2026-11-27-m6-closeout.md`](../docs/reviews/2026-11-27-m6-closeout.md)。
-- G01–G07 完成：权限集合、历史授权审计、未实现回溯、机器门禁 block；
+- G01–G08 完成：权限集合、历史授权审计、未实现回溯、机器门禁 block；
   G7 已完成接口/服务/Profile 设计研究，ADR-0004 仍为 Proposed；
   `main` 分支保护要求 `Windows build and UI tests`。
 - 当前 GUI：Canvas/Tree、Instance/Binding/Config、Connection/Dependency、
@@ -174,8 +174,8 @@ S2 前置：S1 完成 + UW-018 多入口决策。
 
 | 指标 | 数量 |
 |---|---:|
-| 登记事项 | 30 |
-| 已实现 / 已关闭 | 10 |
+| 登记事项 | 31 |
+| 已实现 / 已关闭 | 11 |
 | 等待用户决策 | 5 |
 | 等待授权 | 0 |
 | 已接受待排期 | 3 |
@@ -209,7 +209,8 @@ npm run desktop
 | 2026-11-27 | 028 | Source 编辑设计；ADR-0005 Proposed；029 需 Extend + Rearchitect 授权 |
 | 2026-11-27 | 029 | replace_source 后端、source prepare/apply、文本+对象 Diff、冲突守卫；172 tests |
 | 2026-11-27 | 030 | CodeMirror 可编辑 Source、Review、Discard、冲突只读；30 UI |
-| 2026-11-27 | 031 | Glide 试点 Source 编辑验收；173 tests / 16 Tauri / 30 UI；M7 完成 |
+| 2026-11-27 | 031 | Glide 试点 Source 编辑验收；173 tests / 16 Tauri / 30 UI；M7 完成；UW-011 关闭，模块文件编辑登记 UW-031 |
+| 2026-11-27 | G08 | M7 覆盖审计：UW-011 implemented、UW-031 deferred；31 项登记 |
 
 ## 11. 下一步
 
