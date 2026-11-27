@@ -6,6 +6,10 @@
 - 授权：Extend（Agent Skill、MCP 配置模板、端到端测试）
 - 变更声明：`changes/018-agent-skill-e2e.yaml`
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-011、UW-020、UW-021
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 016 有协议，017 有 MCP Adapter。018 补齐 Agent 使用方式与真实验证：

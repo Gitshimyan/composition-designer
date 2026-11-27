@@ -4,7 +4,13 @@
 - 目标：补齐 v0.1 冻结命令集缺失的 Dependency Provider 编辑能力，让 Designer 的 Dependency 视图可以设置显式 Provider、回退自动解析，并同步 CLI/MCP 事务语义。
 - 授权：**Extend + Modify（用户于 2026-11-27 明确授权补齐该权限缺口）**
 - 变更声明：`changes/025-dependency-provider.yaml`
+
+> 授权审计（2026-11-27）：Extend + Modify 分类正确；Manifest 已补 `crates/composition-protocol` 与 `protocol_transaction_test`。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 - 依赖：024 的 Dependency 只读投影；021 试点结论
+
+- coverage_status：complete_with_deferred_items
+- open_items：UW-005、UW-011
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
 
 ## 背景与授权审计
 
@@ -101,6 +107,8 @@ Extend 能力，因此本卡新增两条命令并打通 Core → TOML → Design
   - 候选列表只列目标模块/版本匹配实例，避免 UI 诱导非法映射。
 - 权限审计结论：
   - 本次补齐的是 024 唯一明确标注的 **Extend** 缺口；
+  - 2026-11-27 授权审计指出本卡 Manifest 漏列 `crates/composition-protocol` 测试 target，
+    已补 `crates/composition-protocol` 与 `protocol_transaction_test`（事实性声明修正，不改产品代码）；
   - G1 接口/契约身份、G2 runtime 容器、G3 项目级 Profile、G4–G8 技术元数据/任务模板
     属于 **Rearchitect**（Schema/领域模型/设计基线），未在本次 Extend 授权下修改；
   - ConfigValue 整数值 float 的 JSON wire 区分是协议格式问题，需要单独设计；

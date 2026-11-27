@@ -1,9 +1,12 @@
 # Composition Designer — v0.2 执行计划
 
 > 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）
-> 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)
-> 测试基线：154 Core/Protocol/MCP/CLI + 24 UI + 15 Tauri 测试
-> 当前阶段：v0.2 M6 进行中；020–025 完成，026 待开始
+> 外部评审：[项目评审](../docs/reviews/2026-11-27-project-review-and-roadmap.md) ·
+> [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
+> [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
+> [整改计划](../docs/reviews/2026-11-27-audit-response.md)
+> 测试基线：163 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
+> 当前阶段：v0.2 M6 完成（020–027，PR 门禁已验证）；G01–G04 完成；M7 为下一阶段候选
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -19,24 +22,31 @@ Designer、Source 与 Agent 入口。
 
 - v0.1 M0–M5 已冻结并通过 A01–A18 验收；
 - 评审已归档；v0.1 领域模型、TOML Schema、命令协议不因 v0.2 UI 需求直接修改；
-- 当前 GUI：Canvas/Tree 查看、Inspector 配置编辑、Change Review、只读 Source、外部变更 Reload；
+- 当前 GUI：Canvas/Tree、Inspector Instance/Binding 与配置编辑、Structure/Connections/
+  Dependencies 三视图、Change Review、只读 Source、外部变更 Reload；
 - 020 已完成：Windows CI 文件、Playwright 1.65 + 8 条 UI 链路、本地 `npm run test:ui`；
 - 021 已完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，Core 验证通过；
 - 022 已完成：Instance 创建/删除/重命名/换模块与版本/配置调整，走统一事务与 Review；
 - 023 已完成：Binding Move/Detach/required Slot 子树创建，Slot 信息与影响可审查；
-- 024 已完成：Structure/Connections/Dependencies 三视图共享模型，Connection 可编辑，
-  Dependency 只读投影；
+- 024 已完成：Structure/Connections/Dependencies 三视图共享模型，Connection 可编辑；
 - 025 已完成：Dependency Provider 编辑（Extend）：`set_dependency_provider` /
   `unset_dependency_provider`、命令 Schema、TOML 写回与 Designer 入口；
+- 2026-11-27 收到两份评审：授权体系审计、未实现工作披露；已归档到 `docs/reviews/`；
+- G01 已完成：权限集合、工程配置/文档/Compose/副作用边界、任务卡与 Manifest 模板、
+  未实现披露与 UW 登记制度生效；
+- G02 已完成：001–025 历史授权审计记录、Manifest 事实性修正与任务卡审计备注；
+- G03 已完成：001–025 历史未实现工作回溯；登记册 27 项（6 关闭、9 待决策、0 accepted、12 延期）；
+- 026 已完成：Change Review 分类、Before/After、命令、Dependency 影响、完整诊断；
+  M6 功能卡完成，总验收 027 待执行；
 - 缺口：G1–G3 等 Rearchitect 缺口；ConfigValue 整数 float 的 wire 限制；Source 编辑；
-- CI 已在远端 main 执行并通过（run 45984567517，5m9s）。
-- 下一步 026：完整 Change Review。
+- CI 已在远端 main 执行并通过（run 45984567517，5m9s）；
+- 下一步：M6 收口检查；G04 需授权；M7 为候选阶段。
 
 ## 3. 路线图
 
 | 阶段 | 目标 | 状态 | 主要交付 |
 |---|---|---|---|
-| M6 | Complete Composition Authoring | planned | CI、真实项目试点、Instance/Binding/Connection/Dependency、完整 Review |
+| M6 | Complete Composition Authoring | done | 功能、Glide 全链路、PR 强制门禁全部通过 |
 | M7 | Source Authoring & Consistency | later | 可编辑 Source、统一提交、外部修改/草稿冲突 |
 | M8 | Agent Authoring Experience | later | 上下文查询、影响分析、事务批处理、Skill 评测 |
 | M9 | Composition Ecosystem | deferred | Module Registry/Versioning、多文件、模板、Adapter；不承诺进入 v0.2 |
@@ -51,7 +61,39 @@ Designer、Source 与 Agent 入口。
 | 4 | 023 | Binding 编辑 | 022 | done |
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | done |
 | 6 | 025 | Dependency Provider 编辑（Extend） | 024；用户明确授权 | done |
-| 7 | 026 | 完整 Change Review | 022–025 | next |
+| 7 | 026 | 完整 Change Review | 022–025；G01–G03 | done |
+| 8 | 027 | M6 收口验收 | 020–026 | done（coverage: complete） |
+
+### 4.1 评审整改队列（G 轨道，2026-11-27）
+
+评审整改不占用 M6 功能卡编号；026 是完整 Change Review，027 是 M6 收口。顺序为
+`G00 → G01 → G02 → G03 → 026 → 027 → G04`。
+
+| 顺序 | 卡 | 方向 | 授权 | 状态 | 依赖 |
+|---|---|---|---|---|---|
+| 0 | [G00 — 评审归档与整改计划](tasks/G00-review-intake.md) | 归档评审、整改队列、UW 登记、Manifest 事实性修正 | Modify | done | 无 |
+| 1 | [G01 — 授权规范与披露制度](tasks/G01-governance-rules.md) | 权限集合、工程配置/文档/Compose 边界、任务卡与 Manifest 模板、未实现汇报规则 | Rearchitect + Modify | done | 用户已批准 |
+| 2 | [G02 — 历史授权审计记录与 Manifest 修正](tasks/G02-historical-audit.md) | 001–025 审计分类、Manifest 事实性修正、不追溯授权 | Modify | done | G01 |
+| 3 | [G03 — 历史未实现工作回溯](tasks/G03-unresolved-backfill.md) | 全量回溯、UW 登记、覆盖状态 | Modify | done | G01 |
+| 4 | 026 — 完整 Change Review | Before/After、影响、诊断、确认/取消 | Modify | done | G01–G03 |
+| 5 | 027 — M6 收口验收 | Glide 试点全链路、CLI/Protocol 一致性、CI PR 门禁 | Modify | done | 020–026 |
+| 6 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | done（block 模式 UW-030） | 027 |
+
+**当前状态：** M6 完成；G01–G04 完成。CI 已运行 change-gate report 模式，
+block 模式待 UW-030；M7 Source Authoring 为下一阶段候选。
+
+### 4.2 未决工作总览
+
+来源：[`working/decisions/unresolved-work.md`](decisions/unresolved-work.md)。
+
+| 指标 | 数量 |
+|---|---:|
+| 登记事项 | 30 |
+| 已实现 / 已关闭 | 9（UW-001、006、007、008、009、010、025、028、029） |
+| 等待用户决策（pending_decision） | 8（G1–G3、ConfigValue、array、Binding UX、示例、边界测试） |
+| 等待授权（pending_authorization） | 0 |
+| 已接受待排期（accepted） | 0 |
+| 明确延期（deferred） | 13（Source、WebView2、MCP、多入口、撤销、block 模式等） |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
 
@@ -137,6 +179,33 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
 - 154 Core/Protocol/MCP/CLI + 24 UI + 15 Tauri 测试通过；
 - 命令 Schema 已在 `docs/spec/command-schema-v1.md` 标注 v0.2 025 Extend。
 
+### 026 — 完整 Change Review（done）
+
+已完成：
+
+- 新增 `src/review/ChangeReview.tsx`：命令列表、Instance/Binding/Connection 分类、
+  Before/After 字段、Dependency Provider 影响、完整诊断与验证分区；
+- 复用现有 `ModelDiff`/诊断/快照，不新增命令、事务协议或 Tauri IPC 字段；
+- 28 条 Playwright UI 链路通过；154 workspace + 15 Tauri 测试通过；
+- M6 六张功能卡（020–026）全部完成，CI 远端通过；总验收 027 待执行。
+
+### 027 — M6 收口验收（done）
+
+已完成：
+
+- `crates/composition-cli/tests/m6_closeout.rs`：Glide 试点副本上的 CLI/Protocol 全链路；
+- 实例 9、Binding 8、Connection 7；写回后重开 valid，Digest 与 Core 一致；
+- UI 28、Tauri 15、workspace 155 测试通过；
+- 验收记录：`docs/reviews/2026-11-27-m6-closeout.md`；
+- **未完成**：`main` 无分支保护（API 404），无 PR 运行证据；UW-029 待配置。
+
+### G04 — 机器门禁（done）
+
+- `tools/change-gate`：Manifest × diff × 授权/scope/coverage 检查；
+- CI 使用 report 模式；block 模式已实现但未接入（UW-030）；
+- `main` 分支保护启用，失败探针 PR #1 被 BLOCKED；
+- UW-010、UW-029 关闭。
+
 ### 022–026 — 完整编辑链
 
 - Instance：创建/删除/重命名/换模块与版本/配置；
@@ -168,6 +237,9 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
 
 M6 完成标准：至少一个真实项目子系统完成该链路；关键操作可由 UI 自动化或可重复集成测试验证；
 CI 在 PR 上执行并阻止失败合并（推送后生效）。
+
+当前：三项均通过——027 Glide 全链路 + 28 UI；`main` 分支保护已启用，
+失败探针 PR #1 被 `BLOCKED`（UW-029 关闭）。
 
 ## 7. 已知限制（v0.1 遗留）
 
@@ -211,10 +283,19 @@ npm run test:ui
 | 2026-11-27 | 024 | 三视图 + Connection 编辑 + Dependency 只读投影；23 UI + 14 Tauri 测试通过 |
 | 2026-11-27 | 025 | Extend：Dependency Provider Set/Unset 命令、写回与 UI；154 + 24 UI + 15 Tauri 测试通过 |
 | 2026-11-27 | 远端 CI | push main 后首次执行通过（Windows，run 45984567517，5m9s） |
+| 2026-11-27 | 评审整改规划 | 授权审计 + 未实现披露评审归档；G00–G04 队列、UW 登记册、审计响应写入；G01 等待 Rearchitect 授权 |
+| 2026-11-27 | G01 | 权限集合与边界、任务卡/Manifest 模板、未实现披露与 UW 制度生效；产品代码/Schema 未改 |
+| 2026-11-27 | G02 | 001–025 历史授权审计记录、Manifest 事实性修正、13 张任务卡审计备注；G03 下一步 |
+| 2026-11-27 | G03 | 001–025 未实现工作回溯；登记册 27 项；任务卡 coverage/open_items；026 下一步 |
+| 2026-11-27 | 026 | 完整 Change Review：分类、Before/After、命令、依赖影响、全部诊断；28 UI 通过；027 总验收 |
+| 2026-11-27 | 027 | Glide 全链路 CLI/Protocol 测试通过；PR 分支保护 404，UW-029 待配置；M6 功能验收完成 |
+| 2026-11-27 | G04 | change-gate report 接入 CI；分支保护启用；失败探针 PR #1 被 BLOCKED；M6 完成 |
 
 ## 10. 下一步
 
-025 已完成。下一步 **026 — 完整 Change Review**：按对象类别展示新增/删除/修改、
-Before/After、Binding/Connection/Dependency 影响与完整诊断，支持取消/确认。
-G1–G3 等 Rearchitect 缺口（接口身份、runtime 容器、项目级 Profile）仍需单独设计，
-不在本次 Extend 授权内自动展开。
+M6 完成；G01–G04 完成。下一步：
+
+1. **UW-030**：收集 change-gate 误报并审计规则后，把 CI 切到 `--mode block`；
+2. M7 — Source Authoring（Source 编辑、草稿冲突），需按新规则重新立卡与授权；
+3. G1–G3 等 Schema/领域模型缺口、ConfigValue wire、array 编辑、Binding UX 等
+   仍在未决登记中等待决策，不自动进入实现。

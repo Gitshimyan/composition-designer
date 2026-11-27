@@ -6,6 +6,10 @@
 - 变更声明：`changes/023-binding-editing.yaml`
 - 依赖：022（事务/Review/影响展示基础）
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-023
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 022 已把 Instance 生命周期接入统一事务，但 Structure 仍然只能在“创建子实例”时形成首个

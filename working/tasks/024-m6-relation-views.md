@@ -6,6 +6,10 @@
 - 变更声明：`changes/024-relation-views.yaml`
 - 依赖：022–023（操作经 Core 事务与 Review）
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-025
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 022/023 已覆盖 Instance 与 Binding，但 Connection 与 Dependency 只有顶部计数和模型数据，

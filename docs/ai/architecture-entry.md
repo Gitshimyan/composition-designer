@@ -9,16 +9,16 @@
 | 项 | 值 |
 |---|---|
 | 项目 | Composition Designer |
-| 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020 CI/UI、021 Glide 试点、022 Instance、023 Binding、024 关系视图、025 Dependency Provider（Extend）完成；026 Change Review 下一步 |
+| 版本 | v0.1 冻结；v0.2 M6 完成 |
+| 当前阶段 | v0.2 M6 完成（020–027）；G01–G04 完成（change-gate report + 分支保护）；M7 候选 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
-| 外部评审 | [`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../reviews/2026-11-27-project-review-and-roadmap.md) |
+| 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
 | 验证入口 | Core：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；Pilot：`composition-cli validate working/pilots/glide-task-terminal --json`；Protocol：`cargo run -p composition-cli -- query examples/minimal-project validate`；MCP：`cargo test -p composition-mcp --test e2e`；Designer：`cd apps/designer && npm run build`、`npm run test:ui`、`npm run desktop`、`cargo test --manifest-path src-tauri/Cargo.toml`；验收：`docs/acceptance-v0.1.md` |
-| working 入口 | [`working/plan.md`](../../working/plan.md) |
+| working 入口 | [`working/plan.md`](../../working/plan.md)、[`working/decisions/unresolved-work.md`](../../working/decisions/unresolved-work.md) |
 
 ## 2. 目标结构与依赖方向
 
@@ -41,6 +41,12 @@
 008 建立 `composition-cli`，009 建立 `composition-editor`；resolver/validator 暂并入 core，
 其余在 M3/M4 按依赖方向加入。
 
+### tools/
+
+| 工具 | 状态 | 职责 | 依赖 |
+|---|---|---|---|
+| `composition-change-gate` | 已建立（G04） | Manifest × git diff × task-card coverage 检查；CI report 模式 | serde, serde_yaml, git |
+
 ### apps/designer/
 
 | 区域 | 职责 |
@@ -49,6 +55,7 @@
 | `src/explorer/` | 项目目录、composition 文件、模块来源 |
 | `src/inspector/` | 实例配置、Slot、Port、依赖 |
 | `src/relations/` | Structure/Connection/Dependency 视图投影与 Connection 编辑（024） |
+| `src/review/` | Change Review：分类、Before/After、命令、Dependency 影响与诊断（026） |
 | `src/source/` | TOML Source（CodeMirror） |
 | `src/diagnostics/` | 诊断与源码定位 |
 | `src/agent-status/` | Agent 会话、Revision、操作记录 |
@@ -66,24 +73,31 @@
 | `docs/adr/` | 决策与否定方案（0001 冻结、0002 不支持项） |
 | `changes/` | Change Manifest |
 
-## 3. 权限模式
+## 3. 权限模式（权限集合）
+
+权限由实际变更影响决定，不由文件位置决定；一个任务可以同时需要多个模式。
+完整规则见 [`AGENTS.md`](../../AGENTS.md) §1。
 
 | 模式 | 允许改动 | 授权 |
 |---|---|---|
 | Inspect | 只读、计划、影响分析 | 默认允许 |
-| Modify | 目标 crate `src/`、测试、crate 内文档；任务卡指定的 `docs/` 规范与计划 | 默认允许 |
-| Compose | `examples/**` 组合声明、`.designer/**`、docs 组合样例 | 需求涉及组合时 |
-| Extend | 新 crate / TOML 字段 / 命令 / Adapter / 示例类型 | 需用户明确授权 |
-| Rearchitect | 领域模型、Schema 版本、命令协议、工程配置、设计基线 | 需用户明确授权 |
+| Modify | 目标 crate/package/app 的既有契约内实现、测试、任务指定文档 | 默认允许 |
+| Compose | `examples/**` 组合声明、`.designer/**`、docs 组合样例、`working/pilots/**` 声明式试点 | 需求涉及组合时允许 |
+| Extend | 新 crate / TOML 字段 / 命令 / Adapter / 示例类型 / 局部依赖 | 需用户明确授权 |
+| Rearchitect | 领域模型、对象关系、Schema 版本/迁移、共享命令/事务协议、workspace 拓扑、全局工程配置、设计基线、AGENTS 规则 | 需用户明确授权 |
+
+任务卡与 Manifest 用 `authorization.required` 列出全部所需模式，用
+`approval`/`approved` + `evidence` 记录批准状态；不能用“最高一级”替代缺失权限。
 
 ## 4. 标准工作流
 
-1. 从 [`working/plan.md`](../../working/plan.md) 取一张卡；
+1. 从 [`working/plan.md`](../../working/plan.md) 取一张卡，读相关 `UW-*`；
 2. 读本卡相关的规范（`docs/spec/`）与设计基线章节；
-3. 复制 `changes/000-template.yaml` 声明范围（跨目录或高一级授权时必须）；
-4. 实现：先失败用例，再实现；不猜字段与命令；
+3. 复制 `changes/000-template.yaml` 声明 `authorization.required/approved`、
+   `targets`、`operations`、`scope`、`unresolved_items`；
+4. 实现：先失败用例，再实现；不猜字段与命令；受阻部分登记而不是隐藏；
 5. 验证：按任务卡验收条件；当前先跑 `cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；没有门禁就明确写“未执行”；
-6. 回写任务卡与 plan。
+6. 回写任务卡（`status`/`coverage_status`/`open_items`）、plan 与未决登记。
 
 ## 5. 禁止清单
 
@@ -142,5 +156,13 @@
 - M6 025 完成（Extend）：`set_dependency_provider` / `unset_dependency_provider`
   命令、命令 Schema、TOML `[instances.dependencies]` 写回与 Designer 编辑入口；
   154 + 24 UI + 15 Tauri 测试；设计基线未改；
+- 2026-11-27 评审整改：G01（权限集合、边界、模板、披露）、G02（历史授权审计记录）、
+  G03（001–025 未实现工作回溯，27 项登记）、G04（change-gate report）已完成；
+- M6 026 完成：Change Review 按对象分类展示 Before/After、命令、Dependency 影响与
+  全部诊断；28 UI + 154 workspace + 15 Tauri 测试通过；
+- M6 027 完成：Glide 试点副本上的 CLI/Protocol 全链路验证；实例 9、Binding 8、
+  Connection 7，写回后重开 valid，Digest 与 Core 一致；workspace 163 测试；
+- G04 完成：`composition-change-gate` report 模式接入 CI；`main` 分支保护启用，
+  失败探针 PR #1 被 BLOCKED；block 模式待 UW-030；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

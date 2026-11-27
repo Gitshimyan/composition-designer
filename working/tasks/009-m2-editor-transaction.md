@@ -6,6 +6,12 @@
 - 授权：Extend（新编辑器 crate）
 - 变更声明：`changes/009-editor-transaction.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Extend + Rearchitect**（新增 crate + 首次定义命令/事务协议）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
+- coverage_status：complete_with_deferred_items
+- open_items：UW-014、UW-015
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 M1 的 Core 只读。M2 要让人和 Agent 通过统一命令修改项目，而不是各自改 TOML。009 先冻结

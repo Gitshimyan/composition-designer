@@ -2,8 +2,9 @@
 
 v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–015 已建立外壳、
 结构 Canvas/Tree、Inspector 配置编辑/Change Review、只读 CodeMirror Source 与外部修改
-同步/Reload；M6 022 增加 Instance 编辑，023 增加 Binding 编辑与必填 Slot 子树创建，
-024 增加独立 Connection / Dependency 视图，025 增加 Dependency Provider 编辑（Extend）。**
+同步/Reload；M6 022–025 增加 Instance/Binding/Connection/Dependency 编辑，
+026 完成 Change Review 的分类、Before/After、依赖影响与完整诊断；027 在 Glide 试点副本
+完成 CLI/Protocol 全链路验收。**
 
 | 区域 | 目录 | 职责 |
 |---|---|---|
@@ -11,6 +12,7 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
 | Project Explorer | `src/explorer/` | 项目目录、结构 Tree、模块来源与搜索 |
 | Inspector | `src/inspector/` | 实例详情、配置编辑、Instance/Binding 操作与 Change Review |
 | Relation Views | `src/relations/` | Connection 列表/端口投影与编辑、Dependency 只读投影（024） |
+| Change Review | `src/review/` | 分类、Before/After、命令、Dependency 影响、完整诊断（026） |
 | TOML Source | `src/source/` | CodeMirror 6 只读 Source、诊断定位（014） |
 | Diagnostics | `src/diagnostics/` | 错误/警告、源码位置、修正提示 |
 | Agent Status | `src/agent-status/` | Agent 会话、Revision 与操作记录 |
@@ -38,6 +40,8 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
     候选与解析状态；可设置显式 Provider 或清空回退自动解析（025 Extend）；
   - 三个视图共享 `selectedId`，切换后保持选择并高亮；
 - Diagnostics：L1–L7 代码、消息、文件:行:列；点击可跳到 Source；
+- Change Review（026）：命令列表、Instance/Binding/Connection 分类、Before/After、
+  Dependency Provider 影响、完整诊断与 accepted/rejected 分区；取消不写入，拒绝/失败保留诊断；
 - TOML Source：CodeMirror 6 只读展示 composition 入口；
 - 外部修改：2s digest 轮询；dirty 时禁编辑并提示 Reload；
 - 空状态 / 无效项目 / 有效项目三种界面；
@@ -90,7 +94,7 @@ npm run tauri dev   # Tauri 开发模式
 - React 不重复实现 Core 的契约规则；
 - Tauri Host 不直接修改 TOML 以绕开 Core。
 
-## UI 自动化（020 / 022 / 023 / 024 / 025）
+## UI 自动化（020 / 022–026）
 
 ```powershell
 npm run test:ui
@@ -100,11 +104,12 @@ npm run test:ui
 - 通过 Vite preview 运行生产构建；
 - 测试在页面加载前注入测试专用 `window.__TAURI_INTERNALS__` fixture；
 - 生产代码不包含 fixture，真实 Tauri 后端仍由 host tests 覆盖；
-- 24 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
+- 28 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
   布局保存，Instance 重命名/换模块/创建/子树删除/非法 ID/拒绝事务，
   Binding 移动、Detach 诊断、required Slot 子树创建，
   三视图切换/选择保持、Connection 创建/修改/删除、Dependency 投影、
-  显式 Dependency Provider 设置/清空。
+  Provider 设置/清空，以及完整 Review 的 Before/After、多命令分类、
+  Connection 字段与 Dependency 影响。
 - `src-tauri/src/lib.rs` 另有 15 个 host tests，其中 11 个直接使用真实
   `ProjectSession` 验证多命令事务与 TOML 写回（创建 + Binding、删除级联、
   拒绝不写文件、重命名 root/引用、Binding 移动、Binding 子树创建、Detach 拒绝、

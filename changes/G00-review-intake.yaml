@@ -1,0 +1,37 @@
+change:
+  id: change.G00-review-intake
+  intent: 归档 2026-11-27 评审，建立整改计划、任务卡队列与未决工作登记，并修正事实性 Manifest 覆盖。
+  coverage_status: complete
+  authorization: modify
+  targets:
+    - README.md
+    - docs/reviews
+    - docs/ai/architecture-entry.md
+    - working
+    - changes
+  operations:
+    - modify
+  scope:
+    allowed:
+      - review_archive
+      - remediation_plan
+      - task_cards
+      - unresolved_work_register
+      - decision_history
+      - manifest_factual_correction
+    forbidden:
+      - design_baseline
+      - toml_schema
+      - command_protocol
+      - domain_object_model
+      - product_code
+      - governance_rule_change
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - review docs exist under docs/reviews
+    - plan, audit response, G cards, unresolved-work and decision-history links resolve
+    - no changes under crates/ or apps/ in this task
+  notes: 仅归档、计划与登记；G01 的 Rearchitect 规则修订尚未授权，未修改 AGENTS.md/模板。

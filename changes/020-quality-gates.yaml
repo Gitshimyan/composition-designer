@@ -32,7 +32,7 @@ change:
       - design_baseline
   impact:
     expected_schema_changes: false
-    expected_command_changes: true
+    expected_command_changes: false
     expected_design_baseline_changes: false
   validation:
     - cargo test --workspace
@@ -41,4 +41,4 @@ change:
     - cargo fmt --all --check
     - npm run build
     - npm run test:ui
-  notes: UI 使用 Vite preview + IPC fixture；生产代码和真实 Tauri IPC 未改变；CI 尚未远端执行。
+  notes: UI 使用 Vite preview + IPC fixture；生产代码和真实 Tauri IPC 未改变，因此 expected_command_changes=false（2026-11-27 授权审计修正）；CI 已在远端 main 执行通过（run 45984567517）。

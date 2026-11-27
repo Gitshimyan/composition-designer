@@ -1,0 +1,58 @@
+change:
+  id: change.G04-machine-gate
+  intent: 建立 Manifest × git diff × 任务卡覆盖的机器检查工具，以 report 模式接入 CI，并支持后续 block 模式；不自动授予权限或替代 Core/人工评审。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+      - extend
+      - rearchitect
+    approved:
+      - modify
+      - extend
+      - rearchitect
+    evidence: "用户于 2026-11-27 明确授权：进行 UW-029、G04 机器授权/覆盖门禁（Extend + Rearchitect）"
+  targets:
+    - AGENTS.md
+    - README.md
+    - .github/workflows
+    - Cargo.toml
+    - Cargo.lock
+    - tools/change-gate
+    - changes
+    - docs/ai/architecture-entry.md
+    - docs/reviews
+    - working
+  operations:
+    - extend
+    - modify
+    - rearchitect
+  scope:
+    allowed:
+      - change_gate_tool
+      - ci_report_mode
+      - manifest_schema_extension
+      - coverage_validation
+      - governance_docs
+      - task_card_and_plan
+    forbidden:
+      - automatic_permission_grant
+      - new_product_command
+      - toml_schema
+      - design_baseline
+      - domain_model
+      - core_semantic_validation
+  unresolved_items:
+    - UW-030
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test -p composition-change-gate
+    - cargo run -p composition-change-gate -- --base HEAD^ --head HEAD --mode report
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - cd apps/designer && npm run build
+  notes: 只新增工具、CI report 步骤、模板 coverage_status 与治理文档；block 模式可执行但不默认启用，需先收集误报。

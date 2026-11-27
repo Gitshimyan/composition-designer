@@ -5,6 +5,12 @@
 - 授权：Extend（CI workflow、Playwright 测试工具、测试 fixture）
 - 变更声明：`changes/020-quality-gates.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Extend；建立全项目强制门禁策略部分另需 Rearchitect**（条件性）；Manifest 的 `expected_command_changes` 已修正为 false。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
+- coverage_status：complete_with_deferred_items
+- open_items：UW-012
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 交付
 
 1. `.github/workflows/ci.yml`：

@@ -6,6 +6,10 @@
 - 授权：Extend（新 crate、serde 序列化依赖）
 - 变更声明：`changes/008-composition-cli.yaml`
 
+- coverage_status：complete
+- open_items：无
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 007 已有完整 Core，但只能作为 Rust API 使用。008 要给人类与脚本一个稳定入口：同一项目目录

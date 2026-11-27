@@ -6,6 +6,10 @@
 - 授权：Modify（editor 依赖与写回实现）
 - 变更声明：`changes/011-toml-writeback.yaml`
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-014、UW-015、UW-017、UW-018、UW-019、UW-027
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 010 结束时，事务只更新内存模型，TOML 仍是旧内容，Revision 的 `source_digest` 也不一致。

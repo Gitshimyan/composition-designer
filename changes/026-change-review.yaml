@@ -1,0 +1,47 @@
+change:
+  id: change.026-change-review
+  intent: 将 Change Review 升级为按对象类别分组、含 Before/After、命令、Dependency 影响与完整诊断的完整审阅界面。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "G01 后默认 Modify；复用现有 Diff/诊断/快照，无新命令或 IPC 字段"
+  targets:
+    - README.md
+    - apps/designer/src
+    - apps/designer/tests
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - docs/reviews
+    - working
+    - changes
+  operations:
+    - modify
+  scope:
+    allowed:
+      - change_review_ui
+      - diff_presentation
+      - diagnostic_presentation
+      - playwright_ui_tests
+      - task_card_and_plan
+    forbidden:
+      - new_core_command
+      - command_protocol
+      - toml_schema
+      - design_baseline
+      - tauri_ipc_shape
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cd apps/designer && npm run build
+    - cd apps/designer && npm run test:ui
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 只改 Designer Review 呈现与测试；复用既有 ModelDiff/诊断/快照，不扩展 Core、命令协议或 Tauri IPC。

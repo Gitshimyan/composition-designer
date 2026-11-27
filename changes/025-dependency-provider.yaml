@@ -4,6 +4,7 @@ change:
   authorization: extend
   targets:
     - crates/composition-editor
+    - crates/composition-protocol
     - crates/README.md
     - docs/spec/command-schema-v1.md
     - docs/spec/README.md
@@ -28,6 +29,7 @@ change:
       - designer_react_ui
       - designer_tauri_host_tests
       - playwright_ui_tests
+      - protocol_transaction_test
       - task_card_and_plan
     forbidden:
       - design_baseline

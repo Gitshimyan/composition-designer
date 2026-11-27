@@ -6,6 +6,10 @@
 - 变更声明：`changes/022-instance-editing.yaml`
 - 依赖：021 结论（现有 Domain/Schema/Commands 足够，不扩展 v0.1 模型）
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-005、UW-012、UW-022
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 Core/Editor 已冻结 12 条编辑命令（`create_instance`、`delete_instance`、`rename_instance`、

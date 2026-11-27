@@ -1,0 +1,57 @@
+change:
+  id: change.G01-governance-rules
+  intent: 将授权改为可组合权限集合，建立工程配置/文档/Compose/副作用边界，并引入未实现工作披露、覆盖状态与未决登记规则。
+  coverage_status: complete
+  authorization:
+    required:
+      - rearchitect
+      - modify
+    approved:
+      - rearchitect
+      - modify
+    evidence: "用户于 2026-11-27 明确确认 G01 的 Rearchitect 范围并指示开始"
+  targets:
+    - AGENTS.md
+    - README.md
+    - docs/ai/architecture-entry.md
+    - docs/reviews/2026-11-27-audit-response.md
+    - docs/reviews/README.md
+    - working/plan.md
+    - working/tasks/000-template.md
+    - working/tasks/G00-review-intake.md
+    - working/tasks/G01-governance-rules.md
+    - working/tasks/G02-historical-audit.md
+    - working/tasks/G03-unresolved-backfill.md
+    - working/tasks/G04-machine-gate.md
+    - working/decisions
+    - changes/000-template.yaml
+    - changes/G01-governance-rules.yaml
+  operations:
+    - rearchitect
+    - modify
+  scope:
+    allowed:
+      - authorization_model
+      - task_card_template
+      - manifest_template
+      - unresolved_work_policy
+      - reporting_policy
+      - plan_and_docs
+    forbidden:
+      - design_baseline
+      - toml_schema
+      - command_protocol
+      - domain_object_model
+      - product_code
+      - historical_authorization_rewrite
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - review AGENTS.md sections for multi-mode authorization and bounds
+    - validate changes/000-template.yaml parses as YAML
+    - check plan, response, G cards and unresolved-work links
+    - confirm no changes under crates/ or apps/
+  notes: 只修订规则、模板与登记制度；不改产品代码、领域模型、TOML Schema 或历史授权证据。G02/G03 不在本卡执行。

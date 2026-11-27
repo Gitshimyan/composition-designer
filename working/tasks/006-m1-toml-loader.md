@@ -7,6 +7,10 @@
 - 授权：Extend（新 crate、`toml_edit` / `sha2` 依赖）
 - 变更声明：`changes/006-toml-loader.yaml`
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-027
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 005 的领域层不知道 TOML 语法。006 要把“文件 → 可定位的 TOML 文档”这一段独立出来：

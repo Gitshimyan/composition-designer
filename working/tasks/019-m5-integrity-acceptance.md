@@ -5,6 +5,10 @@
 - 授权：Modify（验收、恢复、测试；不改设计基线）
 - 变更声明：`changes/019-integrity-acceptance.yaml`
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-011、UW-015、UW-018、UW-019、UW-020
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 M4 已有 Agent 闭环。019 做最后一轮完整性与验收：

@@ -5,6 +5,12 @@
 - 授权：Extend（新 Tauri 查询/重载命令、前端轮询与冲突横幅）
 - 变更声明：`changes/015-external-sync.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Extend；若改变 Core/Protocol 的 prepare/apply 接受规则再评估 Rearchitect**；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
+- coverage_status：complete_with_deferred_items
+- open_items：UW-017
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 014 的 Designer 保存 `ProjectSession`。如果用户在外部编辑器修改 composition/project/module，
