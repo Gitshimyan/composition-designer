@@ -41,10 +41,10 @@ jobs:
         with:
           workspaces: ". -> target"
 
-      - name: Change gate (report)
+      - name: Change gate (block)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: cargo run -p composition-change-gate -- --base "$env:BASE_SHA" --head "${{ github.sha }}" --mode report
+        run: cargo run -p composition-change-gate -- --base "$env:BASE_SHA" --head "${{ github.sha }}" --mode block
 
       - name: Rust format
         run: cargo fmt --all --check

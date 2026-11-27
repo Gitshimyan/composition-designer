@@ -1,7 +1,7 @@
 change:
   id: change.G04-machine-gate
   intent: 建立 Manifest × git diff × 任务卡覆盖的机器检查工具，以 report 模式接入 CI，并支持后续 block 模式；不自动授予权限或替代 Core/人工评审。
-  coverage_status: complete_with_deferred_items
+  coverage_status: complete
   authorization:
     required:
       - modify
@@ -42,8 +42,7 @@ change:
       - design_baseline
       - domain_model
       - core_semantic_validation
-  unresolved_items:
-    - UW-030
+  unresolved_items: []
   impact:
     expected_schema_changes: false
     expected_command_changes: false

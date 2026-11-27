@@ -1,0 +1,52 @@
+change:
+  id: change.G05-gate-block
+  intent: 将 CI change-gate 从 report 切换为 block，修复重叠 Manifest 的授权误报，并更新治理文档。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - extend
+      - rearchitect
+    approved:
+      - modify
+      - extend
+      - rearchitect
+    evidence: "用户于 2026-11-27 明确要求进行 UW-030（启用 block 模式）"
+  targets:
+    - README.md
+    - .github/workflows
+    - tools/change-gate
+    - AGENTS.md
+    - docs/ai/architecture-entry.md
+    - docs/reviews
+    - working
+    - changes
+  operations:
+    - modify
+    - extend
+    - rearchitect
+  scope:
+    allowed:
+      - change_gate_block_mode
+      - overlapping_manifest_selection
+      - governance_docs
+      - task_card_and_plan
+    forbidden:
+      - automatic_permission_grant
+      - new_product_command
+      - toml_schema
+      - design_baseline
+      - domain_model
+      - core_semantic_validation
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test -p composition-change-gate
+    - cargo run -p composition-change-gate -- --base origin/main --head HEAD --mode block
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 只改 CI 步骤、gate 选择规则与治理文档；block 模式让声明违规阻止合并，但仍不替代 Core/人工评审。

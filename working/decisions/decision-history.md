@@ -16,3 +16,4 @@
 | D-009 | 2026-11-27 | 完成 026 完整 Change Review | M6-006；Modify 默认授权 | 分类/Before-After/命令/依赖影响/完整诊断；28 UI + 154 workspace + 15 Tauri；M6 功能卡完成，027 收口待执行 |
 | D-010 | 2026-11-27 | 完成 027 M6 收口验收 | M6 总验收；Modify | Glide 全链路 CLI/Protocol 通过；155 workspace；PR 分支保护 404，UW-029 待配置；M6 功能验收完成 |
 | D-011 | 2026-11-27 | 完成 G04 机器门禁与 UW-029 | 用户明确授权 Extend + Rearchitect + 远端设置 | change-gate report 接入 CI；main 分支保护启用，失败探针 PR #1 被 BLOCKED；M6 完成；block 模式转 UW-030 |
+| D-012 | 2026-11-27 | 完成 UW-030 / G05 block 模式 | 用户明确要求 UW-030；Modify + Rearchitect | CI 切换 block；重叠 Manifest 任一授权；声明违规阻止合并；UW-030 关闭 |

@@ -1,10 +1,10 @@
 # 机器授权/覆盖门禁与 PR 强制门禁（2026-11-27）
 
-- 任务：G04 + UW-029
+- 任务：G04 + UW-029 + G05（block 模式）
 - 状态：`done`
-- coverage_status：`complete_with_deferred_items`
-- open_items：UW-030（CI block 模式）
-- 关联：[`working/plan.md`](../../working/plan.md)、[`working/tasks/G04-machine-gate.md`](../../working/tasks/G04-machine-gate.md)
+- coverage_status：`complete`
+- open_items：无
+- 关联：[`working/plan.md`](../../working/plan.md)、[`working/tasks/G04-machine-gate.md`](../../working/tasks/G04-machine-gate.md)、[`working/tasks/G05-gate-block.md`](../../working/tasks/G05-gate-block.md)
 
 ## 1. 交付
 
@@ -21,8 +21,9 @@
 CI：
 
 - checkout 改为 `fetch-depth: 0`；
-- 新增 `Change gate (report)` 步骤；
-- 仍使用 `--mode report`，不阻断声明违规；切换登记为 UW-030。
+- 新增 `Change gate (block)` 步骤；声明/授权/覆盖不一致会使 required check 失败；
+- 重叠 Manifest：一个文件被多个 `targets` 覆盖时，任一覆盖 Manifest 满足约束即通过
+  （G05；修复 README 等宽 target 的误报）。
 
 ### PR 强制门禁（UW-029）
 
@@ -59,11 +60,11 @@ CI：
 - 机器门禁只检查声明与 diff 的一致性；不执行 Core 语义校验，不自动授予权限；
 - 新 crate/command/Adapter 的识别基于路径启发式，不是 AST 分析；
 - legacy Manifest 没有 `coverage_status` 时不做 coverage 检查；touch 时再补；
-- CI 仍为 report 模式，声明违规不会阻止合并；UW-030 跟踪切换。
+- block 模式已启用；声明违规会让 CI 失败并阻止合并。
 
 ## 4. 结论
 
-- UW-010（机器门禁 report）关闭；
+- UW-010（机器门禁）关闭；
 - UW-029（PR 分支保护/失败合并阻止）关闭；
-- M6 完成标准三项全部通过；
-- UW-030 保留为 block 模式后续项。
+- UW-030（CI block 模式）由 G05 关闭；
+- M6 完成标准三项全部通过。

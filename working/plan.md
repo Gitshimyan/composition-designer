@@ -5,8 +5,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)
-> 测试基线：163 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
-> 当前阶段：v0.2 M6 完成（020–027，PR 门禁已验证）；G01–G04 完成；M7 为下一阶段候选
+> 测试基线：164 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
+> 当前阶段：v0.2 M6 完成（020–027）；G01–G05 完成（change-gate block 已启用）；M7 为下一阶段候选
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -77,10 +77,11 @@ Designer、Source 与 Agent 入口。
 | 3 | [G03 — 历史未实现工作回溯](tasks/G03-unresolved-backfill.md) | 全量回溯、UW 登记、覆盖状态 | Modify | done | G01 |
 | 4 | 026 — 完整 Change Review | Before/After、影响、诊断、确认/取消 | Modify | done | G01–G03 |
 | 5 | 027 — M6 收口验收 | Glide 试点全链路、CLI/Protocol 一致性、CI PR 门禁 | Modify | done | 020–026 |
-| 6 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | done（block 模式 UW-030） | 027 |
+| 6 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | done | 027 |
+| 7 | [G05 — change-gate block 模式](tasks/G05-gate-block.md) | CI 切换 block、修复重叠 Manifest 误报 | Modify + Rearchitect | done | G04 |
 
-**当前状态：** M6 完成；G01–G04 完成。CI 已运行 change-gate report 模式，
-block 模式待 UW-030；M7 Source Authoring 为下一阶段候选。
+**当前状态：** M6 完成；G01–G05 完成。CI 已用 change-gate block 模式；
+M7 Source Authoring 为下一阶段候选。
 
 ### 4.2 未决工作总览
 
@@ -89,11 +90,11 @@ block 模式待 UW-030；M7 Source Authoring 为下一阶段候选。
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 30 |
-| 已实现 / 已关闭 | 9（UW-001、006、007、008、009、010、025、028、029） |
+| 已实现 / 已关闭 | 10（UW-001、006、007、008、009、010、025、028、029、030） |
 | 等待用户决策（pending_decision） | 8（G1–G3、ConfigValue、array、Binding UX、示例、边界测试） |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 0 |
-| 明确延期（deferred） | 13（Source、WebView2、MCP、多入口、撤销、block 模式等） |
+| 明确延期（deferred） | 12（Source、WebView2、MCP、多入口、撤销等） |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
 
@@ -202,9 +203,15 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
 ### G04 — 机器门禁（done）
 
 - `tools/change-gate`：Manifest × diff × 授权/scope/coverage 检查；
-- CI 使用 report 模式；block 模式已实现但未接入（UW-030）；
+- G04 接入 report 模式；G05 已切换 block（见下）；
 - `main` 分支保护启用，失败探针 PR #1 被 BLOCKED；
 - UW-010、UW-029 关闭。
+
+### G05 — block 模式（done）
+
+- CI `Change gate` 切换 `--mode block`；
+- 重叠 Manifest：任一覆盖 Manifest 满足约束即通过；
+- UW-030 关闭。
 
 ### 022–026 — 完整编辑链
 
@@ -290,12 +297,12 @@ npm run test:ui
 | 2026-11-27 | 026 | 完整 Change Review：分类、Before/After、命令、依赖影响、全部诊断；28 UI 通过；027 总验收 |
 | 2026-11-27 | 027 | Glide 全链路 CLI/Protocol 测试通过；PR 分支保护 404，UW-029 待配置；M6 功能验收完成 |
 | 2026-11-27 | G04 | change-gate report 接入 CI；分支保护启用；失败探针 PR #1 被 BLOCKED；集成 PR #2 通过并合并；M6 完成 |
+| 2026-11-27 | G05 | change-gate 切换 block；重叠 Manifest 选择修复；UW-030 关闭 |
 
 ## 10. 下一步
 
-M6 完成；G01–G04 完成。下一步：
+M6 完成；G01–G05 完成。下一步：
 
-1. **UW-030**：收集 change-gate 误报并审计规则后，把 CI 切到 `--mode block`；
-2. M7 — Source Authoring（Source 编辑、草稿冲突），需按新规则重新立卡与授权；
-3. G1–G3 等 Schema/领域模型缺口、ConfigValue wire、array 编辑、Binding UX 等
+1. M7 — Source Authoring（Source 编辑、草稿冲突），需按新规则重新立卡与授权；
+2. G1–G3 等 Schema/领域模型缺口、ConfigValue wire、array 编辑、Binding UX 等
    仍在未决登记中等待决策，不自动进入实现。

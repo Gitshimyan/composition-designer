@@ -11,7 +11,7 @@
 | 2026-11-27 | [001–025 历史授权审计记录](./2026-11-27-authorization-audit-record.md) | 逐卡审计分类与 Manifest 差异；不追溯改写历史授权 |
 | 2026-11-27 | [001–025 未实现工作回溯](./2026-11-27-unimplemented-work-backfill.md) | 遗留线索去向、27 项 UW、任务卡 coverage/open_items |
 | 2026-11-27 | [M6 收口验收](./2026-11-27-m6-closeout.md) | Glide 全链路通过；PR 分支保护 404，UW-029 待配置 |
-| 2026-11-27 | [机器授权/覆盖门禁](./2026-11-27-machine-gate.md) | change-gate report 接入 CI；main 分支保护启用，失败探针 BLOCKED |
+| 2026-11-27 | [机器授权/覆盖门禁](./2026-11-27-machine-gate.md) | change-gate block 接入 CI；main 分支保护启用，失败探针 BLOCKED |
 | 2026-11-27 | [未实现功能显性化与授权阻塞治理](./2026-11-27-unimplemented-work-transparency.md) | 未实现事项必须有稳定 ID、影响、授权和汇报章节；`done` 与需求覆盖状态分离 |
 | 2026-11-27 | [评审响应与整改计划](./2026-11-27-audit-response.md) | 已采纳；G01 完成，G02 下一步；治理优先于 026；G1–G3 不自动展开 |
 

@@ -1,6 +1,6 @@
 # 未决工作登记册
 
-> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010。
+> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010；G05 关闭 UW-030。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -9,11 +9,11 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 30 |
-| 已实现 / 已关闭 | 9 |
+| 已实现 / 已关闭 | 10 |
 | 等待用户决策（pending_decision） | 8 |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 0 |
-| 明确延期（deferred） | 13 |
+| 明确延期（deferred） | 12 |
 
 ## 2. 登记表
 
@@ -48,7 +48,7 @@
 | UW-027 | 003 / 006 / 007 | 边界测试补充（大小写路径、符号链接、级联抑制、重复 SourceMap、session 部分命令） | 测试 | pending_decision | Modify | 边界行为缺少回归保护 | 后续测试卡 |
 | UW-028 | M6 总验收 | 真实项目子系统完整 M6 链路（Glide 试点上的编辑链） | 验收 | implemented | Modify | 已由 CLI/Protocol 全链路测试验证 | 027 已关闭 |
 | UW-029 | 020 / M6 总验收 | CI PR 触发与分支保护/失败合并阻止的验证 | 工程流程 | implemented | Modify；仓库设置需管理员 | `main` 已启用分支保护；失败探针 PR #1 被 BLOCKED | 027/G04 已关闭 |
-| UW-030 | G04 | CI 切换到 change-gate block 模式 | 治理流程 | deferred | Modify | 当前 report 模式只报告，不阻断声明违规 | 先收集误报并审计规则，再切 block |
+| UW-030 | G04 | CI 切换到 change-gate block 模式 | 治理流程 | implemented | Modify + Rearchitect | CI 声明违规会阻止合并 | G05 已关闭 |
 
 ## 3. 已关闭事项证据
 
@@ -114,11 +114,10 @@
 
 ### UW-030 — CI block 模式
 
-- 当前：CI 使用 report 模式；`--mode block` 已实现但未接入；
-- 原因：先收集误报、审计规则；避免把历史 Manifest 噪声变成硬阻断；
-- 影响：声明违规目前只报告，不阻止合并；
-- 最小方案：修齐误报后把 CI 步骤切为 `--mode block`；
-- 状态：`deferred`。
+- 实现：CI `Change gate` 步骤改为 `--mode block`；
+- 修复重叠 Manifest 误报：任一覆盖 Manifest 满足约束即通过；
+- 验证：G05 单元/仓库测试 + PR CI；
+- 状态：`implemented`；关闭日期：2026-11-27（G05）。
 
 ## 4. 维护规则
 
