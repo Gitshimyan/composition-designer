@@ -1,0 +1,30 @@
+[module]
+schema_version = 1
+id = "glide.platform.conpty-session"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Windows ConPTY session adapter"
+
+[contract.properties.rows]
+type = "integer"
+required = false
+default = 24
+
+[contract.properties.cols]
+type = "integer"
+required = false
+default = 80
+
+[[contract.ports]]
+id = "stdin"
+direction = "input"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"
+
+[[contract.ports]]
+id = "stdout"
+direction = "output"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"

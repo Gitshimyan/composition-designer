@@ -10,14 +10,14 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020 Windows CI + 8 条 Playwright UI 已完成；021 真实项目试点待输入 |
+| 当前阶段 | v0.2 M6 进行中：020 CI/UI、021 Glide Task+Terminal 试点完成；022 Instance 编辑下一步 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../reviews/2026-11-27-project-review-and-roadmap.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
-| 验证入口 | Core：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；Protocol：`cargo run -p composition-cli -- query examples/minimal-project validate`；MCP：`cargo test -p composition-mcp --test e2e`；Designer：`cd apps/designer && npm run build`、`npm run test:ui`、`npm run desktop`、`cargo test --manifest-path src-tauri/Cargo.toml`；验收：`docs/acceptance-v0.1.md` |
+| 验证入口 | Core：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；Pilot：`composition-cli validate working/pilots/glide-task-terminal --json`；Protocol：`cargo run -p composition-cli -- query examples/minimal-project validate`；MCP：`cargo test -p composition-mcp --test e2e`；Designer：`cd apps/designer && npm run build`、`npm run test:ui`、`npm run desktop`、`cargo test --manifest-path src-tauri/Cargo.toml`；验收：`docs/acceptance-v0.1.md` |
 | working 入口 | [`working/plan.md`](../../working/plan.md) |
 
 ## 2. 目标结构与依赖方向
@@ -128,6 +128,8 @@
 - v0.2 以 M6 Complete Composition Authoring 为第一阶段：020 CI/UI 测试、021 真实项目试点，
   再做 Instance/Binding/Connection/Dependency 编辑与完整 Change Review；
 - M6 020 完成：Windows CI、Playwright 1.65 + 系统 Edge、8 条 UI 链路、IPC fixture；
-  CI 远端尚未执行（等阶段性推送）；021 真实项目试点待用户提供代表性子系统；
+  CI 远端尚未执行（等阶段性推送）；
+- M6 021 完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，
+  `validate` 通过；缺口为接口身份、runtime 容器、Profile、技术元数据；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

@@ -1,0 +1,33 @@
+[module]
+schema_version = 1
+id = "glide.presentation.terminal-panel"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "WPF terminal panel hosting WebView2"
+
+[contract.properties.shell]
+type = "string"
+required = true
+
+[contract.properties.cwd]
+type = "string"
+required = true
+
+[[contract.ports]]
+id = "to-web"
+direction = "output"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"
+
+[[contract.ports]]
+id = "from-web"
+direction = "input"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"
+
+[[contract.dependencies]]
+id = "terminal-web"
+module = "glide.terminal.web"
+version = "1.0.0"

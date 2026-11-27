@@ -1,0 +1,33 @@
+change:
+  id: change.m6-real-project-pilot
+  intent: 用 Glide Task + Terminal 子系统建立只读 Composition Designer 试点，复核 Schema 表达能力并记录缺口
+  authorization: compose
+  targets:
+    - working/pilots/glide-task-terminal
+    - working/tasks
+    - working/plan.md
+    - README.md
+    - docs/ai
+  operations:
+    - compose
+    - modify
+  scope:
+    allowed:
+      - pilot_project
+      - schema_review
+      - gap_analysis
+      - task_card
+      - documentation
+    forbidden:
+      - glide_source_copy
+      - toml_schema_change
+      - design_baseline
+      - production_code
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - target/debug/composition-cli validate working/pilots/glide-task-terminal --json
+    - target/debug/composition-cli resolve working/pilots/glide-task-terminal
+  notes: 试点只读；不复制 Glide 源码；缺口记录但不修改 v0.1 Schema。

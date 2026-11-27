@@ -1,0 +1,31 @@
+[module]
+schema_version = 1
+id = "glide.presentation.task-panel"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Task list view model and view"
+
+[contract.properties.active-profile]
+type = "string"
+required = true
+
+# Task panel sends commands and receives task output events.
+[[contract.ports]]
+id = "run"
+direction = "output"
+type = "glide.task.command.v1"
+protocol = "glide.task.v1"
+
+[[contract.ports]]
+id = "events"
+direction = "input"
+type = "glide.task.output.v1"
+protocol = "glide.task.v1"
+multi = true
+
+[[contract.dependencies]]
+id = "task-runner"
+module = "glide.runtime.task-runner"
+version = "1.0.0"

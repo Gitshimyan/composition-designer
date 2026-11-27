@@ -3,7 +3,7 @@
 > 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）
 > 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)
 > 测试基线：146 Core/Protocol/MCP/CLI + 8 UI + 5 Tauri 测试
-> 当前阶段：v0.2 M6 进行中；020 完成，021 待真实项目
+> 当前阶段：v0.2 M6 进行中；020–021 完成，022 待开始
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -21,8 +21,9 @@ Designer、Source 与 Agent 入口。
 - 评审已归档；v0.1 领域模型、TOML Schema、命令协议不因 v0.2 UI 需求直接修改；
 - 当前 GUI：Canvas/Tree 查看、Inspector 配置编辑、Change Review、只读 Source、外部变更 Reload；
 - 020 已完成：Windows CI 文件、Playwright 1.65 + 8 条 UI 链路、本地 `npm run test:ui`；
+- 021 已完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，Core 验证通过；
 - 缺口：CI 尚未远端执行；Instance/Binding/Connection/Dependency 完整编辑、Source 编辑；
-- 下一步 021 需要用户提供真实项目的代表性子系统，当前不能开工。
+- 下一步 022：Instance 编辑。
 
 ## 3. 路线图
 
@@ -38,8 +39,8 @@ Designer、Source 与 Agent 入口。
 | 顺序 | 卡 | 方向 | 依赖 | 状态 |
 |---|---|---|---|---|
 | 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | done（CI 远端待推送） |
-| 2 | 021 | 真实项目试点与 Schema 复核 | 020；需用户提供代表性子系统 | blocked (input) |
-| 3 | 022 | Instance 编辑 | 021 结论 | queued |
+| 2 | 021 | 真实项目试点与 Schema 复核 | 020；Glide Task+Terminal | done |
+| 3 | 022 | Instance 编辑 | 021 结论 | next |
 | 4 | 023 | Binding 编辑 | 022 | queued |
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | queued |
 | 6 | 025 | 完整 Change Review | 022–024 | queued |
@@ -55,11 +56,15 @@ Designer、Source 与 Agent 入口。
 - `npm run test:ui` 本地通过（build + 8 passed）；
 - CI 远端尚未执行，因为尚未推送。
 
-### 021 — 真实项目试点
+### 021 — 真实项目试点（done）
 
-需要一个真实项目的代表性子系统，完整声明 Module/Instance/Binding/Dependency/Connection；
-先验证现有 Schema，不先加字段。输出表达能力不足清单与 Extend / Rearchitect 建议。
-此卡在用户提供试点项目前不能开始。
+已完成 Glide Task + Terminal 只读试点：
+
+- 7 模块 / 7 实例 / 6 Binding / 6 Connection / 3 Dependency；
+- `validate`：valid=true、0 诊断；
+- 表达：结构、依赖、端口、连接、实例 Config；
+- 缺口：接口/契约独立身份、项目级 Profile、运行时/技术元数据、Profile-scoped tasks；
+- 不复制 Glide 源码，不修改 v0.1 Schema。
 
 ### 022–025 — 完整编辑链
 
@@ -129,8 +134,10 @@ npm run test:ui
 | 2026-11-27 | 结构迁移 | 设计基线 → `docs/design/`；评审 → `docs/reviews/`；根目录清理 |
 | 2026-11-27 | v0.2 计划 | 采纳 M6 为下一阶段；020 质量门禁卡进入 planned |
 | 2026-11-27 | 020 | Windows CI + Playwright 8 条 UI 链路；本地 146 Rust + 5 Tauri + 8 UI 通过；CI 远端待推送 |
+| 2026-11-27 | 021 | Glide Task + Terminal 只读试点；7 模块/7 实例/6 Binding/6 Connection/3 Dependency；valid=true |
 
 ## 10. 下一步
 
-020 已完成。下一步 **021 — 真实项目试点与 Schema 复核**，需要用户提供一个真实项目的
-代表性子系统；在获得该输入前不启动 021，也不修改 v0.1 领域模型。
+021 已完成。下一步 **022 — Instance 编辑**：先用现有模型完成模块选择、创建/删除/重命名、
+换模块/版本、配置重置与级联影响 Review；G1/G2/G3 等 Schema 缺口留到对应 UI 需求出现时
+再评估，不提前修改 v0.1 模型。

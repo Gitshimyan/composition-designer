@@ -1,0 +1,25 @@
+# Glide App composition root: workbench UI plus the task/terminal runtime.
+[module]
+schema_version = 1
+id = "glide.app"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Glide App composition root"
+
+[[contract.slots]]
+id = "workbench"
+cardinality = "one"
+required = true
+accepts = ["glide.presentation.workbench"]
+
+[[contract.slots]]
+id = "runtime"
+cardinality = "many"
+required = true
+accepts = [
+  "glide.platform.conpty-session",
+  "glide.runtime.task-runner",
+  "glide.terminal.web",
+]
