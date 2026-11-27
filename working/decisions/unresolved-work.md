@@ -10,9 +10,9 @@
 |---|---:|
 | 登记事项 | 30 |
 | 已实现 / 已关闭 | 10 |
-| 等待用户决策（pending_decision） | 8 |
+| 等待用户决策（pending_decision） | 5 |
 | 等待授权（pending_authorization） | 0 |
-| 已接受待排期（accepted） | 0 |
+| 已接受待排期（accepted） | 3 |
 | 明确延期（deferred） | 12 |
 
 ## 2. 登记表
@@ -20,9 +20,9 @@
 | ID | 来源 | 功能缺口 | 类型 | 状态 | 所需授权 | 影响 | 后续处理 |
 |---|---|---|---|---|---|---|---|
 | UW-001 | 024 → 025 | Dependency Provider 的设置/清空编辑 | Extend | implemented | Extend + Modify | 已解除；Dependency 视图可编辑 | 025 已关闭，保留证据 |
-| UW-002 | 021 | Interface / Contract 的独立身份 | Rearchitect | pending_decision | Rearchitect | 依赖无法与实现解耦 | G7 研究完成；ADR-0004 推荐模块契约接口标记，等待 S1 决策 |
-| UW-003 | 021 | 非结构 runtime / service 容器 | Rearchitect | pending_decision | Rearchitect | 运行时服务只能近似映射为结构节点 | G7 研究完成；ADR-0004 推荐实例 scope，等待 S1 决策 |
-| UW-004 | 021 | 项目级 Profile / 条件组合选择 | Rearchitect | pending_decision | Rearchitect | 无法完整表达 profile/环境/task 变体 | G7 研究完成；ADR-0004 推荐 Profile-scoped Composition，等待 S2 |
+| UW-002 | 021 | Interface / Contract 的独立身份 | Rearchitect | accepted | Rearchitect | 依赖无法与实现解耦 | ADR-0004 确认接口标记；S1（032–035）实施 |
+| UW-003 | 021 | 非结构 runtime / service 容器 | Rearchitect | accepted | Rearchitect | 运行时服务只能近似映射为结构节点 | ADR-0004 确认实例 scope；S1 实施 |
+| UW-004 | 021 | 项目级 Profile / 条件组合选择 | Rearchitect | accepted | Rearchitect | 无法完整表达 profile/环境/task 变体 | ADR-0004 确认 Profile 入口；S2（039–041）实施 |
 | UW-005 | 022 / 025 | ConfigValue 整数值 float 的 JSON wire | Extend（协议方案） | pending_decision | Extend；协议基线变更再评估 Rearchitect | Agent/UI 传输可能无法保留数值类型 | 单独设计 wire 语义 |
 | UW-006 | 授权审计 | 权限集合、工程/文档/Compose/副作用边界 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |
 | UW-007 | 披露评审 | 任务卡/Manifest 模板、coverage/open_items、汇报规范 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |

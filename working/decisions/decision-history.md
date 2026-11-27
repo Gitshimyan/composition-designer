@@ -19,3 +19,5 @@
 | D-012 | 2026-11-27 | 完成 UW-030 / G05 block 模式 | 用户明确要求 UW-030；Modify + Rearchitect | CI 切换 block；重叠 Manifest 任一授权；声明违规阻止合并；UW-030 关闭 |
 | D-013 | 2026-11-27 | 完成 G06 Post-M6 计划重排 | 用户明确要求重排；Modify | 归档 v0.2 计划；v0.3 R1→M7→M8→H1→M9；下一卡 028 Source 设计 |
 | D-014 | 2026-11-27 | 完成 G7 领域缺口设计研究 | 用户要求先研究 G7；Modify | ADR-0004 Proposed：v2.0 G1+G2，v2.1 G3；S1/S2 插入路线图；未改 Schema |
+| D-015 | 2026-11-27 | 确认 ADR-0004 推荐方案 | 用户明确确认 ADR-0004 | v2.0/v2.1、接口标记、实例 scope、Profile 入口；S1 在 M7 后、M8 前；实施逐卡授权 |
+| D-016 | 2026-11-27 | 完成 028 M7 Source 设计 | 用户确认 ADR-0004 后继续；Modify（研究） | ADR-0005 Proposed：独占 replace_source、文本+对象 Diff、冲突阻止；029 待 Extend + Rearchitect |
