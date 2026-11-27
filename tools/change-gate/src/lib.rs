@@ -1,5 +1,8 @@
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
+use std::path::Path;
+use std::process::Command;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChangeKind {
@@ -296,6 +299,97 @@ pub fn evaluate(input: &GateInput) -> Vec<Finding> {
     }
 
     findings
+}
+
+pub fn changed_files_from_git(
+    repo_root: &Path,
+    base: &str,
+    head: &str,
+) -> Result<Vec<ChangedFile>, String> {
+    if base.trim().is_empty() || base.chars().all(|character| character == '0') {
+        return Ok(Vec::new());
+    }
+    if base == head {
+        return Ok(Vec::new());
+    }
+    let output = Command::new("git")
+        .current_dir(repo_root)
+        .args(["diff", "--name-status", "--no-renames", base, head])
+        .output()
+        .map_err(|error| format!("cannot run git diff: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "git diff {base} {head} failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    let mut files = Vec::new();
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let mut parts = line.split('\t');
+        let status = parts.next().unwrap_or("");
+        let path = parts.next().unwrap_or("");
+        if path.is_empty() {
+            continue;
+        }
+        files.push(ChangedFile {
+            path: path.replace('\\', "/"),
+            kind: ChangeKind::from_git_status(status),
+        });
+    }
+    Ok(files)
+}
+
+pub fn load_manifests(dir: &Path) -> Result<Vec<Manifest>, String> {
+    let mut manifests = Vec::new();
+    let entries =
+        fs::read_dir(dir).map_err(|error| format!("cannot read {}: {error}", dir.display()))?;
+    for entry in entries {
+        let entry = entry.map_err(|error| format!("cannot read manifest directory: {error}"))?;
+        let path = entry.path();
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("");
+        if !name.ends_with(".yaml") && !name.ends_with(".yml") {
+            continue;
+        }
+        if name == "000-template.yaml" {
+            continue;
+        }
+        let text = fs::read_to_string(&path)
+            .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+        let document: Document = serde_yaml::from_str(&text)
+            .map_err(|error| format!("cannot parse {}: {error}", path.display()))?;
+        manifests.push(document.change);
+    }
+    Ok(manifests)
+}
+
+pub fn load_task_cards(dir: &Path) -> Result<BTreeMap<String, TaskCard>, String> {
+    let mut cards = BTreeMap::new();
+    let entries =
+        fs::read_dir(dir).map_err(|error| format!("cannot read {}: {error}", dir.display()))?;
+    for entry in entries {
+        let entry = entry.map_err(|error| format!("cannot read task directory: {error}"))?;
+        let path = entry.path();
+        let name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("");
+        if !name.ends_with(".md") || name == "000-template.md" {
+            continue;
+        }
+        let Some(prefix) = name.split('-').next() else {
+            continue;
+        };
+        if prefix.is_empty() {
+            continue;
+        }
+        let text = fs::read_to_string(&path)
+            .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+        cards.insert(prefix.to_owned(), parse_task_card(&text));
+    }
+    Ok(cards)
 }
 
 pub fn parse_task_card(text: &str) -> TaskCard {

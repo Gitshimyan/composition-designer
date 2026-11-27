@@ -1,8 +1,8 @@
 # G04 — 机器授权/覆盖门禁
 
-- 状态：in_progress
-- coverage_status：partial
-- open_items：无
+- 状态：done
+- coverage_status：complete_with_deferred_items
+- open_items：UW-030
 - 目标：让 Manifest、实际 diff 与需求覆盖状态可自动核对，先报告、后阻断；避免“声明覆盖”继续只靠人工。
 - authorization：
   - required：extend, rearchitect
@@ -27,6 +27,16 @@
 2. 先以报告模式接入 CI；收集误报、补齐规则后再切为阻断模式。
 3. 提供测试夹具：通过、越权、缺少授权、敏感路径未声明、coverage 不一致。
 
+## 清单
+
+- [x] 实现 `composition-change-gate`（Manifest × diff × authorization/scope/coverage）
+- [x] 支持 report / block 两种模式
+- [x] 提供通过、越权、缺少授权、敏感路径、coverage 不一致测试
+- [x] CI 接入 report 模式（`fetch-depth: 0`）
+- [x] 在现有仓库上运行 report，并验证 block 模式退出码
+- [x] 更新 AGENTS、模板、README、architecture-entry
+- [x] 创建 `changes/G04-machine-gate.yaml`
+
 ## 非目标
 
 - 不自动授予权限；
@@ -44,4 +54,21 @@
 
 ## 结果 / 遗留问题
 
-- 尚未开始；依赖 G01–G03 的规则与登记册稳定后再实现。
+- 结果：
+  - 新增 [`tools/change-gate`](../../tools/change-gate/README.md)：`composition-change-gate`；
+  - 检查 targets、授权/批准、operation、敏感路径、Compose、Extend、forbidden、
+    `coverage_status` 与 `unresolved_items`；
+  - 7 个单元测试 + 1 个真实仓库 report 集成测试；
+  - CI 已运行 report 模式；block 模式已验证在 coverage 不一致时退出 1；
+  - `changes/000-template.yaml` 增加 `coverage_status`；
+  - **UW-010 关闭**（机器门禁 report 实现）。
+- 未启用 / 后续：
+  - CI 仍使用 report 模式；block 模式需先收集误报并审计规则；
+  - 登记 **UW-030**（`deferred`），由后续治理任务切换。
+- 验证：
+  - `cargo test --workspace`：163 passed；
+  - `cargo clippy --workspace --all-targets -- -D warnings`：通过；
+  - `cargo fmt --all --check`：通过；
+  - `npm run build`：通过（未改 UI）；
+  - 真实仓库 report：0 error（G04 结卡后）；block 模式在已知 mismatch 上退出 1。
+- 下一步：M6 收口完成后可选择启用 block 模式；G04 不自动授予权限。

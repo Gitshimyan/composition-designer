@@ -1,8 +1,8 @@
 # Composition Designer
 
-> v0.2 M6 功能与 Glide 全链路验收通过（020–027）：CI 远端通过、Instance/Binding/Connection/Dependency
-> 编辑、完整 Change Review、Glide 试点 CLI/Protocol 全链路；PR 分支保护/强制门禁未启用（UW-029）。
-> G01–G03 治理整改完成，G04 机器门禁待授权。
+> v0.2 M6 完成（020–027）：Instance/Binding/Connection/Dependency 编辑、完整 Change Review、
+> Glide 全链路、PR 强制门禁；G01–G04 完成（change-gate report + 分支保护）。
+> 下一阶段：M7 Source Authoring；CI block 模式见 UW-030。
 > 下一步行动入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
@@ -53,7 +53,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
 | Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
-| v0.2 / M6 | 功能与 Glide 全链路验收通过（020–027）；PR 强制门禁 UW-029 待配置；G01–G03 完成 |
+| v0.2 / M6 | M6 完成（020–027）：Glide 全链路、完整 Review、PR 强制门禁；G01–G04 完成，change-gate report |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；

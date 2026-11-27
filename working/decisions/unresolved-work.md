@@ -1,6 +1,6 @@
 # 未决工作登记册
 
-> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027 关闭 UW-028。
+> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -8,12 +8,12 @@
 
 | 指标 | 数量 |
 |---|---:|
-| 登记事项 | 29 |
-| 已实现 / 已关闭 | 7 |
-| 等待用户决策（pending_decision） | 10 |
+| 登记事项 | 30 |
+| 已实现 / 已关闭 | 9 |
+| 等待用户决策（pending_decision） | 8 |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 0 |
-| 明确延期（deferred） | 12 |
+| 明确延期（deferred） | 13 |
 
 ## 2. 登记表
 
@@ -28,7 +28,7 @@
 | UW-007 | 披露评审 | 任务卡/Manifest 模板、coverage/open_items、汇报规范 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |
 | UW-008 | 授权审计 | 001–025 历史授权审计记录与 Manifest 事实性修正 | Modify | implemented | Modify | 历史分类可追溯 | G02 已关闭 |
 | UW-009 | 披露评审 | 001–025 历史未实现工作回溯与登记 | Modify | implemented | Modify | 历史遗留线索有去向 | G03 已关闭 |
-| UW-010 | 授权审计 | 机器授权/覆盖门禁 | Extend + Rearchitect | pending_decision | Extend + Rearchitect | Manifest 仍靠人工核对 | G04，026 之后 |
+| UW-010 | 授权审计 | 机器授权/覆盖门禁 | Extend + Rearchitect | implemented | Extend + Rearchitect | `composition-change-gate` report 模式已接入 CI | G04 已关闭；block 模式转 UW-030 |
 | UW-011 | 014 / 015 / 路线图 | Source 编辑与草稿冲突处理 | 产品能力 | deferred | 待 M7 评估 | Source 仍只读 | M7 排期时重新确认 |
 | UW-012 | 020 | 真实 WebView2 / Tauri GUI 自动化 | 工程能力 | deferred | 待评估 | Playwright 使用 IPC fixture | M6 后评估 tauri-driver/smoke |
 | UW-013 | 021 | Glide G4–G8：kind、技术元数据、Port wire、Profile-scoped task、模板 | Rearchitect / 后续 | deferred | Rearchitect | 拓扑够用，运行细节不足 | 出现真实需求时再评估 |
@@ -47,7 +47,8 @@
 | UW-026 | 004 | edit-cases / external-change-cases 具体载荷 | 示例/测试 | pending_decision | Compose + Modify | 场景说明无具体请求载荷 | 后续补示例 |
 | UW-027 | 003 / 006 / 007 | 边界测试补充（大小写路径、符号链接、级联抑制、重复 SourceMap、session 部分命令） | 测试 | pending_decision | Modify | 边界行为缺少回归保护 | 后续测试卡 |
 | UW-028 | M6 总验收 | 真实项目子系统完整 M6 链路（Glide 试点上的编辑链） | 验收 | implemented | Modify | 已由 CLI/Protocol 全链路测试验证 | 027 已关闭 |
-| UW-029 | 020 / M6 总验收 | CI PR 触发与分支保护/失败合并阻止的验证 | 工程流程 | pending_decision | Modify；仓库设置需管理员 | `main` 未启用分支保护，无 PR 运行证据 | 配置 required check 并跑一次 PR；027 记录阻塞 |
+| UW-029 | 020 / M6 总验收 | CI PR 触发与分支保护/失败合并阻止的验证 | 工程流程 | implemented | Modify；仓库设置需管理员 | `main` 已启用分支保护；失败探针 PR #1 被 BLOCKED | 027/G04 已关闭 |
+| UW-030 | G04 | CI 切换到 change-gate block 模式 | 治理流程 | deferred | Modify | 当前 report 模式只报告，不阻断声明违规 | 先收集误报并审计规则，再切 block |
 
 ## 3. 已关闭事项证据
 
@@ -94,6 +95,28 @@
 - 在 Glide 试点副本上通过 CLI/Protocol 完成创建/绑定/配置/连接/Provider/写回/重开；
 - 证据：实例 9、Binding 8、Connection 7，CLI validate 与 Core Digest 一致；
 - 关闭日期：2026-11-27（027）。
+
+### UW-010 — 机器授权/覆盖门禁（report）
+
+- 实现：[`tools/change-gate`](../../tools/change-gate/README.md)、CI report 步骤；
+- 检查 targets、授权、operation、敏感路径、Compose/Extend、coverage 与 unresolved_items；
+- 验证：7 单元 + 1 真实仓库集成测试；block 模式退出码已测；
+- 关闭日期：2026-11-27（G04）；CI 阻断切换转 UW-030。
+
+### UW-029 — PR 分支保护/失败合并阻止
+
+- `main` 已启用分支保护：strict required check `Windows build and UI tests`，
+  enforce_admins=true，禁止 force push/删除；
+- 失败探针 PR #1：CI `fail`，`mergeStateStatus=BLOCKED`；已关闭并删除分支；
+- 关闭日期：2026-11-27（G04）。
+
+### UW-030 — CI block 模式
+
+- 当前：CI 使用 report 模式；`--mode block` 已实现但未接入；
+- 原因：先收集误报、审计规则；避免把历史 Manifest 噪声变成硬阻断；
+- 影响：声明违规目前只报告，不阻止合并；
+- 最小方案：修齐误报后把 CI 步骤切为 `--mode block`；
+- 状态：`deferred`。
 
 ## 4. 维护规则
 

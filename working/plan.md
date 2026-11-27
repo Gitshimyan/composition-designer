@@ -6,7 +6,7 @@
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)
 > 测试基线：155 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
-> 当前阶段：M6 功能与 Glide 全链路验收通过；PR 强制门禁（UW-029）未完成；G01–G03 完成
+> 当前阶段：v0.2 M6 完成（020–027，PR 门禁已验证）；G01–G04 完成；M7 为下一阶段候选
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -46,7 +46,7 @@ Designer、Source 与 Agent 入口。
 
 | 阶段 | 目标 | 状态 | 主要交付 |
 |---|---|---|---|
-| M6 | Complete Composition Authoring | complete_with_deferred_items | 功能与 Glide 全链路通过；PR 强制门禁 UW-029 待配置 |
+| M6 | Complete Composition Authoring | done | 功能、Glide 全链路、PR 强制门禁全部通过 |
 | M7 | Source Authoring & Consistency | later | 可编辑 Source、统一提交、外部修改/草稿冲突 |
 | M8 | Agent Authoring Experience | later | 上下文查询、影响分析、事务批处理、Skill 评测 |
 | M9 | Composition Ecosystem | deferred | Module Registry/Versioning、多文件、模板、Adapter；不承诺进入 v0.2 |
@@ -62,7 +62,7 @@ Designer、Source 与 Agent 入口。
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | done |
 | 6 | 025 | Dependency Provider 编辑（Extend） | 024；用户明确授权 | done |
 | 7 | 026 | 完整 Change Review | 022–025；G01–G03 | done |
-| 8 | 027 | M6 收口验收 | 020–026 | done（coverage: complete_with_deferred_items；UW-029） |
+| 8 | 027 | M6 收口验收 | 020–026 | done（coverage: complete） |
 
 ### 4.1 评审整改队列（G 轨道，2026-11-27）
 
@@ -77,10 +77,10 @@ Designer、Source 与 Agent 入口。
 | 3 | [G03 — 历史未实现工作回溯](tasks/G03-unresolved-backfill.md) | 全量回溯、UW 登记、覆盖状态 | Modify | done | G01 |
 | 4 | 026 — 完整 Change Review | Before/After、影响、诊断、确认/取消 | Modify | done | G01–G03 |
 | 5 | 027 — M6 收口验收 | Glide 试点全链路、CLI/Protocol 一致性、CI PR 门禁 | Modify | done | 020–026 |
-| 6 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | deferred | 027 |
+| 6 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | done（block 模式 UW-030） | 027 |
 
-**当前状态：** M6 功能与 Glide 全链路验收通过；PR 强制门禁未完成（UW-029）。
-G01–G03 已完成；G04 需 Extend + Rearchitect；M7 为下一阶段候选。
+**当前状态：** M6 完成；G01–G04 完成。CI 已运行 change-gate report 模式，
+block 模式待 UW-030；M7 Source Authoring 为下一阶段候选。
 
 ### 4.2 未决工作总览
 
@@ -88,12 +88,12 @@ G01–G03 已完成；G04 需 Extend + Rearchitect；M7 为下一阶段候选。
 
 | 指标 | 数量 |
 |---|---:|
-| 登记事项 | 29 |
-| 已实现 / 已关闭 | 7（UW-001、006、007、008、009、025、028） |
-| 等待用户决策（pending_decision） | 10（G1–G3、ConfigValue、array、Binding UX、机器门禁、PR 门禁等） |
+| 登记事项 | 30 |
+| 已实现 / 已关闭 | 9（UW-001、006、007、008、009、010、025、028、029） |
+| 等待用户决策（pending_decision） | 8（G1–G3、ConfigValue、array、Binding UX、示例、边界测试） |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 0 |
-| 明确延期（deferred） | 12（Source、WebView2、MCP、多入口、撤销等） |
+| 明确延期（deferred） | 13（Source、WebView2、MCP、多入口、撤销、block 模式等） |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
 
@@ -231,8 +231,8 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
 M6 完成标准：至少一个真实项目子系统完成该链路；关键操作可由 UI 自动化或可重复集成测试验证；
 CI 在 PR 上执行并阻止失败合并（推送后生效）。
 
-当前：前两项通过（027 Glide 全链路 + 28 UI）；第三项未通过——`main` 无分支保护，
-无 PR 运行证据，登记为 UW-029。
+当前：三项均通过——027 Glide 全链路 + 28 UI；`main` 分支保护已启用，
+失败探针 PR #1 被 `BLOCKED`（UW-029 关闭）。
 
 ## 7. 已知限制（v0.1 遗留）
 
@@ -282,16 +282,13 @@ npm run test:ui
 | 2026-11-27 | G03 | 001–025 未实现工作回溯；登记册 27 项；任务卡 coverage/open_items；026 下一步 |
 | 2026-11-27 | 026 | 完整 Change Review：分类、Before/After、命令、依赖影响、全部诊断；28 UI 通过；027 总验收 |
 | 2026-11-27 | 027 | Glide 全链路 CLI/Protocol 测试通过；PR 分支保护 404，UW-029 待配置；M6 功能验收完成 |
+| 2026-11-27 | G04 | change-gate report 接入 CI；分支保护启用；失败探针 PR #1 被 BLOCKED；M6 完成 |
 
 ## 10. 下一步
 
-M6 功能与 Glide 全链路验收通过；027 已关闭 UW-028。下一步：
+M6 完成；G01–G04 完成。下一步：
 
-1. **UW-029 — PR 强制门禁**：在 GitHub 启用 `main` 分支保护，把
-   `Windows build and UI tests` 设为 required check，并用一个 PR 实际验证；
-   该操作修改远端仓库设置，需用户明确批准；
-2. G04 — 机器授权/覆盖门禁：需要 Extend + Rearchitect；
-3. M7 — Source Authoring（Source 编辑、草稿冲突），需按新规则重新立卡与授权。
-
-G1–G3 等 Schema/领域模型缺口、ConfigValue wire、array 编辑、Binding UX 等仍在
-未决登记中等待决策，不自动进入实现。
+1. **UW-030**：收集 change-gate 误报并审计规则后，把 CI 切到 `--mode block`；
+2. M7 — Source Authoring（Source 编辑、草稿冲突），需按新规则重新立卡与授权；
+3. G1–G3 等 Schema/领域模型缺口、ConfigValue wire、array 编辑、Binding UX 等
+   仍在未决登记中等待决策，不自动进入实现。

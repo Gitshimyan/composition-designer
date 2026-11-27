@@ -1,8 +1,8 @@
 # 027 — M6 收口验收
 
 - 状态：done
-- coverage_status：complete_with_deferred_items
-- open_items：UW-029
+- coverage_status：complete
+- open_items：无
 - 目标：按 M6 完成标准做一次可重复的真实项目全链路验收，并核实 CI PR/合并门禁；只补充验证与记录，不实现新能力。
 - authorization：
   - required：modify
@@ -62,10 +62,10 @@
   - 验证实例 9、Binding 8、Connection 7，Digest 与 Core 一致；
   - UI 28 条、Tauri host 15 条、workspace 155 条测试通过；
   - 新增 `docs/reviews/2026-11-27-m6-closeout.md` 记录验收结论。
-- 未完成 / 外部阻塞：
-  - `main` 未启用分支保护（API 404），无 PR 运行记录；
-  - 无法证明失败合并被阻止；UW-029 保持 pending_decision，需仓库管理员设置
-    required check `Windows build and UI tests` 并用 PR 验证。
+- 未完成 / 外部阻塞（已由 G04 关闭）：
+  - `main` 已启用分支保护；必需检查 `Windows build and UI tests`；
+  - 失败探针 PR #1 的 CI 失败，`mergeStateStatus=BLOCKED`，已关闭并删除分支；
+  - UW-029 已关闭；M6 的 PR 门禁项通过。
 - 验证边界：
   - UI 自动化使用 IPC fixture；未做同一 Glide 副本上的 GUI + MCP 并发验证；
   - 跨入口一致性由共享 Core 与分别的 UI/CLI/Protocol 测试支持。
