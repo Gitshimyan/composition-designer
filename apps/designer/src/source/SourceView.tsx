@@ -1,8 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { basicSetup } from "codemirror";
 import { StreamLanguage } from "@codemirror/language";
 import { toml } from "@codemirror/legacy-modes/mode/toml";
-import { EditorState } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 
@@ -43,24 +43,45 @@ const theme = EditorView.theme(
 interface SourceViewProps {
   text: string;
   revealLine: { line: number; nonce: number } | null;
+  editable: boolean;
+  blocked: boolean;
+  onReview: (source: string) => void;
 }
 
-export default function SourceView({ text, revealLine }: SourceViewProps) {
+export default function SourceView({
+  text,
+  revealLine,
+  editable,
+  blocked,
+  onReview,
+}: SourceViewProps) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
+  const textRef = useRef(text);
+  const onReviewRef = useRef(onReview);
+  const compartment = useRef(new Compartment()).current;
+  const [dirty, setDirty] = useState(false);
+  const canEdit = editable && !blocked;
+
+  textRef.current = text;
+  onReviewRef.current = onReview;
 
   useEffect(() => {
     if (!host.current) return;
     const state = EditorState.create({
-      doc: text,
+      doc: textRef.current,
       extensions: [
         basicSetup,
         StreamLanguage.define(toml),
         oneDark,
         theme,
-        EditorState.readOnly.of(true),
-        EditorView.editable.of(false),
+        compartment.of(editableConfig(editable && !blocked)),
         EditorView.lineWrapping,
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            setDirty(update.state.doc.toString() !== textRef.current);
+          }
+        }),
       ],
     });
     const editor = new EditorView({ state, parent: host.current });
@@ -69,18 +90,31 @@ export default function SourceView({ text, revealLine }: SourceViewProps) {
       editor.destroy();
       view.current = null;
     };
-    // The editor is created once; text updates are dispatched below.
+    // The editor is created once; text/read-only updates are dispatched below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const editor = view.current;
     if (!editor) return;
+    editor.dispatch({
+      effects: compartment.reconfigure(editableConfig(editable && !blocked)),
+    });
+  }, [compartment, editable, blocked]);
+
+  useEffect(() => {
+    const editor = view.current;
+    if (!editor) return;
+    textRef.current = text;
     const current = editor.state.doc.toString();
-    if (current === text) return;
+    if (current === text) {
+      setDirty(false);
+      return;
+    }
     editor.dispatch({
       changes: { from: 0, to: current.length, insert: text },
     });
+    setDirty(false);
   }, [text]);
 
   useEffect(() => {
@@ -98,5 +132,65 @@ export default function SourceView({ text, revealLine }: SourceViewProps) {
     editor.focus();
   }, [revealLine]);
 
-  return <div className="source-view" ref={host} aria-label="Read-only TOML source" />;
+  function review() {
+    const editor = view.current;
+    if (!editor || !canEdit) return;
+    onReviewRef.current(editor.state.doc.toString());
+  }
+
+  function discard() {
+    const editor = view.current;
+    if (!editor) return;
+    const current = editor.state.doc.toString();
+    editor.dispatch({
+      changes: { from: 0, to: current.length, insert: textRef.current },
+    });
+    setDirty(false);
+  }
+
+  return (
+    <div className="source-editor-shell">
+      <div className="source-toolbar">
+        <span className="source-mode">
+          {blocked
+            ? "External change detected · Reload before editing"
+            : canEdit
+              ? "Editable · Review before writing"
+              : "Read-only"}
+        </span>
+        {canEdit && (
+          <div className="source-actions">
+            <button
+              type="button"
+              className="button button-ghost source-action"
+              onClick={discard}
+              disabled={!dirty}
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              className="button button-primary source-action"
+              onClick={review}
+              disabled={!dirty}
+            >
+              Review source
+            </button>
+          </div>
+        )}
+      </div>
+      <div
+        className="source-view"
+        ref={host}
+        aria-label={canEdit ? "Editable TOML source" : "Read-only TOML source"}
+      />
+    </div>
+  );
+}
+
+function editableConfig(editable: boolean) {
+  return [
+    EditorState.readOnly.of(!editable),
+    EditorView.editable.of(editable),
+  ];
 }

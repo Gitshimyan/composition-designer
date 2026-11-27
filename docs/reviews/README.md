@@ -13,6 +13,7 @@
 | 2026-11-27 | [M6 收口验收](./2026-11-27-m6-closeout.md) | Glide 全链路通过；PR 分支保护 404，UW-029 待配置 |
 | 2026-11-27 | [机器授权/覆盖门禁](./2026-11-27-machine-gate.md) | change-gate block 接入 CI；main 分支保护启用，失败探针 BLOCKED |
 | 2026-11-27 | [G7 领域缺口设计研究](./2026-11-27-g7-domain-gaps.md) | 接口身份/服务容器/Profile 方案；ADR-0004 Proposed；M7/M9 重排建议 |
+| 2026-11-27 | [M7 Source Authoring 验收](./2026-11-27-m7-source-closeout.md) | replace_source、Source UI、Glide 验收；30 UI / 16 Tauri / 173 workspace |
 | 2026-11-27 | [未实现功能显性化与授权阻塞治理](./2026-11-27-unimplemented-work-transparency.md) | 未实现事项必须有稳定 ID、影响、授权和汇报章节；`done` 与需求覆盖状态分离 |
 | 2026-11-27 | [评审响应与整改计划](./2026-11-27-audit-response.md) | 已采纳；G01 完成，G02 下一步；治理优先于 026；G1–G3 不自动展开 |
 

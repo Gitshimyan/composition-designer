@@ -1,0 +1,45 @@
+change:
+  id: change.030-source-ui
+  intent: 将 029 的 replace_source 接到 Designer Source UI，支持编辑、草稿、文本 Review 与冲突只读。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "M7 Source UI；复用 029 后端，无新命令/协议"
+  targets:
+    - README.md
+    - apps/designer/src/source
+    - apps/designer/src/review
+    - apps/designer/src/App.tsx
+    - apps/designer/src/styles.css
+    - apps/designer/src/types.ts
+    - apps/designer/tests/ui
+    - docs/ai/architecture-entry.md
+    - working
+    - changes/030-source-ui.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - source_editor_ui
+      - source_review_rendering
+      - playwright_source_tests
+      - task_card_and_plan
+    forbidden:
+      - new_core_command
+      - command_protocol
+      - toml_schema
+      - design_baseline
+      - three_way_merge
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cd apps/designer && npm run build
+    - cd apps/designer && npm run test:ui
+    - cargo test --workspace
+  notes: 仅 UI/测试；Source 命令与事务已在 029 完成，030 不改后端语义。

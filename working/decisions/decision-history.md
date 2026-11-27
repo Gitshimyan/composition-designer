@@ -21,4 +21,6 @@
 | D-014 | 2026-11-27 | 完成 G7 领域缺口设计研究 | 用户要求先研究 G7；Modify | ADR-0004 Proposed：v2.0 G1+G2，v2.1 G3；S1/S2 插入路线图；未改 Schema |
 | D-015 | 2026-11-27 | 确认 ADR-0004 推荐方案 | 用户明确确认 ADR-0004 | v2.0/v2.1、接口标记、实例 scope、Profile 入口；S1 在 M7 后、M8 前；实施逐卡授权 |
 | D-016 | 2026-11-27 | 完成 028 M7 Source 设计 | 用户确认 ADR-0004 后继续；Modify（研究） | ADR-0005 Proposed：独占 replace_source、文本+对象 Diff、冲突阻止；029 待 Extend + Rearchitect |
-| D-017 | 2026-11-27 | 完成 029 Source 后端 | 用户选择 A 并批准；Extend + Rearchitect | replace_source、source prepare/apply、文本+对象 Diff、冲突守卫；171 tests；030 待做 |
+| D-017 | 2026-11-27 | 完成 029 Source 后端 | 用户选择 A 并批准；Extend + Rearchitect | replace_source、source prepare/apply、文本+对象 Diff、冲突守卫；172 tests；030 待做 |
+| D-018 | 2026-11-27 | 完成 030 Source UI | M7；Modify | CodeMirror 编辑、draft、Review/文本 Diff、Discard、冲突只读；30 UI |
+| D-019 | 2026-11-27 | 完成 031 M7 Source 验收 | M7；Modify | Glide 试点 Source 编辑；173 tests/16 Tauri/30 UI；M7 完成 |

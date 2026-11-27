@@ -1,0 +1,42 @@
+change:
+  id: change.031-source-closeout
+  intent: 在 Glide 试点副本上通过 CLI/Protocol 验收 Source 编辑，并汇总 M7 测试证据。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "M7 验收；只新增测试与记录"
+  targets:
+    - README.md
+    - crates/composition-cli/tests
+    - docs/reviews
+    - docs/ai/architecture-entry.md
+    - working
+    - changes/031-source-closeout.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - source_acceptance_test
+      - m7_closeout_record
+      - plan_and_docs
+    forbidden:
+      - new_core_command
+      - command_protocol
+      - toml_schema
+      - design_baseline
+      - product_code
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cd apps/designer && npm run test:ui
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 只验收 M7 Source；S1 Schema v2.0 不在本卡范围。
