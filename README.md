@@ -1,14 +1,16 @@
 # Composition Designer
 
-> v0.2 进行中：v0.1 已冻结；M6-001 CI/UI 与 M6-002 Glide 试点已完成。
-> 下一步 022 Instance 编辑。
+> v0.2 进行中：v0.1 已冻结；M6 020–025 已完成（CI、Glide 试点、Instance/Binding/Connection/Dependency 编辑）。
+> 当前处于评审整改规划：G01 授权规范修订等待 Rearchitect 授权，026 Change Review 顺延。
+> 下一步行动入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
 通过 Composition Core 读取或修改它。
 
 - 设计基线：[docs/design/v0.1-design.md](./docs/design/v0.1-design.md)
-- 评审与路线图：[docs/reviews/2026-11-27-project-review-and-roadmap.md](./docs/reviews/2026-11-27-project-review-and-roadmap.md)
+- 评审与路线图：[docs/reviews/](./docs/reviews/README.md)
+- 未决工作登记：[working/decisions/unresolved-work.md](./working/decisions/unresolved-work.md)
 - 下一步行动入口：[working/plan.md](./working/plan.md)
 - AI 工作规则：[AGENTS.md](./AGENTS.md)
 - AI 架构入口：[docs/ai/architecture-entry.md](./docs/ai/architecture-entry.md)
@@ -39,9 +41,9 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | TOML 加载与 Source Map（M1 006 / M5 019） | 已建立：`composition-toml`，29 项测试 |
 | Core：解析 / 验证（M1 007 / M5 019） | 已建立：`composition-core`，9 项测试、26/26 数据集 |
 | CLI（M1 008 / M4 016） | 已建立：`composition-cli`，10 项测试 |
-| 编辑命令与事务（M2 009–011 / M5 019） | 已建立：`composition-editor`，31 项测试 |
+| 编辑命令与事务（M2 009–011 / M5 019 / 025） | 已建立：`composition-editor`，38 项测试；14 条命令 |
 | Revision / 幂等 / Diff | 已建立（M2 010） |
-| 保留格式 TOML 写回 | 已建立（M2 011） |
+| 保留格式 TOML 写回 | 已建立（M2 011；025 增加 Dependency Provider） |
 | Designer 外壳（M3 012） | 已建立：Tauri 2 + React 19 + TS + Vite 7 |
 | Canvas / Tree（M3 013） | 已建立：`@xyflow/react`、结构树、布局持久化 |
 | Inspector / Source（M3 014） | 已建立：配置编辑、Change Review、只读 CodeMirror Source |
@@ -50,7 +52,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
 | Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
-| v0.2 / M6 | 020 完成（CI 远端待推送）；021 完成（Glide 试点）；022 下一步 |
+| v0.2 / M6 | 020–025 完成（CI 远端通过；Instance/Binding/关系视图/Provider Extend）；评审整改 G01 等待授权 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
@@ -80,8 +82,8 @@ composition-designer/
 │   └── composition-app/                   # 待 M3/M4
 │
 ├── apps/
-│   └── designer/                          # Tauri 2 + React 设计器（012–015）
-│       ├── src/{canvas,explorer,inspector,source,diagnostics,agent-status}/
+│   └── designer/                          # Tauri 2 + React 设计器（012–015、022–025）
+│       ├── src/{canvas,explorer,inspector,relations,source,diagnostics,agent-status}/
 │       └── src-tauri/
 │
 ├── agent/                                 # Agent Skill + MCP 配置（018）
@@ -104,6 +106,7 @@ composition-designer/
 └── working/                               # 计划、任务卡、过程文件
     ├── plan.md
     ├── tasks/
+    ├── decisions/                         # 未决工作登记与决策历史
     ├── pilots/                            # 021 真实项目试点
     └── tmp/
 ```
@@ -126,6 +129,8 @@ composition-designer/
 |---|---|
 | `working/plan.md` | 唯一的“下一步行动”入口：目标、状态、路线图、队列、决策、日志 |
 | `working/tasks/NNN-*.md` | 每次行动一张任务卡：状态、目标、授权、清单、验收、结果 |
+| `working/decisions/unresolved-work.md` | 未决工作登记册（UW ID、状态、授权、影响、后续） |
+| `working/decisions/decision-history.md` | 用户决策与授权历史 |
 | `working/tmp/` | 过程文件（探针、日志、草稿），不提交 |
 
 规则：开始前先读 `plan.md`；一次只取一张卡；完成后回写状态与日志，再把“下一步”收敛成
@@ -134,7 +139,13 @@ composition-designer/
 ## 6. 文档索引
 
 - [设计基线 v0.1](./docs/design/v0.1-design.md)
+- [评审索引](./docs/reviews/README.md)
 - [2026-11-27 项目评审与路线图](./docs/reviews/2026-11-27-project-review-and-roadmap.md)
+- [2026-11-27 授权体系审计](./docs/reviews/2026-11-27-authorization-audit.md)
+- [2026-11-27 未实现工作披露评审](./docs/reviews/2026-11-27-unimplemented-work-transparency.md)
+- [2026-11-27 评审响应与整改计划](./docs/reviews/2026-11-27-audit-response.md)
+- [未决工作登记](./working/decisions/unresolved-work.md)
+- [决策与授权历史](./working/decisions/decision-history.md)
 - [Glide Task + Terminal 试点](./working/pilots/glide-task-terminal/README.md)
 - [AI 架构入口](./docs/ai/architecture-entry.md)
 - [AI 工作规则](./AGENTS.md)

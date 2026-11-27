@@ -101,6 +101,8 @@ Extend 能力，因此本卡新增两条命令并打通 Core → TOML → Design
   - 候选列表只列目标模块/版本匹配实例，避免 UI 诱导非法映射。
 - 权限审计结论：
   - 本次补齐的是 024 唯一明确标注的 **Extend** 缺口；
+  - 2026-11-27 授权审计指出本卡 Manifest 漏列 `crates/composition-protocol` 测试 target，
+    已补 `crates/composition-protocol` 与 `protocol_transaction_test`（事实性声明修正，不改产品代码）；
   - G1 接口/契约身份、G2 runtime 容器、G3 项目级 Profile、G4–G8 技术元数据/任务模板
     属于 **Rearchitect**（Schema/领域模型/设计基线），未在本次 Extend 授权下修改；
   - ConfigValue 整数值 float 的 JSON wire 区分是协议格式问题，需要单独设计；

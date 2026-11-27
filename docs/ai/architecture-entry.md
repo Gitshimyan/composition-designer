@@ -10,15 +10,15 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020 CI/UI、021 Glide 试点、022 Instance、023 Binding、024 关系视图、025 Dependency Provider（Extend）完成；026 Change Review 下一步 |
+| 当前阶段 | v0.2 M6 进行中：020–025 完成；评审整改 G01 等待 Rearchitect 授权，026 Change Review 顺延 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
-| 外部评审 | [`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../reviews/2026-11-27-project-review-and-roadmap.md) |
+| 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
 | 验证入口 | Core：`cargo test --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --all --check`；Pilot：`composition-cli validate working/pilots/glide-task-terminal --json`；Protocol：`cargo run -p composition-cli -- query examples/minimal-project validate`；MCP：`cargo test -p composition-mcp --test e2e`；Designer：`cd apps/designer && npm run build`、`npm run test:ui`、`npm run desktop`、`cargo test --manifest-path src-tauri/Cargo.toml`；验收：`docs/acceptance-v0.1.md` |
-| working 入口 | [`working/plan.md`](../../working/plan.md) |
+| working 入口 | [`working/plan.md`](../../working/plan.md)、[`working/decisions/unresolved-work.md`](../../working/decisions/unresolved-work.md) |
 
 ## 2. 目标结构与依赖方向
 
@@ -142,5 +142,7 @@
 - M6 025 完成（Extend）：`set_dependency_provider` / `unset_dependency_provider`
   命令、命令 Schema、TOML `[instances.dependencies]` 写回与 Designer 编辑入口；
   154 + 24 UI + 15 Tauri 测试；设计基线未改；
+- 2026-11-27 评审整改：授权审计与未实现披露评审归档；G01（Rearchitect，等待授权）
+  → G02 → G03 → 026 → G04；未决事项登记 `working/decisions/unresolved-work.md`；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。
