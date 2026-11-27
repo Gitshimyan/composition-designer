@@ -5,7 +5,7 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)
-> 测试基线：155 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
+> 测试基线：163 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
 > 当前阶段：v0.2 M6 完成（020–027，PR 门禁已验证）；G01–G04 完成；M7 为下一阶段候选
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
@@ -198,6 +198,13 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
 - UI 28、Tauri 15、workspace 155 测试通过；
 - 验收记录：`docs/reviews/2026-11-27-m6-closeout.md`；
 - **未完成**：`main` 无分支保护（API 404），无 PR 运行证据；UW-029 待配置。
+
+### G04 — 机器门禁（done）
+
+- `tools/change-gate`：Manifest × diff × 授权/scope/coverage 检查；
+- CI 使用 report 模式；block 模式已实现但未接入（UW-030）；
+- `main` 分支保护启用，失败探针 PR #1 被 BLOCKED；
+- UW-010、UW-029 关闭。
 
 ### 022–026 — 完整编辑链
 

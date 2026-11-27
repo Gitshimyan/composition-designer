@@ -157,7 +157,7 @@
   命令、命令 Schema、TOML `[instances.dependencies]` 写回与 Designer 编辑入口；
   154 + 24 UI + 15 Tauri 测试；设计基线未改；
 - 2026-11-27 评审整改：G01（权限集合、边界、模板、披露）、G02（历史授权审计记录）、
-  G03（001–025 未实现工作回溯，27 项登记）已完成；G04 机器门禁待授权；
+  G03（001–025 未实现工作回溯，27 项登记）、G04（change-gate report）已完成；
 - M6 026 完成：Change Review 按对象分类展示 Before/After、命令、Dependency 影响与
   全部诊断；28 UI + 154 workspace + 15 Tauri 测试通过；
 - M6 027 完成：Glide 试点副本上的 CLI/Protocol 全链路验证；实例 9、Binding 8、

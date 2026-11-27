@@ -44,7 +44,7 @@ CI：
 
 对当前分支全量 diff（`65ac30c..HEAD`）运行 report：
 
-- 70 个 changed files；
+- 72 个 changed files；
 - 0 error、0 warning（G04 结卡后）；
 - block 模式在已知 coverage mismatch 上退出 1，证明阻断逻辑有效。
 

@@ -148,6 +148,7 @@ composition-designer/
 - [001–025 历史授权审计记录](./docs/reviews/2026-11-27-authorization-audit-record.md)
 - [001–025 未实现工作回溯报告](./docs/reviews/2026-11-27-unimplemented-work-backfill.md)
 - [M6 收口验收](./docs/reviews/2026-11-27-m6-closeout.md)
+- [机器授权/覆盖门禁](./docs/reviews/2026-11-27-machine-gate.md)
 - [未决工作登记](./working/decisions/unresolved-work.md)
 - [决策与授权历史](./working/decisions/decision-history.md)
 - [Glide Task + Terminal 试点](./working/pilots/glide-task-terminal/README.md)
