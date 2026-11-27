@@ -20,9 +20,9 @@
 | ID | 来源 | 功能缺口 | 类型 | 状态 | 所需授权 | 影响 | 后续处理 |
 |---|---|---|---|---|---|---|---|
 | UW-001 | 024 → 025 | Dependency Provider 的设置/清空编辑 | Extend | implemented | Extend + Modify | 已解除；Dependency 视图可编辑 | 025 已关闭，保留证据 |
-| UW-002 | 021 | Interface / Contract 的独立身份 | Rearchitect | pending_decision | Rearchitect | 依赖无法与实现解耦 | 先做设计研究；与 UW-003 联合评估 |
-| UW-003 | 021 | 非结构 runtime / service 容器 | Rearchitect | pending_decision | Rearchitect | 运行时服务只能近似映射为结构节点 | 与 UW-002 联合设计 |
-| UW-004 | 021 | 项目级 Profile / 条件组合选择 | Rearchitect | pending_decision | Rearchitect | 无法完整表达 profile/环境/task 变体 | 需要真实需求触发 |
+| UW-002 | 021 | Interface / Contract 的独立身份 | Rearchitect | pending_decision | Rearchitect | 依赖无法与实现解耦 | G7 研究完成；ADR-0004 推荐模块契约接口标记，等待 S1 决策 |
+| UW-003 | 021 | 非结构 runtime / service 容器 | Rearchitect | pending_decision | Rearchitect | 运行时服务只能近似映射为结构节点 | G7 研究完成；ADR-0004 推荐实例 scope，等待 S1 决策 |
+| UW-004 | 021 | 项目级 Profile / 条件组合选择 | Rearchitect | pending_decision | Rearchitect | 无法完整表达 profile/环境/task 变体 | G7 研究完成；ADR-0004 推荐 Profile-scoped Composition，等待 S2 |
 | UW-005 | 022 / 025 | ConfigValue 整数值 float 的 JSON wire | Extend（协议方案） | pending_decision | Extend；协议基线变更再评估 Rearchitect | Agent/UI 传输可能无法保留数值类型 | 单独设计 wire 语义 |
 | UW-006 | 授权审计 | 权限集合、工程/文档/Compose/副作用边界 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |
 | UW-007 | 披露评审 | 任务卡/Manifest 模板、coverage/open_items、汇报规范 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |

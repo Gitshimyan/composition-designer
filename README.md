@@ -1,8 +1,8 @@
 # Composition Designer
 
-> v0.2 M6 与 G01–G05 完成；已重排 v0.3 计划：下一卡为 M7 Source 设计决议（028）。
-> M7 Source Authoring → M8 Agent → H1 可靠性 → M9 生态（条件承诺）。
-> 下一步行动入口：[`working/plan.md`](./working/plan.md)。
+> v0.2 M6 与 G01–G07 完成；G7 已产出 Schema v2 设计研究（ADR-0004，Proposed）。
+> 下一步：028 M7 Source 设计决议；Schema v2.0/v2.1 等待决策。
+> 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
