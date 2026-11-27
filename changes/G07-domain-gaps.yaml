@@ -1,0 +1,48 @@
+change:
+  id: change.G07-domain-gaps
+  intent: 完成接口身份、服务容器与项目 Profile 的设计研究，提出 Schema v2 分阶段 ADR 与 M7/M9 重排建议，不实施 Schema 变更。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "用户 2026-11-27 明确要求先做设计研究，开始 G7"
+  targets:
+    - README.md
+    - docs/adr
+    - docs/ai/architecture-entry.md
+    - docs/reviews
+    - working/plan.md
+    - working/tasks/G07-domain-gaps.md
+    - working/decisions/decision-history.md
+    - working/decisions/unresolved-work.md
+    - changes/G07-domain-gaps.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - design_research
+      - adr_proposal
+      - roadmap_replan
+      - decision_options
+    forbidden:
+      - domain_model_change
+      - toml_schema_change
+      - command_protocol
+      - design_baseline
+      - product_code
+      - schema_v2_implementation
+  unresolved_items:
+    - UW-002
+    - UW-003
+    - UW-004
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - markdown relative link check
+    - git diff --check
+    - confirm no changes under crates/ or apps/
+  notes: 研究完成不等于 Rearchitect 批准；v2 实施需用户明确授权。

@@ -18,3 +18,4 @@
 | D-011 | 2026-11-27 | 完成 G04 机器门禁与 UW-029 | 用户明确授权 Extend + Rearchitect + 远端设置 | change-gate report 接入 CI；main 分支保护启用，失败探针 PR #1 被 BLOCKED；M6 完成；block 模式转 UW-030 |
 | D-012 | 2026-11-27 | 完成 UW-030 / G05 block 模式 | 用户明确要求 UW-030；Modify + Rearchitect | CI 切换 block；重叠 Manifest 任一授权；声明违规阻止合并；UW-030 关闭 |
 | D-013 | 2026-11-27 | 完成 G06 Post-M6 计划重排 | 用户明确要求重排；Modify | 归档 v0.2 计划；v0.3 R1→M7→M8→H1→M9；下一卡 028 Source 设计 |
+| D-014 | 2026-11-27 | 完成 G7 领域缺口设计研究 | 用户要求先研究 G7；Modify | ADR-0004 Proposed：v2.0 G1+G2，v2.1 G3；S1/S2 插入路线图；未改 Schema |
