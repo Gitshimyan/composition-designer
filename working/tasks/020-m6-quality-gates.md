@@ -1,6 +1,6 @@
 # 020 — M6-001 自动化质量门禁与 UI 测试基础
 
-- 状态：done（CI 远端执行待明确推送后验证）
+- 状态：done（远端 CI 已通过）
 - 目标：建立 Windows-first 的 CI 与前端 UI 自动化基础，让关键编辑链路在本地和 PR 中可重复验证。
 - 授权：Extend（CI workflow、Playwright 测试工具、测试 fixture）
 - 变更声明：`changes/020-quality-gates.yaml`
@@ -49,11 +49,12 @@
   - external change + reload；
   - layout save without digest change。
 
-远端状态：
+远端状态（2026-11-27 更新）：
 
-- workflow 文件已建立，但按当前规则**未推送**，因此 GitHub Actions 尚未执行；
-- 远端 CI 的首次真实执行只能在用户明确要求阶段性推送后验证；
-- 本卡不声称 CI 已通过。
+- 用户明确要求推送评审后，main 推送至 GitHub，CI 首次远端执行**通过**
+  （run 45984567517，5m9s，Windows build and UI tests）；
+- 覆盖 Rust fmt/clippy/tests、Tauri host tests、MCP e2e、TypeScript/Vite 与 Playwright；
+- 唯一 annotation 是 Node.js 20 actions 被强制运行在 Node 24 的弃用提示，不阻塞。
 
 ## 结果 / 遗留问题
 
@@ -66,8 +67,8 @@
   - 真实 Tauri/WebView2 仍由 5 个 host tests 覆盖；
   - 首批不引入 tauri-driver，避免 CI 不稳定；后续可补 smoke。
 - 遗留：
-  - CI 未远端执行；
+  - CI 已远端执行（run 45984567517），后续推送继续依赖该 workflow；
   - UI fixture 不是真实 Tauri 集成；
   - 无真实 GUI WebView2 自动化；
-  - 020 的 8 条覆盖目前主要针对既有查看/配置/外部同步，Instance/Binding 编辑链路将在 022–025 扩展。
+  - 020 的 8 条覆盖目前主要针对既有查看/配置/外部同步，Instance/Binding 编辑链路已在 022–025 扩展。
 - 下一步：021 真实项目试点；需要用户提供代表性子系统。

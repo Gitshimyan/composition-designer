@@ -129,7 +129,7 @@
 - v0.2 以 M6 Complete Composition Authoring 为第一阶段：020 CI/UI 测试、021 真实项目试点，
   再做 Instance/Binding/Connection/Dependency 编辑与完整 Change Review；
 - M6 020 完成：Windows CI、Playwright 1.65 + 系统 Edge、8 条 UI 链路、IPC fixture；
-  CI 远端尚未执行（等阶段性推送）；
+  远端 main 已执行并通过（run 45984567517，5m9s）；
 - M6 021 完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，
   `validate` 通过；缺口为接口身份、runtime 容器、Profile、技术元数据；
 - M6 022 完成：Designer Instance 创建（Slot 下 + 首个 Binding）、删除子树、重命名、

@@ -28,7 +28,8 @@ Designer、Source 与 Agent 入口。
   Dependency 只读投影；
 - 025 已完成：Dependency Provider 编辑（Extend）：`set_dependency_provider` /
   `unset_dependency_provider`、命令 Schema、TOML 写回与 Designer 入口；
-- 缺口：CI 尚未远端执行；G1–G3 等 Rearchitect 缺口；ConfigValue 整数 float 的 wire 限制；Source 编辑；
+- 缺口：G1–G3 等 Rearchitect 缺口；ConfigValue 整数 float 的 wire 限制；Source 编辑；
+- CI 已在远端 main 执行并通过（run 45984567517，5m9s）。
 - 下一步 026：完整 Change Review。
 
 ## 3. 路线图
@@ -44,7 +45,7 @@ Designer、Source 与 Agent 入口。
 
 | 顺序 | 卡 | 方向 | 依赖 | 状态 |
 |---|---|---|---|---|
-| 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | done（CI 远端待推送） |
+| 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | done（远端 CI 已通过） |
 | 2 | 021 | 真实项目试点与 Schema 复核 | 020；Glide Task+Terminal | done |
 | 3 | 022 | Instance 编辑 | 021 结论 | done |
 | 4 | 023 | Binding 编辑 | 022 | done |
@@ -60,8 +61,7 @@ Designer、Source 与 Agent 入口。
 - 146 Rust + 5 Tauri host + MCP e2e + TypeScript/Vite + Playwright 接入；
 - Playwright 1.65 + 系统 Edge；测试专用 IPC fixture；
 - 8 条 UI 链路：valid/invalid/select/edit+apply/cancel/reject/external/layout；
-- `npm run test:ui` 本地通过（build + 8 passed）；
-- CI 远端尚未执行，因为尚未推送。
+- 远端 main 首次执行通过（run 45984567517，5m9s，2026-11-27）。
 
 ### 021 — 真实项目试点（done）
 
@@ -210,6 +210,7 @@ npm run test:ui
 | 2026-11-27 | 023 | Binding Move/Detach/required Slot 递归子树创建；18 UI + 12 Tauri 测试通过 |
 | 2026-11-27 | 024 | 三视图 + Connection 编辑 + Dependency 只读投影；23 UI + 14 Tauri 测试通过 |
 | 2026-11-27 | 025 | Extend：Dependency Provider Set/Unset 命令、写回与 UI；154 + 24 UI + 15 Tauri 测试通过 |
+| 2026-11-27 | 远端 CI | push main 后首次执行通过（Windows，run 45984567517，5m9s） |
 
 ## 10. 下一步
 
