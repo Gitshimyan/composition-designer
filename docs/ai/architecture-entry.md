@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020–025 完成；G01 治理规则生效，G02 历史审计下一步，026 Change Review 顺延 |
+| 当前阶段 | v0.2 M6 进行中：020–025 完成；G01/G02 完成，G03 历史回溯下一步，026 Change Review 顺延 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -149,8 +149,9 @@
 - M6 025 完成（Extend）：`set_dependency_provider` / `unset_dependency_provider`
   命令、命令 Schema、TOML `[instances.dependencies]` 写回与 Designer 编辑入口；
   154 + 24 UI + 15 Tauri 测试；设计基线未改；
-- 2026-11-27 评审整改：授权审计与未实现披露评审归档；G01（权限集合、工程/文档/Compose/
-  副作用边界、任务卡/Manifest 模板、未实现披露）已完成；G02 → G03 → 026 → G04 进行中；
+- 2026-11-27 评审整改：G01 已完成（权限集合、工程/文档/Compose/副作用边界、
+  任务卡/Manifest 模板、未实现披露）；G02 已完成（001–025 历史授权审计记录与
+  Manifest 事实性修正）；G03 → 026 → G04 进行中；
   未决事项登记 `working/decisions/unresolved-work.md`；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

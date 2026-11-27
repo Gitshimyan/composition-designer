@@ -6,6 +6,8 @@
 - 授权：Extend（新 crate、workspace 工程配置）
 - 变更声明：`changes/005-rust-domain.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Extend；首次建立全局 workspace 基线部分另需 Rearchitect**（条件性）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
 ## 背景
 
 M0 已冻结规范与样例，但仓库没有任何 Rust 代码。M1 需要一个所有后续 crate 共享的领域层：

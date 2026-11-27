@@ -6,6 +6,8 @@
 - 授权：Modify（editor/core 文档与测试）
 - 变更声明：`changes/010-revision-diff.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Modify + Rearchitect**（事务历史/幂等/Diff 契约）；Manifest 的 `expected_command_changes=true` 与授权记录不一致，仅记录不追溯改写。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
 ## 背景
 
 009 已有命令和内存原子事务，但 Revision 只递增 `seq`、没有历史；同一 request_id 未处理；

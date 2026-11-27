@@ -6,6 +6,8 @@
 - 授权：Modify（仅 `docs/`）
 - 变更声明：无（仅文档）
 
+> 授权审计（2026-11-27）：审计建议 **Extend + Rearchitect**（字段/契约 + Schema 结构/版本策略）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
 ## 背景
 
 设计基线 §4 / §5 给出了草案示例和 10 条 Schema 规则，但字段表、默认值、错误代码仍是“建议”。

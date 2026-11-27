@@ -1,0 +1,58 @@
+change:
+  id: change.G02-historical-audit
+  intent: 将 001–025 授权审计结论固化为记录，修正 Manifest 事实性遗漏，并在相关任务卡追加审计备注；不追溯改写历史授权。
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "G01 后默认 Modify；无 Rearchitect/Extend 变更"
+  targets:
+    - docs/reviews/2026-11-27-authorization-audit-record.md
+    - docs/reviews/README.md
+    - docs/reviews/2026-11-27-audit-response.md
+    - docs/ai/architecture-entry.md
+    - README.md
+    - working/plan.md
+    - working/decisions
+    - working/tasks/002-m0-domain-model.md
+    - working/tasks/003-m0-toml-contract-schema.md
+    - working/tasks/004-m0-example-projects.md
+    - working/tasks/005-m1-rust-workspace-domain.md
+    - working/tasks/009-m2-editor-transaction.md
+    - working/tasks/010-m2-revision-diff.md
+    - working/tasks/012-m3-designer-shell.md
+    - working/tasks/014-m3-inspector-source.md
+    - working/tasks/015-m3-external-sync.md
+    - working/tasks/016-m4-protocol-cli-jsonl.md
+    - working/tasks/020-m6-quality-gates.md
+    - working/tasks/021-m6-real-project-pilot.md
+    - working/tasks/025-m6-dependency-provider.md
+    - working/tasks/G02-historical-audit.md
+    - working/tasks/G03-unresolved-backfill.md
+    - changes/G02-historical-audit.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - historical_audit_record
+      - manifest_factual_correction
+      - task_card_audit_notes
+      - plan_and_docs
+    forbidden:
+      - product_code
+      - design_baseline
+      - toml_schema
+      - command_protocol
+      - historical_authorization_rewrite
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - check relative links in audit record, reviews README, plan and task cards
+    - git diff --check
+    - confirm no changes under crates/ or apps/
+    - record unexecuted YAML parse explicitly in the G02 card
+  notes: 只记录审计分类与事实性修正；010/021 的授权分类保留原值，不补造历史授权。产品代码/Schema 未改。

@@ -4,6 +4,8 @@
 - 目标：补齐 v0.1 冻结命令集缺失的 Dependency Provider 编辑能力，让 Designer 的 Dependency 视图可以设置显式 Provider、回退自动解析，并同步 CLI/MCP 事务语义。
 - 授权：**Extend + Modify（用户于 2026-11-27 明确授权补齐该权限缺口）**
 - 变更声明：`changes/025-dependency-provider.yaml`
+
+> 授权审计（2026-11-27）：Extend + Modify 分类正确；Manifest 已补 `crates/composition-protocol` 与 `protocol_transaction_test`。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 - 依赖：024 的 Dependency 只读投影；021 试点结论
 
 ## 背景与授权审计

@@ -6,6 +6,8 @@
 - 授权：Extend（新 protocol crate、CLI 命令）
 - 变更声明：`changes/016-protocol-cli-jsonl.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Extend + Rearchitect**（新 Protocol crate + Agent/CLI 通信契约）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
 ## 背景
 
 M3 的编辑能力只在 Tauri/Rust API 中。M4 要让 Agent 用统一协议执行同样操作：

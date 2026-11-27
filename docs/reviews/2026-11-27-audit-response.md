@@ -1,6 +1,6 @@
 # 评审响应与整改计划（2026-11-27）
 
-- 状态：Adopted（2026-11-27 用户确认 G01 授权范围；G02 进行中）
+- 状态：Adopted（2026-11-27 用户确认 G01 授权范围；G02 已完成，G03 下一步）
 - 来源评审：
   - [`2026-11-27-authorization-audit.md`](./2026-11-27-authorization-audit.md)
   - [`2026-11-27-unimplemented-work-transparency.md`](./2026-11-27-unimplemented-work-transparency.md)
@@ -46,8 +46,8 @@ G00（评审归档与整改计划）已在本轮完成；下表为后续执行�
 | 顺序 | 任务卡 | 授权 | 状态 | 说明 |
 |---|---|---|---|---|
 | 1 | [G01 — 授权规范与披露制度](../../working/tasks/G01-governance-rules.md) | Rearchitect + Modify | done | AGENTS、任务卡模板、Manifest 模板、未实现披露规则生效 |
-| 2 | [G02 — 历史授权审计记录与 Manifest 修正](../../working/tasks/G02-historical-audit.md) | Modify | next | 001–025 审计分类；不伪造历史授权 |
-| 3 | [G03 — 历史未实现工作回溯](../../working/tasks/G03-unresolved-backfill.md) | Modify | queued | 填充未决工作登记册与覆盖状态 |
+| 2 | [G02 — 历史授权审计记录与 Manifest 修正](../../working/tasks/G02-historical-audit.md) | Modify | done | 001–025 审计分类；不伪造历史授权 |
+| 3 | [G03 — 历史未实现工作回溯](../../working/tasks/G03-unresolved-backfill.md) | Modify | next | 填充未决工作登记册与覆盖状态 |
 | 4 | 026 — 完整 Change Review | Modify | queued | M6-006 功能卡 |
 | 5 | [G04 — 机器授权/覆盖门禁](../../working/tasks/G04-machine-gate.md) | Extend + Rearchitect | deferred | 026 后先报告、再阻断 |
 
@@ -64,13 +64,14 @@ G00（评审归档与整改计划）已在本轮完成；下表为后续执行�
 - `changes/000-template.yaml`：权限集合、`unresolved_items`、target/scope/operations 分离；
 - 汇报规范：任务结束时必须包含“未实现 / 被搁置功能”独立章节。
 
-### 4.2 执行顺序（已确认）
+### 4.2 执行顺序
 
-`G01 → G02 → G03 → 026 → G04`。G02 可立即开始；G04 仍需 Extend + Rearchitect。
+`G01 → G02 → G03 → 026 → G04`。G01/G02 已完成；G03 下一步；G04 仍需 Extend + Rearchitect。
 
 ### 4.3 历史分类的处理方式
 
-历史任务卡的原始授权字段保持不变；审计结论写入 G02 的历史审计记录，并标注
+历史任务卡的原始授权字段保持不变；审计结论已写入
+[001–025 历史授权审计记录](./2026-11-27-authorization-audit-record.md)，并标注
 “审计建议 / 当时的授权证据不足”。不追溯修改旧任务卡来假装当时已获批准。
 
 ## 5. 验收
@@ -78,6 +79,6 @@ G00（评审归档与整改计划）已在本轮完成；下表为后续执行�
 - 两份评审文档已归档，根目录无散落评审文件；
 - `working/plan.md` 有权队列、依赖、授权状态与未决工作总览；
 - 每个未实现/阻塞事项有稳定 UW ID、影响、所需授权与后续处理；
-- G01 已在用户明确批准后执行，G02/G03 尚未开始；
+- G01 已在用户明确批准后执行，G02 已完成；G03 尚未开始；
 - 025/020 Manifest 的事实性修正与实际 diff 一致；
 - 026 及机器门禁不被提前标记为完成。

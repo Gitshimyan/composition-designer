@@ -6,6 +6,8 @@
 - 授权：Extend（新前端依赖、Tauri 编辑命令、Source 面板）
 - 变更声明：`changes/014-inspector-source.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Extend + Modify；破坏性协议/字段语义变化再评估 Rearchitect**；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
 ## 背景
 
 013 已有 Canvas/Tree 与只读 Inspector。014 增加：

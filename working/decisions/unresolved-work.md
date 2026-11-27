@@ -9,10 +9,10 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 13 |
-| 已实现 / 已关闭 | 3 |
+| 已实现 / 已关闭 | 4 |
 | 等待用户决策（pending_decision） | 5 |
 | 等待授权（pending_authorization） | 0 |
-| 已接受待排期（accepted） | 2 |
+| 已接受待排期（accepted） | 1 |
 | 明确延期（deferred） | 3 |
 
 ## 2. 登记表
@@ -26,7 +26,7 @@
 | UW-005 | 022 / 025 | ConfigValue 整数值 float 的 JSON wire 区分 | Extend（协议方案） | pending_decision | Extend；若改共享协议基线再评估 Rearchitect | Agent/UI 传输可能无法保留原始数值类型 | 单独设计 wire 语义，不做局部 hack |
 | UW-006 | 授权审计 | 五种模式改为可组合权限集合；工程配置/文档/Compose 路径/副作用边界 | Rearchitect | implemented | Rearchitect + Modify | 已解除；权限按集合声明与审批 | G01 已生效；G02 记录历史分类 |
 | UW-007 | 披露评审 | 任务卡/Manifest 模板、`coverage_status`、`open_items`、未实现汇报规范 | Rearchitect | implemented | Rearchitect + Modify | 已解除；模板与汇报规则生效 | G01 已生效；G03 回溯历史卡 |
-| UW-008 | 授权审计 | 001–025 历史授权审计记录与 Manifest 事实性修正 | Modify | accepted | Modify | 历史授权分类与 Manifest 覆盖不一致 | G02，G01 后执行 |
+| UW-008 | 授权审计 | 001–025 历史授权审计记录与 Manifest 事实性修正 | Modify | implemented | Modify | 已解除；历史分类可追溯，未倒填授权 | G02 已关闭；G03 继续回溯未实现工作 |
 | UW-009 | 披露评审 | 001–025 历史未实现工作回溯与登记 | Modify | accepted | Modify | 部分缺口可能只停留在旧卡末尾 | G03，G01 后执行 |
 | UW-010 | 授权审计 | 机器授权/覆盖门禁（targets、operations、授权等级、coverage） | Extend + Rearchitect | pending_decision | Extend + Rearchitect | Manifest 仍只是书面契约，越权靠人工发现 | G04，026 之后；先报告后阻断 |
 | UW-011 | 014 / 015 / 路线图 | Source 编辑与草稿冲突处理 | 产品能力 | deferred | 待 M7 评估 | Source 仍只读；文本编辑与事务未对等 | M7 排期时重新确认，不算授权阻塞 |
@@ -56,6 +56,14 @@
 - 实现：`AGENTS.md` §4、§6、§9；任务卡 `coverage_status`/`open_items` 与独立汇报章节；
 - 登记：本文件与 `working/decisions/decision-history.md`；
 - 关闭日期：2026-11-27（G01）。
+
+### UW-008 — 历史授权审计记录
+
+- 实现：`docs/reviews/2026-11-27-authorization-audit-record.md`（001–025 全量分类）；
+- 修正：025 Protocol target、020 `expected_command_changes`；
+- 任务卡：002/003/004/005/009/010/012/014/015/016/020/021/025 追加审计备注；
+- 边界：010/021 的授权分类保留为审计建议，不追溯改写；
+- 关闭日期：2026-11-27（G02）。
 
 ## 4. 维护规则
 

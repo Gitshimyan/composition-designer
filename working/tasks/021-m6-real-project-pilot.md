@@ -6,6 +6,8 @@
 - 来源：`E:\Work.Projects\Glide`（只读）
 - 变更声明：`changes/021-glide-pilot.yaml`
 
+> 授权审计（2026-11-27）：Compose + Modify 类型合理；Compose 原未覆盖 `working/pilots/**`，G01 已补齐路径规则；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
 ## 范围
 
 - Glide App composition root；

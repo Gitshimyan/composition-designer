@@ -8,6 +8,7 @@
 |---|---|---|
 | 2026-11-27 | [项目评审与后续发展方向](./2026-11-27-project-review-and-roadmap.md) | v0.1 保持冻结；下一阶段建议 v0.2 / M6 Complete Composition Authoring |
 | 2026-11-27 | [授权体系与任务卡审计](./2026-11-27-authorization-audit.md) | 五种模式应改为权限集合；002/003/009/010/016 等历史分类需记录；025 Manifest 漏列 Protocol target |
+| 2026-11-27 | [001–025 历史授权审计记录](./2026-11-27-authorization-audit-record.md) | 逐卡审计分类与 Manifest 差异；不追溯改写历史授权 |
 | 2026-11-27 | [未实现功能显性化与授权阻塞治理](./2026-11-27-unimplemented-work-transparency.md) | 未实现事项必须有稳定 ID、影响、授权和汇报章节；`done` 与需求覆盖状态分离 |
 | 2026-11-27 | [评审响应与整改计划](./2026-11-27-audit-response.md) | 已采纳；G01 完成，G02 下一步；治理优先于 026；G1–G3 不自动展开 |
 
@@ -18,8 +19,8 @@ M6 020–025 已完成：CI/UI 测试、Glide 试点、Instance/Binding 编辑�
 
 1. 授权规则从单值等级改为可组合权限集合（G01，done）；
 2. 任务卡/Manifest 模板与未实现披露制度（G01，done）；
-3. 001–025 历史授权审计记录与 Manifest 事实性修正（G02，next）；
-4. 历史未实现工作回溯与登记（G03，queued）；
+3. 001–025 历史授权审计记录与 Manifest 事实性修正（G02，done）；
+4. 历史未实现工作回溯与登记（G03，next）；
 5. 026 完整 Change Review；
 6. 机器授权/覆盖门禁（G04，026 之后）。
 

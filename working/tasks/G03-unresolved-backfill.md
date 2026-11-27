@@ -1,6 +1,6 @@
 # G03 — 历史未实现工作回溯
 
-- 状态：queued（G02 之后执行）
+- 状态：next（G02 已完成，可立即开始）
 - coverage_status：partial
 - open_items：无
 - 目标：对 001–025 做一次未实现工作回溯，填充 `working/decisions/unresolved-work.md`，并给有未决项的卡补 `coverage_status` / `open_items`。

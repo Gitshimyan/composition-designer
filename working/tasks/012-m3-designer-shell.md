@@ -7,6 +7,8 @@
 - 授权：Extend（新桌面应用、前端工程、Tauri 配置）
 - 变更声明：`changes/012-designer-shell.yaml`
 
+> 授权审计（2026-11-27）：审计建议 **Extend；workspace 纳入/排除与宿主工程边界部分另需 Rearchitect**（条件性）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
+
 ## 技术栈（用户确认）
 
 | 层 | 选择 |
