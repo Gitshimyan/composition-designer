@@ -40,6 +40,12 @@ CI：
 - PR `mergeStateStatus`：**BLOCKED**；
 - 已关闭 PR 并删除探针分支。
 
+集成 PR：
+
+- PR #2（`gov/m6-g04`）CI 通过（run 45997141339），已合并到 `main`；
+- 合并后 main push CI 通过（run 45997795133）；
+- 远端仅保留 `main` 分支。
+
 ## 2. 报告结果
 
 对当前分支全量 diff（`65ac30c..HEAD`）运行 report：

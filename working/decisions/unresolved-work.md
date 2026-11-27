@@ -108,6 +108,8 @@
 - `main` 已启用分支保护：strict required check `Windows build and UI tests`，
   enforce_admins=true，禁止 force push/删除；
 - 失败探针 PR #1：CI `fail`，`mergeStateStatus=BLOCKED`；已关闭并删除分支；
+- 集成 PR #2：CI 通过（run 45997141339）并合并；合并后 main push CI 通过
+  （run 45997795133）；
 - 关闭日期：2026-11-27（G04）。
 
 ### UW-030 — CI block 模式
