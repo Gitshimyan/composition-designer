@@ -1,0 +1,44 @@
+change:
+  id: change.027-m6-closeout
+  intent: 按 M6 完成标准验证 Glide 试点副本上的完整编辑链，并核实 CI PR/合并门禁；只补验证与记录。
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "M6 总验收；不新增产品能力，仅测试与文档"
+  targets:
+    - README.md
+    - apps/designer/src-tauri/src
+    - docs/ai/architecture-entry.md
+    - docs/reviews
+    - working
+    - changes/027-m6-closeout.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - m6_closeout_test
+      - cli_mcp_consistency_check
+      - ci_gate_verification
+      - plan_and_docs
+    forbidden:
+      - new_core_command
+      - command_protocol
+      - toml_schema
+      - design_baseline
+      - product_capability
+  unresolved_items:
+    - UW-028
+    - UW-029
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - cd apps/designer && npm run build && npm run test:ui
+  notes: 只做 M6 总验收与证据记录；若 PR 分支保护不可读/不可改，记录外部阻塞，不声称强制合并已启用。

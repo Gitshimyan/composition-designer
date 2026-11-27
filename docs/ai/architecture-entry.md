@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 已完成（020–026）；G01–G03 完成；G04 机器门禁需另行授权 |
+| 当前阶段 | v0.2 M6 功能卡 020–026 完成；027 真实项目全链路与 CI PR 门禁收口；G01–G03 完成，G04 待授权 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -153,6 +153,7 @@
 - 2026-11-27 评审整改：G01（权限集合、边界、模板、披露）、G02（历史授权审计记录）、
   G03（001–025 未实现工作回溯，27 项登记）已完成；G04 机器门禁待授权；
 - M6 026 完成：Change Review 按对象分类展示 Before/After、命令、Dependency 影响与
-  全部诊断；28 UI + 154 workspace + 15 Tauri 测试通过；M6 收口；
+  全部诊断；28 UI + 154 workspace + 15 Tauri 测试通过；
+- M6 027 待执行：Glide 试点副本上的完整编辑链、CLI/Protocol 一致性、CI PR/分支保护核实；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

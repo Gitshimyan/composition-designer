@@ -6,7 +6,7 @@
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)
 > 测试基线：154 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
-> 当前阶段：v0.2 M6 已完成（020–026）；G01–G03 完成；G04 机器门禁需另行授权
+> 当前阶段：v0.2 M6 功能卡 020–026 完成；M6 总验收 027 待执行；G01–G03 完成
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -36,7 +36,8 @@ Designer、Source 与 Agent 入口。
   未实现披露与 UW 登记制度生效；
 - G02 已完成：001–025 历史授权审计记录、Manifest 事实性修正与任务卡审计备注；
 - G03 已完成：001–025 历史未实现工作回溯；登记册 27 项（6 关闭、9 待决策、0 accepted、12 延期）；
-- 026 已完成：Change Review 分类、Before/After、命令、Dependency 影响、完整诊断；M6 完成；
+- 026 已完成：Change Review 分类、Before/After、命令、Dependency 影响、完整诊断；
+  M6 功能卡完成，总验收 027 待执行；
 - 缺口：G1–G3 等 Rearchitect 缺口；ConfigValue 整数 float 的 wire 限制；Source 编辑；
 - CI 已在远端 main 执行并通过（run 45984567517，5m9s）；
 - 下一步：M6 收口检查；G04 需授权；M7 为候选阶段。
@@ -45,7 +46,7 @@ Designer、Source 与 Agent 入口。
 
 | 阶段 | 目标 | 状态 | 主要交付 |
 |---|---|---|---|
-| M6 | Complete Composition Authoring | done | CI、真实项目试点、Instance/Binding/Connection/Dependency、完整 Review；CI 远端通过 |
+| M6 | Complete Composition Authoring | in_progress | 功能卡完成；027 真实项目全链路与 CI PR 门禁收口验收 |
 | M7 | Source Authoring & Consistency | later | 可编辑 Source、统一提交、外部修改/草稿冲突 |
 | M8 | Agent Authoring Experience | later | 上下文查询、影响分析、事务批处理、Skill 评测 |
 | M9 | Composition Ecosystem | deferred | Module Registry/Versioning、多文件、模板、Adapter；不承诺进入 v0.2 |
@@ -61,11 +62,12 @@ Designer、Source 与 Agent 入口。
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | done |
 | 6 | 025 | Dependency Provider 编辑（Extend） | 024；用户明确授权 | done |
 | 7 | 026 | 完整 Change Review | 022–025；G01–G03 | done |
+| 8 | 027 | M6 收口验收 | 020–026 | next |
 
 ### 4.1 评审整改队列（G 轨道，2026-11-27）
 
-评审整改不占用 M6 功能卡编号；026 仍是完整 Change Review。G 轨道与 026 的顺序固定为
-`G00 → G01 → G02 → G03 → 026 → G04`。
+评审整改不占用 M6 功能卡编号；026 是完整 Change Review，027 是 M6 收口。顺序为
+`G00 → G01 → G02 → G03 → 026 → 027 → G04`。
 
 | 顺序 | 卡 | 方向 | 授权 | 状态 | 依赖 |
 |---|---|---|---|---|---|
@@ -74,10 +76,11 @@ Designer、Source 与 Agent 入口。
 | 2 | [G02 — 历史授权审计记录与 Manifest 修正](tasks/G02-historical-audit.md) | 001–025 审计分类、Manifest 事实性修正、不追溯授权 | Modify | done | G01 |
 | 3 | [G03 — 历史未实现工作回溯](tasks/G03-unresolved-backfill.md) | 全量回溯、UW 登记、覆盖状态 | Modify | done | G01 |
 | 4 | 026 — 完整 Change Review | Before/After、影响、诊断、确认/取消 | Modify | done | G01–G03 |
-| 5 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | deferred | 026 |
+| 5 | 027 — M6 收口验收 | Glide 试点全链路、CLI/Protocol 一致性、CI PR 门禁 | Modify | next | 020–026 |
+| 6 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | deferred | 027 |
 
-**当前状态：** M6 已完成；G01–G03 已完成。G04 机器门禁需 Extend + Rearchitect，
-当前未授权；M7 Source 编辑为下一阶段候选。
+**当前状态：** M6 功能卡 020–026 完成；027 总验收可立即开始（Modify）。G04 机器门禁
+需 Extend + Rearchitect，排在 027 之后。
 
 ### 4.2 未决工作总览
 
@@ -85,11 +88,11 @@ Designer、Source 与 Agent 入口。
 
 | 指标 | 数量 |
 |---|---:|
-| 登记事项 | 27 |
+| 登记事项 | 29 |
 | 已实现 / 已关闭 | 6（UW-001、006、007、008、009、025） |
-| 等待用户决策（pending_decision） | 9（G1–G3、ConfigValue、array 编辑、Binding UX、机器门禁等） |
+| 等待用户决策（pending_decision） | 10（G1–G3、ConfigValue、array、Binding UX、机器门禁等） |
 | 等待授权（pending_authorization） | 0 |
-| 已接受待排期（accepted） | 0 |
+| 已接受待排期（accepted） | 1（UW-028，027 承接） |
 | 明确延期（deferred） | 12（Source、WebView2、MCP、多入口、撤销等） |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
@@ -184,7 +187,7 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
   Before/After 字段、Dependency Provider 影响、完整诊断与验证分区；
 - 复用现有 `ModelDiff`/诊断/快照，不新增命令、事务协议或 Tauri IPC 字段；
 - 28 条 Playwright UI 链路通过；154 workspace + 15 Tauri 测试通过；
-- M6 六张功能卡（020–026）全部完成，CI 远端通过。
+- M6 六张功能卡（020–026）全部完成，CI 远端通过；总验收 027 待执行。
 
 ### 022–026 — 完整编辑链
 
@@ -264,14 +267,14 @@ npm run test:ui
 | 2026-11-27 | G01 | 权限集合与边界、任务卡/Manifest 模板、未实现披露与 UW 制度生效；产品代码/Schema 未改 |
 | 2026-11-27 | G02 | 001–025 历史授权审计记录、Manifest 事实性修正、13 张任务卡审计备注；G03 下一步 |
 | 2026-11-27 | G03 | 001–025 未实现工作回溯；登记册 27 项；任务卡 coverage/open_items；026 下一步 |
-| 2026-11-27 | 026 | 完整 Change Review：分类、Before/After、命令、依赖影响、全部诊断；28 UI 通过；M6 完成 |
+| 2026-11-27 | 026 | 完整 Change Review：分类、Before/After、命令、依赖影响、全部诊断；28 UI 通过；027 总验收 |
 
 ## 10. 下一步
 
-M6 已完成；026 完整 Change Review 关闭了 UW-025。下一步建议：
+M6 功能卡 020–026 已完成；026 关闭了 UW-025。下一步：
 
-1. 做一次 **M6 收口检查**：对照 M6 总验收链路与 `docs/acceptance-v0.1.md` 记录当前状态；
-2. G04 — 机器授权/覆盖门禁：需要 Extend + Rearchitect，当前未授权；
+1. **027 — M6 收口验收**：Glide 试点副本全链路、CLI/Protocol 一致性、CI PR 门禁；
+2. G04 — 机器授权/覆盖门禁：需要 Extend + Rearchitect；
 3. M7 — Source Authoring（Source 编辑、草稿冲突），需按新规则重新立卡与授权。
 
 G1–G3 等 Schema/领域模型缺口、ConfigValue wire、array 编辑、Binding UX 等仍在
