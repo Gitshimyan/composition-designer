@@ -31,6 +31,9 @@ artifacts/
 
 agent/mcp.local.json
 
+# Designer local layout/state
+**/.designer/
+
 # OS
 Thumbs.db
 .DS_Store
