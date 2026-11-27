@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成 |
-| 当前阶段 | v0.2 M6 完成；G01–G08 完成；ADR-0004/0005 Accepted；029 Source 后端完成；下一卡 030 Source UI |
+| 当前阶段 | v0.2 M6 完成；G01–G08 完成；ADR-0004/0005 Accepted；M7 Source 完成；下一阶段 S1 Schema v2.0 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -169,6 +169,8 @@
 - G07 完成：G1/G2/G3 设计研究；ADR-0004 Accepted（v2.0 接口+service，v2.1 Profile+多入口）；
 - 028 完成：Source 设计研究；ADR-0005 Proposed（独占 `replace_source` + 事务复用）；
 - 029 完成：`replace_source`、候选文本加载、source-aware prepare/apply、文本+对象 Diff、
-  外部冲突守卫；workspace 172 测试；Tauri 16；030 Source UI 下一步；
+  外部冲突守卫；
+- 030/031 完成：CodeMirror 可编辑 Source、Review/Discard/冲突只读；Glide 试点 Source
+  验收；workspace 173、UI 30、Tauri 16；M7 完成；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

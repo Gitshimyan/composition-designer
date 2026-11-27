@@ -917,9 +917,24 @@ export default function App() {
                 <div className="source-shell">
                   <div className="source-meta">
                     <code>{source.entry}</code>
-                    <span>read-only · edits go through Inspector</span>
+                    <span>
+                      {snapshot?.canEdit
+                        ? "editable · Review before writing"
+                        : "read-only"}
+                    </span>
                   </div>
-                  <SourceView text={source.text} revealLine={revealLine} />
+                  <SourceView
+                    text={source.text}
+                    revealLine={revealLine}
+                    editable={Boolean(snapshot?.canEdit)}
+                    blocked={Boolean(external?.dirty)}
+                    onReview={(nextSource) =>
+                      void reviewCommands(
+                        [{ type: "replace_source", source: nextSource }],
+                        "Edit composition source",
+                      )
+                    }
+                  />
                 </div>
               ) : (
                 <div className="diagnostics-empty">

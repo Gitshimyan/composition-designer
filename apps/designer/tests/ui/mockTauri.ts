@@ -35,6 +35,7 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
 
   await page.addInitScript((data: MockPayload) => {
     let current = structuredClone(data.valid);
+    let currentSource = data.sourceText;
     const testState = {
       mode: data.mode,
       dirty: false,
@@ -434,6 +435,52 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
     }
 
     function transactionResponse(transaction: { commands: MockCommand[] }) {
+      const sourceCommand = transaction.commands.find(
+        (command) => command.type === "replace_source",
+      );
+      if (sourceCommand) {
+        const after = String(sourceCommand.source);
+        const before = currentSource;
+        if (after.includes("title = 42")) {
+          return {
+            accepted: false,
+            replayed: false,
+            diff: null,
+            sourceDiff: { before, after },
+            diagnostics: [
+              {
+                code: "contract-property-type-mismatch",
+                severity: "error",
+                message: "property title expects string",
+                object_id: "instance:app",
+                file: "composition/main.toml",
+                range: null,
+                related: [],
+                hint: null,
+              },
+            ],
+            snapshot: structuredClone(current),
+          };
+        }
+        currentSource = after;
+        const model = current.model;
+        if (model) {
+          const seq = (model.revision?.seq ?? 0) + 1;
+          model.revision = {
+            seq,
+            source_digest: `sha256:mock-source-${seq}`,
+          };
+          current.sourceDigest = model.revision.source_digest;
+        }
+        return {
+          accepted: true,
+          replayed: false,
+          diff: null,
+          sourceDiff: { before, after },
+          diagnostics: [],
+          snapshot: structuredClone(current),
+        };
+      }
       if (
         transaction.commands.some((command) => command.type === "delete_binding")
       ) {
@@ -500,7 +547,7 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
             ? structuredClone(data.invalid)
             : structuredClone(current);
         case "read_source":
-          return { entry: "composition/main.toml", text: data.sourceText };
+          return { entry: "composition/main.toml", text: currentSource };
         case "load_layout":
           return {};
         case "save_layout":

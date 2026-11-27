@@ -112,6 +112,27 @@ export default function ChangeReview({
           </ol>
         </section>
 
+        {preview.sourceDiff && (
+          <section className="review-section">
+            <div className="review-section-head">
+              <h3>Source change</h3>
+              <span className="review-section-count">
+                {preview.sourceDiff.after.split("\n").length} lines
+              </span>
+            </div>
+            <div className="review-source-diff">
+              <div>
+                <span className="review-source-label">Before</span>
+                <pre>{preview.sourceDiff.before}</pre>
+              </div>
+              <div>
+                <span className="review-source-label">After</span>
+                <pre>{preview.sourceDiff.after}</pre>
+              </div>
+            </div>
+          </section>
+        )}
+
         {changes.length === 0 ? (
           <div className="review-empty">No object changes returned by Core.</div>
         ) : (
@@ -389,6 +410,8 @@ function describeCommand(command: EditCommand): string {
       return `update_connection ${command.id}: ${command.from.instance}.${command.from.port} → ${command.to.instance}.${command.to.port}`;
     case "delete_connection":
       return `delete_connection ${command.id}`;
+    case "replace_source":
+      return `replace_source ${command.source.length} chars`;
     default:
       return JSON.stringify(command);
   }

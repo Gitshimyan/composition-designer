@@ -1,7 +1,8 @@
 # Composition Designer
 
 > v0.2 M6 与 G01–G08 完成；ADR-0004/0005 Accepted。
-> 029 Source 后端完成（`replace_source`、文本+对象 Diff、冲突守卫）；下一步 030 Source UI。
+> M7 Source Authoring 完成（029–031：编辑 Source、文本+对象 Review、Glide 验收）。
+> 下一步 S1 Schema v2.0（032–035）。
 > 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition

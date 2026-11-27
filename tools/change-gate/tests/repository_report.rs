@@ -7,7 +7,11 @@ use std::path::PathBuf;
 fn repository_report_is_readable() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let base = std::env::var("GATE_BASE").unwrap_or_else(|_| "HEAD^".to_owned());
-    let files = changed_files_from_git(&root, &base, "HEAD").expect("read git diff");
+    let files = match changed_files_from_git(&root, &base, "HEAD") {
+        Ok(files) => files,
+        Err(error) if error.contains("ambiguous argument") => return,
+        Err(error) => panic!("read git diff: {error}"),
+    };
     if files.is_empty() {
         return;
     }

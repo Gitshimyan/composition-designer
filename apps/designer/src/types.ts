@@ -246,6 +246,10 @@ export type EditCommand =
   | {
       type: "delete_connection";
       id: string;
+    }
+  | {
+      type: "replace_source";
+      source: string;
     };
 
 export interface Transaction {
