@@ -1,6 +1,6 @@
 # 未决工作登记册
 
-> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025。
+> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027 关闭 UW-028。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -9,10 +9,10 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 29 |
-| 已实现 / 已关闭 | 6 |
+| 已实现 / 已关闭 | 7 |
 | 等待用户决策（pending_decision） | 10 |
 | 等待授权（pending_authorization） | 0 |
-| 已接受待排期（accepted） | 1 |
+| 已接受待排期（accepted） | 0 |
 | 明确延期（deferred） | 12 |
 
 ## 2. 登记表
@@ -46,8 +46,8 @@
 | UW-025 | 010 / 014 / 024 | Diff/Review 覆盖 Dependency 与模块影响 | Change Review | implemented | Modify | 完整 Review 已展示分类/Before-After/依赖影响/全部诊断 | 026 已关闭 |
 | UW-026 | 004 | edit-cases / external-change-cases 具体载荷 | 示例/测试 | pending_decision | Compose + Modify | 场景说明无具体请求载荷 | 后续补示例 |
 | UW-027 | 003 / 006 / 007 | 边界测试补充（大小写路径、符号链接、级联抑制、重复 SourceMap、session 部分命令） | 测试 | pending_decision | Modify | 边界行为缺少回归保护 | 后续测试卡 |
-| UW-028 | M6 总验收 | 真实项目子系统完整 M6 链路（Glide 试点上的编辑链） | 验收 | accepted | Modify | 目前 UI 自动化用 fixture，host 编辑测试用示例项目 | 027 承接 |
-| UW-029 | 020 / M6 总验收 | CI PR 触发与分支保护/失败合并阻止的验证 | 工程流程 | pending_decision | Modify；仓库设置需管理员 | 尚未观察到 PR 运行与强制合并门禁 | 027 记录/验证 |
+| UW-028 | M6 总验收 | 真实项目子系统完整 M6 链路（Glide 试点上的编辑链） | 验收 | implemented | Modify | 已由 CLI/Protocol 全链路测试验证 | 027 已关闭 |
+| UW-029 | 020 / M6 总验收 | CI PR 触发与分支保护/失败合并阻止的验证 | 工程流程 | pending_decision | Modify；仓库设置需管理员 | `main` 未启用分支保护，无 PR 运行证据 | 配置 required check 并跑一次 PR；027 记录阻塞 |
 
 ## 3. 已关闭事项证据
 
@@ -85,8 +85,15 @@
 
 - 实现：[`ChangeReview.tsx`](../../apps/designer/src/review/ChangeReview.tsx)；
 - 分类、Before/After、命令列表、Dependency 影响、全部诊断；
-- 验证：28 UI + 154 workspace + 15 Tauri，详见 026 卡；
+- 验证：28 UI + 155 workspace + 15 Tauri，详见 026 卡；
 - 关闭日期：2026-11-27（026）。
+
+### UW-028 — M6 真实项目全链路
+
+- 实现：[`m6_closeout.rs`](../../crates/composition-cli/tests/m6_closeout.rs)；
+- 在 Glide 试点副本上通过 CLI/Protocol 完成创建/绑定/配置/连接/Provider/写回/重开；
+- 证据：实例 9、Binding 8、Connection 7，CLI validate 与 Core Digest 一致；
+- 关闭日期：2026-11-27（027）。
 
 ## 4. 维护规则
 

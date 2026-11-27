@@ -1,8 +1,8 @@
 # 027 — M6 收口验收
 
-- 状态：next
-- coverage_status：partial
-- open_items：UW-028、UW-029
+- 状态：done
+- coverage_status：complete_with_deferred_items
+- open_items：UW-029
 - 目标：按 M6 完成标准做一次可重复的真实项目全链路验收，并核实 CI PR/合并门禁；只补充验证与记录，不实现新能力。
 - authorization：
   - required：modify
@@ -38,13 +38,13 @@
 
 ## 清单
 
-- [ ] 建立 Glide 试点副本的 M6 全链路集成测试
-- [ ] 验证写入后可重开、validate 通过、Revision/Digest 刷新
-- [ ] 验证 CLI/Protocol 至少一个入口与 Core 结果一致
-- [ ] 检查 CI PR 触发与分支保护设置，记录证据或外部阻塞
-- [ ] 写 `docs/reviews/2026-11-27-m6-closeout.md`
-- [ ] 更新 plan / README / architecture-entry 的 M6 状态
-- [ ] 创建 `changes/027-m6-closeout.yaml`
+- [x] 建立 Glide 试点副本的 M6 全链路集成测试
+- [x] 验证写入后可重开、validate 通过、Revision/Digest 刷新
+- [x] 验证 CLI/Protocol 至少一个入口与 Core 结果一致
+- [x] 检查 CI PR 触发与分支保护设置，记录外部阻塞
+- [x] 写 `docs/reviews/2026-11-27-m6-closeout.md`
+- [x] 更新 plan / README / architecture-entry 的 M6 状态
+- [x] 创建 `changes/027-m6-closeout.yaml`
 
 ## 验收
 
@@ -56,4 +56,17 @@
 
 ## 结果 / 遗留问题
 
-- 尚未开始；等待执行。
+- 结果：
+  - 新增 `crates/composition-cli/tests/m6_closeout.rs`：在 Glide 试点副本上通过 CLI/Protocol
+    完成创建 Instance、Binding、配置、Connection、Dependency Provider、写回、重开与 validate；
+  - 验证实例 9、Binding 8、Connection 7，Digest 与 Core 一致；
+  - UI 28 条、Tauri host 15 条、workspace 155 条测试通过；
+  - 新增 `docs/reviews/2026-11-27-m6-closeout.md` 记录验收结论。
+- 未完成 / 外部阻塞：
+  - `main` 未启用分支保护（API 404），无 PR 运行记录；
+  - 无法证明失败合并被阻止；UW-029 保持 pending_decision，需仓库管理员设置
+    required check `Windows build and UI tests` 并用 PR 验证。
+- 验证边界：
+  - UI 自动化使用 IPC fixture；未做同一 Glide 副本上的 GUI + MCP 并发验证；
+  - 跨入口一致性由共享 Core 与分别的 UI/CLI/Protocol 测试支持。
+- 下一步：处理 UW-029；M6 不标记为完全通过。G04 机器门禁仍需 Extend + Rearchitect。

@@ -1,7 +1,7 @@
 # Composition Designer
 
-> v0.2 M6 功能卡 020–026 完成：CI 远端通过、Glide 试点、Instance/Binding/Connection/Dependency 编辑、
-> 完整 Change Review；027 真实项目全链路与 CI PR 门禁收口待执行。
+> v0.2 M6 功能与 Glide 全链路验收通过（020–027）：CI 远端通过、Instance/Binding/Connection/Dependency
+> 编辑、完整 Change Review、Glide 试点 CLI/Protocol 全链路；PR 分支保护/强制门禁未启用（UW-029）。
 > G01–G03 治理整改完成，G04 机器门禁待授权。
 > 下一步行动入口：[`working/plan.md`](./working/plan.md)。
 
@@ -53,7 +53,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
 | Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
-| v0.2 / M6 | 功能卡 020–026 完成；027 M6 收口验收（真实项目全链路 + CI PR 门禁）待执行；G01–G03 完成 |
+| v0.2 / M6 | 功能与 Glide 全链路验收通过（020–027）；PR 强制门禁 UW-029 待配置；G01–G03 完成 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
@@ -147,6 +147,7 @@ composition-designer/
 - [2026-11-27 评审响应与整改计划](./docs/reviews/2026-11-27-audit-response.md)
 - [001–025 历史授权审计记录](./docs/reviews/2026-11-27-authorization-audit-record.md)
 - [001–025 未实现工作回溯报告](./docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+- [M6 收口验收](./docs/reviews/2026-11-27-m6-closeout.md)
 - [未决工作登记](./working/decisions/unresolved-work.md)
 - [决策与授权历史](./working/decisions/decision-history.md)
 - [Glide Task + Terminal 试点](./working/pilots/glide-task-terminal/README.md)

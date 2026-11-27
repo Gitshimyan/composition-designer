@@ -3,7 +3,8 @@
 v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–015 已建立外壳、
 结构 Canvas/Tree、Inspector 配置编辑/Change Review、只读 CodeMirror Source 与外部修改
 同步/Reload；M6 022–025 增加 Instance/Binding/Connection/Dependency 编辑，
-026 完成 Change Review 的分类、Before/After、依赖影响与完整诊断。**
+026 完成 Change Review 的分类、Before/After、依赖影响与完整诊断；027 在 Glide 试点副本
+完成 CLI/Protocol 全链路验收。**
 
 | 区域 | 目录 | 职责 |
 |---|---|---|

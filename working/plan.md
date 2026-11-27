@@ -5,8 +5,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)
-> 测试基线：154 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
-> 当前阶段：v0.2 M6 功能卡 020–026 完成；M6 总验收 027 待执行；G01–G03 完成
+> 测试基线：155 Core/Protocol/MCP/CLI + 28 UI + 15 Tauri 测试
+> 当前阶段：M6 功能与 Glide 全链路验收通过；PR 强制门禁（UW-029）未完成；G01–G03 完成
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -46,7 +46,7 @@ Designer、Source 与 Agent 入口。
 
 | 阶段 | 目标 | 状态 | 主要交付 |
 |---|---|---|---|
-| M6 | Complete Composition Authoring | in_progress | 功能卡完成；027 真实项目全链路与 CI PR 门禁收口验收 |
+| M6 | Complete Composition Authoring | complete_with_deferred_items | 功能与 Glide 全链路通过；PR 强制门禁 UW-029 待配置 |
 | M7 | Source Authoring & Consistency | later | 可编辑 Source、统一提交、外部修改/草稿冲突 |
 | M8 | Agent Authoring Experience | later | 上下文查询、影响分析、事务批处理、Skill 评测 |
 | M9 | Composition Ecosystem | deferred | Module Registry/Versioning、多文件、模板、Adapter；不承诺进入 v0.2 |
@@ -62,7 +62,7 @@ Designer、Source 与 Agent 入口。
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | done |
 | 6 | 025 | Dependency Provider 编辑（Extend） | 024；用户明确授权 | done |
 | 7 | 026 | 完整 Change Review | 022–025；G01–G03 | done |
-| 8 | 027 | M6 收口验收 | 020–026 | next |
+| 8 | 027 | M6 收口验收 | 020–026 | done（coverage: complete_with_deferred_items；UW-029） |
 
 ### 4.1 评审整改队列（G 轨道，2026-11-27）
 
@@ -76,11 +76,11 @@ Designer、Source 与 Agent 入口。
 | 2 | [G02 — 历史授权审计记录与 Manifest 修正](tasks/G02-historical-audit.md) | 001–025 审计分类、Manifest 事实性修正、不追溯授权 | Modify | done | G01 |
 | 3 | [G03 — 历史未实现工作回溯](tasks/G03-unresolved-backfill.md) | 全量回溯、UW 登记、覆盖状态 | Modify | done | G01 |
 | 4 | 026 — 完整 Change Review | Before/After、影响、诊断、确认/取消 | Modify | done | G01–G03 |
-| 5 | 027 — M6 收口验收 | Glide 试点全链路、CLI/Protocol 一致性、CI PR 门禁 | Modify | next | 020–026 |
+| 5 | 027 — M6 收口验收 | Glide 试点全链路、CLI/Protocol 一致性、CI PR 门禁 | Modify | done | 020–026 |
 | 6 | [G04 — 机器授权/覆盖门禁](tasks/G04-machine-gate.md) | Manifest × diff × coverage 自动检查，先报告后阻断 | Extend + Rearchitect | deferred | 027 |
 
-**当前状态：** M6 功能卡 020–026 完成；027 总验收可立即开始（Modify）。G04 机器门禁
-需 Extend + Rearchitect，排在 027 之后。
+**当前状态：** M6 功能与 Glide 全链路验收通过；PR 强制门禁未完成（UW-029）。
+G01–G03 已完成；G04 需 Extend + Rearchitect；M7 为下一阶段候选。
 
 ### 4.2 未决工作总览
 
@@ -89,10 +89,10 @@ Designer、Source 与 Agent 入口。
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 29 |
-| 已实现 / 已关闭 | 6（UW-001、006、007、008、009、025） |
-| 等待用户决策（pending_decision） | 10（G1–G3、ConfigValue、array、Binding UX、机器门禁等） |
+| 已实现 / 已关闭 | 7（UW-001、006、007、008、009、025、028） |
+| 等待用户决策（pending_decision） | 10（G1–G3、ConfigValue、array、Binding UX、机器门禁、PR 门禁等） |
 | 等待授权（pending_authorization） | 0 |
-| 已接受待排期（accepted） | 1（UW-028，027 承接） |
+| 已接受待排期（accepted） | 0 |
 | 明确延期（deferred） | 12（Source、WebView2、MCP、多入口、撤销等） |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
@@ -189,6 +189,16 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
 - 28 条 Playwright UI 链路通过；154 workspace + 15 Tauri 测试通过；
 - M6 六张功能卡（020–026）全部完成，CI 远端通过；总验收 027 待执行。
 
+### 027 — M6 收口验收（done）
+
+已完成：
+
+- `crates/composition-cli/tests/m6_closeout.rs`：Glide 试点副本上的 CLI/Protocol 全链路；
+- 实例 9、Binding 8、Connection 7；写回后重开 valid，Digest 与 Core 一致；
+- UI 28、Tauri 15、workspace 155 测试通过；
+- 验收记录：`docs/reviews/2026-11-27-m6-closeout.md`；
+- **未完成**：`main` 无分支保护（API 404），无 PR 运行证据；UW-029 待配置。
+
 ### 022–026 — 完整编辑链
 
 - Instance：创建/删除/重命名/换模块与版本/配置；
@@ -220,6 +230,9 @@ Provider 编辑新增了命令 Schema + Core + Adapter 一致路径，不是 UI-
 
 M6 完成标准：至少一个真实项目子系统完成该链路；关键操作可由 UI 自动化或可重复集成测试验证；
 CI 在 PR 上执行并阻止失败合并（推送后生效）。
+
+当前：前两项通过（027 Glide 全链路 + 28 UI）；第三项未通过——`main` 无分支保护，
+无 PR 运行证据，登记为 UW-029。
 
 ## 7. 已知限制（v0.1 遗留）
 
@@ -268,12 +281,15 @@ npm run test:ui
 | 2026-11-27 | G02 | 001–025 历史授权审计记录、Manifest 事实性修正、13 张任务卡审计备注；G03 下一步 |
 | 2026-11-27 | G03 | 001–025 未实现工作回溯；登记册 27 项；任务卡 coverage/open_items；026 下一步 |
 | 2026-11-27 | 026 | 完整 Change Review：分类、Before/After、命令、依赖影响、全部诊断；28 UI 通过；027 总验收 |
+| 2026-11-27 | 027 | Glide 全链路 CLI/Protocol 测试通过；PR 分支保护 404，UW-029 待配置；M6 功能验收完成 |
 
 ## 10. 下一步
 
-M6 功能卡 020–026 已完成；026 关闭了 UW-025。下一步：
+M6 功能与 Glide 全链路验收通过；027 已关闭 UW-028。下一步：
 
-1. **027 — M6 收口验收**：Glide 试点副本全链路、CLI/Protocol 一致性、CI PR 门禁；
+1. **UW-029 — PR 强制门禁**：在 GitHub 启用 `main` 分支保护，把
+   `Windows build and UI tests` 设为 required check，并用一个 PR 实际验证；
+   该操作修改远端仓库设置，需用户明确批准；
 2. G04 — 机器授权/覆盖门禁：需要 Extend + Rearchitect；
 3. M7 — Source Authoring（Source 编辑、草稿冲突），需按新规则重新立卡与授权。
 

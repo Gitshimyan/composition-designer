@@ -9,6 +9,8 @@ change:
     evidence: "M6 总验收；不新增产品能力，仅测试与文档"
   targets:
     - README.md
+    - apps/designer/README.md
+    - crates/composition-cli
     - apps/designer/src-tauri/src
     - docs/ai/architecture-entry.md
     - docs/reviews
@@ -19,6 +21,7 @@ change:
   scope:
     allowed:
       - m6_closeout_test
+      - cli_integration_test
       - cli_mcp_consistency_check
       - ci_gate_verification
       - plan_and_docs
@@ -29,7 +32,6 @@ change:
       - design_baseline
       - product_capability
   unresolved_items:
-    - UW-028
     - UW-029
   impact:
     expected_schema_changes: false
