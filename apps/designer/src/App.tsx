@@ -15,6 +15,7 @@ import {
 } from "./api";
 import CompositionCanvas from "./canvas/CompositionCanvas";
 import StructureTree from "./explorer/StructureTree";
+import BindingEditorDialog from "./inspector/BindingEditorDialog";
 import CreateInstanceDialog from "./inspector/CreateInstanceDialog";
 import InstanceActions from "./inspector/InstanceActions";
 import { parseDraft, toDraftValue } from "./inspector/configDraft";
@@ -71,6 +72,7 @@ export default function App() {
     parentId: string;
     slotId: string;
   } | null>(null);
+  const [bindingDraft, setBindingDraft] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -170,6 +172,7 @@ export default function App() {
     setRevealLine(null);
     setPendingReview(null);
     setCreateDraft(null);
+    setBindingDraft(null);
     void loadLayout(snapshot.root)
       .then((saved) => {
         if (cancelled) return;
@@ -275,6 +278,7 @@ export default function App() {
       setExternal(null);
       setPendingReview(null);
       setCreateDraft(null);
+      setBindingDraft(null);
       setBottomTab("diagnostics");
       setRevealLine(null);
       if (next.model) {
@@ -393,6 +397,7 @@ export default function App() {
       }
       setPendingReview(null);
       setCreateDraft(null);
+      setBindingDraft(null);
       if (response.snapshot.canEdit) {
         try {
           setSource(await readSource());
@@ -448,6 +453,12 @@ export default function App() {
   const createSlot = createParentModule?.contract.slots.find(
     (slot) => slot.id === createDraft?.slotId,
   );
+  const bindingDraftValue = bindingDraft
+    ? bindings.find((binding) => binding.id === bindingDraft)
+    : undefined;
+  const bindingDraftChild = bindingDraftValue
+    ? instances.find((instance) => instance.id === bindingDraftValue.child)
+    : undefined;
 
   const status = describeStatus(loadState, snapshot, error);
   const digest = snapshot?.sourceDigest ?? model?.revision?.source_digest ?? null;
@@ -665,7 +676,7 @@ export default function App() {
               />
               <footer className="stage-footer">
                 <span className="stage-note">
-                  Drag to arrange · positions write to .designer/layout.toml · instance edits go through Core transactions
+                  Drag to arrange · positions write to .designer/layout.toml · structure edits go through Core transactions
                 </span>
                 <div className="stage-counts">
                   <span>{bindings.length} structural bindings</span>
@@ -707,6 +718,7 @@ export default function App() {
                     onCreateChild={(parent, slot) =>
                       setCreateDraft({ parentId: parent.id, slotId: slot.id })
                     }
+                    onEditBinding={(binding) => setBindingDraft(binding.id)}
                     onReview={(commands, description, options) =>
                       void reviewCommands(commands, description, options)
                     }
@@ -830,8 +842,8 @@ export default function App() {
           <span className="status-digest" title={digest ?? undefined}>
             sha {shortDigest}
           </span>
-          <span className="status-sep">instance editing</span>
-          <span className="status-version">M6.022</span>
+          <span className="status-sep">structure editing</span>
+          <span className="status-version">M6.023</span>
         </div>
       </footer>
 
@@ -845,6 +857,22 @@ export default function App() {
           modules={modules}
           suspended={pendingReview !== null}
           onCancel={() => setCreateDraft(null)}
+          onReview={(commands, description, options) =>
+            void reviewCommands(commands, description, options)
+          }
+        />
+      )}
+
+      {bindingDraftValue && bindingDraftChild && (
+        <BindingEditorDialog
+          key={bindingDraftValue.id}
+          binding={bindingDraftValue}
+          child={bindingDraftChild}
+          instances={instances}
+          bindings={bindings}
+          modules={modules}
+          suspended={pendingReview !== null}
+          onCancel={() => setBindingDraft(null)}
           onReview={(commands, description, options) =>
             void reviewCommands(commands, description, options)
           }

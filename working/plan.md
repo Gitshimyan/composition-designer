@@ -2,8 +2,8 @@
 
 > 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）
 > 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)
-> 测试基线：146 Core/Protocol/MCP/CLI + 15 UI + 9 Tauri 测试
-> 当前阶段：v0.2 M6 进行中；020–022 完成，023 待开始
+> 测试基线：146 Core/Protocol/MCP/CLI + 18 UI + 12 Tauri 测试
+> 当前阶段：v0.2 M6 进行中；020–023 完成，024 待开始
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -23,8 +23,9 @@ Designer、Source 与 Agent 入口。
 - 020 已完成：Windows CI 文件、Playwright 1.65 + 8 条 UI 链路、本地 `npm run test:ui`；
 - 021 已完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，Core 验证通过；
 - 022 已完成：Instance 创建/删除/重命名/换模块与版本/配置调整，走统一事务与 Review；
-- 缺口：CI 尚未远端执行；Binding/Connection/Dependency 完整编辑、Source 编辑；
-- 下一步 023：Binding 编辑。
+- 023 已完成：Binding Move/Detach/required Slot 子树创建，Slot 信息与影响可审查；
+- 缺口：CI 尚未远端执行；Connection/Dependency 编辑视图、Source 编辑；
+- 下一步 024：Connection / Dependency 视图。
 
 ## 3. 路线图
 
@@ -42,8 +43,8 @@ Designer、Source 与 Agent 入口。
 | 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | done（CI 远端待推送） |
 | 2 | 021 | 真实项目试点与 Schema 复核 | 020；Glide Task+Terminal | done |
 | 3 | 022 | Instance 编辑 | 021 结论 | done |
-| 4 | 023 | Binding 编辑 | 022 | next |
-| 5 | 024 | Connection / Dependency 视图 | 022–023 | queued |
+| 4 | 023 | Binding 编辑 | 022 | done |
+| 5 | 024 | Connection / Dependency 视图 | 022–023 | next |
 | 6 | 025 | 完整 Change Review | 022–024 | queued |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
@@ -81,8 +82,26 @@ Designer、Source 与 Agent 入口。
   拒绝不写文件、重命名 root/引用；
 - 复用 009 冻结命令，不新增 Schema/命令。
 
-已知边界：创建候选只包含“创建后即可合法”的模块（不带必填 Slot）；带必填 Slot 的
-复合模块整棵子树创建留给 023。
+已知边界（已由 023 补齐）：022 的创建候选只包含不带必填 Slot 的模块；023 的递归
+结构创建覆盖了 required Slot 子树。
+
+### 023 — Binding 编辑（done）
+
+已完成：
+
+- Inspector Binding 列表：父/子 Binding、Move、Detach；
+- Move 对话框：parent 候选 + Slot 候选（accepts/cardinality/required/占用/子节点），
+  只发 `update_binding`，child 子树不变；
+- Detach 走 `delete_binding` + Review；单根模型下 Core 以
+  `structure-unreachable-instance` 拒绝，UI 显示真实诊断而非静默处理；
+- 创建向导升级为递归结构创建：模块的 required Slot 自动展开为子草稿，
+  所有实例与 Binding 在同一事务提交（023 补齐 022 的边界）；
+- 18 条 Playwright UI 链路（新增 3 条 Binding/子树链路）；
+- 12 个 Tauri host tests，其中 7 个真实 `ProjectSession` 写回测试；
+- 复用 009 冻结命令，不新增 Schema/命令。
+
+已知边界：Move 的 child 固定（创建时选择 child）；Detach 单独提交在单根模型下必被
+拒绝，移除子结构使用 Delete。
 
 ### 022–025 — 完整编辑链
 
@@ -154,9 +173,10 @@ npm run test:ui
 | 2026-11-27 | 020 | Windows CI + Playwright 8 条 UI 链路；本地 146 Rust + 5 Tauri + 8 UI 通过；CI 远端待推送 |
 | 2026-11-27 | 021 | Glide Task + Terminal 只读试点；7 模块/7 实例/6 Binding/6 Connection/3 Dependency；valid=true |
 | 2026-11-27 | 022 | Instance 创建/删除/重命名/换模块/配置调整；15 UI + 9 Tauri 测试通过；复用冻结命令 |
+| 2026-11-27 | 023 | Binding Move/Detach/required Slot 递归子树创建；18 UI + 12 Tauri 测试通过 |
 
 ## 10. 下一步
 
-022 已完成。下一步 **023 — Binding 编辑**：在现有 022 的事务/Review 基础上加入
-Slot 感知的父子结构编辑（重新选择 parent/slot/child、删除 Binding、带必填 Slot 的
-复合模块子树创建），GUI 不复制 Slot/Cardinality 规则，候选关系由 Core 验证。
+023 已完成。下一步 **024 — Connection / Dependency 视图**：为 Port Connection 与
+Dependency Provider 建立独立视图与编辑路径，三个视图共享同一 Composition Model，
+不画成同一种无类型边；所有操作继续经 Core 事务与 Review。

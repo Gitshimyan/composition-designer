@@ -12,17 +12,21 @@ import type {
 } from "../types";
 import { defaultDraftFor, parseDraft } from "./configDraft";
 import {
-  creatableModules,
+  acceptedModules,
+  childBindings,
   deleteCommands,
   deleteImpact,
   describeModuleChange,
+  detachBindingCommands,
   findModule,
   isLocalId,
   moduleChangeCommands,
   moduleKey,
   moduleOptions,
+  parentBinding,
   parentOf,
   planModuleChange,
+  slotChildren,
   slotHasCapacity,
   slotOccupancy,
 } from "./instanceEditing";
@@ -37,6 +41,7 @@ interface InstanceActionsProps {
   rootId: string;
   canEdit: boolean;
   onCreateChild: (parent: Instance, slot: SlotContract) => void;
+  onEditBinding: (binding: Binding) => void;
   onReview: (
     commands: EditCommand[],
     description: string,
@@ -54,6 +59,7 @@ export default function InstanceActions({
   rootId,
   canEdit,
   onCreateChild,
+  onEditBinding,
   onReview,
 }: InstanceActionsProps) {
   const module = findModule(modules, instance.module.id, instance.module.version);
@@ -97,6 +103,8 @@ export default function InstanceActions({
       deleteImpact(instance.id, bindings, connections, dependencies),
     [instance.id, bindings, connections, dependencies],
   );
+  const parentB = parentBinding(bindings, instance.id);
+  const childBs = childBindings(bindings, instance.id);
   const isRoot = instance.id === rootId;
   const displayModule = module ? moduleKey(module) : moduleKey(instance.module);
 
@@ -157,6 +165,14 @@ export default function InstanceActions({
         selectAfter: parentOf(bindings, instance.id) ?? rootId,
         focusAfter: true,
       },
+    );
+  }
+
+  function reviewDetach(binding: Binding, childId: string) {
+    onReview(
+      detachBindingCommands(binding.id),
+      `Detach ${childId} from ${binding.parent}.${binding.slot}`,
+      { selectAfter: childId },
     );
   }
 
@@ -333,7 +349,8 @@ export default function InstanceActions({
           {module.contract.slots.map((slot) => {
             const count = slotOccupancy(bindings, instance.id, slot.id);
             const capacity = slotHasCapacity(slot, count);
-            const candidates = creatableModules(modules, slot.accepts);
+            const children = slotChildren(bindings, instance.id, slot.id);
+            const candidates = acceptedModules(modules, slot);
             return (
               <div className="slot-row" key={slot.id}>
                 <div className="slot-row-head">
@@ -346,6 +363,7 @@ export default function InstanceActions({
                 </div>
                 <div className="slot-accepts">
                   accepts {slot.accepts.join(", ")}
+                  {children.length > 0 ? ` · ${children.join(", ")}` : ""}
                 </div>
                 {capacity && canEdit && candidates.length > 0 && (
                   <button
@@ -358,8 +376,7 @@ export default function InstanceActions({
                 )}
                 {capacity && candidates.length === 0 && (
                   <div className="slot-note">
-                    Accepted modules need their own required children first
-                    (structure editing arrives in 023).
+                    No loaded module is accepted by this Slot.
                   </div>
                 )}
               </div>
@@ -368,10 +385,87 @@ export default function InstanceActions({
         </div>
       )}
 
+      {(parentB || childBs.length > 0) && (
+        <div className="bindings-block">
+          <div className="section-label">Bindings</div>
+          {parentB && (
+            <BindingRow
+              binding={parentB}
+              childId={instance.id}
+              parentLabel={`${parentB.parent}.${parentB.slot}`}
+              canEdit={canEdit}
+              onEdit={() => onEditBinding(parentB)}
+              onDetach={() => reviewDetach(parentB, instance.id)}
+            />
+          )}
+          {childBs.map((binding) => (
+            <BindingRow
+              key={binding.id}
+              binding={binding}
+              childId={binding.child}
+              parentLabel={`${binding.parent}.${binding.slot}`}
+              canEdit={canEdit}
+              onEdit={() => onEditBinding(binding)}
+              onDetach={() => reviewDetach(binding, binding.child)}
+            />
+          ))}
+          <div className="slot-note">
+            A standalone Detach leaves the child unreachable, so Core rejects
+            it; use Move or Delete instead.
+          </div>
+        </div>
+      )}
+
       <div className="action-note">
         Changes are previewed through Core and written only after Apply.
       </div>
     </section>
+  );
+}
+
+function BindingRow({
+  binding,
+  childId,
+  parentLabel,
+  canEdit,
+  onEdit,
+  onDetach,
+}: {
+  binding: Binding;
+  childId: string;
+  parentLabel: string;
+  canEdit: boolean;
+  onEdit: () => void;
+  onDetach: () => void;
+}) {
+  return (
+    <div className="binding-row">
+      <div className="binding-row-head">
+        <code>{binding.id}</code>
+        <span className="binding-child">→ {childId}</span>
+      </div>
+      <div className="binding-row-meta">
+        <span>{parentLabel}</span>
+        <div className="binding-row-actions">
+          <button
+            type="button"
+            className="config-action"
+            disabled={!canEdit}
+            onClick={onEdit}
+          >
+            Move…
+          </button>
+          <button
+            type="button"
+            className="config-action is-muted"
+            disabled={!canEdit}
+            onClick={onDetach}
+          >
+            Detach
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -2147,3 +2147,153 @@ code,
   font-size: 8px;
   line-height: 1.5;
 }
+
+/* ---------- 023: binding editing ---------- */
+.bindings-block {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+}
+
+.binding-row {
+  margin-bottom: 7px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(8, 12, 18, 0.3);
+}
+
+.binding-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.binding-row-head code {
+  color: var(--text);
+  font-size: 9px;
+}
+
+.binding-child {
+  overflow: hidden;
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.binding-row-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.binding-row-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.dialog-card-wide {
+  width: min(660px, 100%);
+}
+
+.slot-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.slot-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(8, 12, 18, 0.3);
+  cursor: pointer;
+}
+
+.slot-choice:has(input:checked) {
+  border-color: rgba(94, 224, 189, 0.4);
+  background: var(--accent-soft);
+}
+
+.slot-choice input {
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.slot-choice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.slot-choice-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.slot-choice-head code {
+  color: var(--text);
+  font-size: 9px;
+}
+
+.draft-node {
+  margin: 10px 0 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(8, 12, 18, 0.28);
+}
+
+.draft-node.is-root {
+  border-color: rgba(94, 224, 189, 0.25);
+}
+
+.draft-node legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 5px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.draft-node legend code {
+  color: var(--text);
+  font-size: 9px;
+}
+
+.draft-slot-meta {
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.draft-child {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px dashed var(--border);
+}
+
+.draft-missing {
+  margin-top: 9px;
+  padding: 7px;
+  border: 1px dashed rgba(255, 123, 123, 0.35);
+  border-radius: 6px;
+  color: var(--danger);
+  font-size: 9px;
+  line-height: 1.5;
+}

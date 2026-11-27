@@ -2,13 +2,13 @@
 
 v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–015 已建立外壳、
 结构 Canvas/Tree、Inspector 配置编辑/Change Review、只读 CodeMirror Source 与外部修改
-同步/Reload；M6 022 增加 Instance 创建/删除/重命名/换模块与版本。**
+同步/Reload；M6 022 增加 Instance 编辑，M6 023 增加 Binding 编辑与必填 Slot 子树创建。**
 
 | 区域 | 目录 | 职责 |
 |---|---|---|
 | Composition Canvas | `src/canvas/` | 实例与结构 Binding 的 `@xyflow/react` 呈现（013） |
 | Project Explorer | `src/explorer/` | 项目目录、结构 Tree、模块来源与搜索 |
-| Inspector | `src/inspector/` | 实例详情、配置编辑、Instance 操作与 Change Review |
+| Inspector | `src/inspector/` | 实例详情、配置编辑、Instance/Binding 操作与 Change Review |
 | TOML Source | `src/source/` | CodeMirror 6 只读 Source、诊断定位（014） |
 | Diagnostics | `src/diagnostics/` | 错误/警告、源码位置、修正提示 |
 | Agent Status | `src/agent-status/` | Agent 会话、Revision 与操作记录 |
@@ -24,8 +24,10 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
   - 重命名 Instance（引用重写由 Core 事务完成）；
   - 换 Module / Version（同一事务内移除不兼容配置、补齐必填属性）；
   - 删除 Instance（Review 前展示子树、Binding、Connection、Dependency 影响）；
-  - 在 Slot 下创建子 Instance（`create_instance` + `create_binding` 同一事务，
-    必填属性在对话框内填写）；
+  - 在 Slot 下创建子结构：`create_instance` + `create_binding` 同一事务，
+    必填属性在对话框内填写；模块的 required Slot 会递归展开；
+  - Binding 列表：父 Binding 与子 Binding、Move（改 parent/slot）、Detach；
+  - Move 对话框展示 Slot 的 accepts、cardinality、required、当前占用与子节点；
 - Diagnostics：L1–L7 代码、消息、文件:行:列；点击可跳到 Source；
 - TOML Source：CodeMirror 6 只读展示 composition 入口；
 - 外部修改：2s digest 轮询；dirty 时禁编辑并提示 Reload；
@@ -33,17 +35,19 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
 - 布局只写 `.designer/layout.toml`，编辑写 `composition/**` 但只经 Core 事务；
 - 所有数据来自 `composition_core` / `composition_editor`，React 不解析 TOML。
 
-### Instance 编辑的边界（022）
+### 结构编辑的边界（022 / 023）
 
 - 非 Root Instance 必须有一条父 Binding，因此“创建 Instance”与创建它的首个 Binding
   是同一个事务；单独 `create_instance` 会被 L5 拒绝。
-- 创建候选只包含“创建后即可合法”的模块：模块自身不能声明必填 Slot。带必填 Slot 的
-  复合模块需要连同其子树一起创建，属于 023 的 Slot 感知结构编辑。
+- 创建向导只列 Slot 契约 `accepts` 内的模块；模块的每个 required Slot 递归要求至少一个
+  子实例，所有实例与 Binding 在同一事务提交。可选 Slot 之后用 Add child 继续补。
+- Move Binding 只改 parent + slot，child 及其子树保持不变；parent 候选排除 child 的
+  后代，Slot 候选按模块契约过滤，最终是否合法由 Core 判定。
+- v0.1 单根组合要求非 Root 实例可达，单独 Detach 会使 child 不可达并被 Core 拒绝；
+  UI 仍展示 Detach 的 Review 与真实诊断；移除子结构请用 Delete（022）。
 - 换模块时保留名称/类型兼容的配置；目标契约不认识的键会在同一事务中 Unset，
-  新必填属性必须填写。最终合法性由 Core 重新校验。
-- 删除是整棵子树：先删后代再删目标，`delete_instance` 级联清理 Binding/Connection/
-  Provider；是否仍满足 Slot/依赖约束由 Core 判定。
-- 重新选择/修改/删除已有 Binding 不在本卡；023 会复用同一事务与 Review 机制。
+  新必填属性必须填写。
+- Connection / Dependency 视图与完整 Before/After Review 分别属于 024 / 025。
 
 ## 开发命令
 
@@ -72,7 +76,7 @@ npm run tauri dev   # Tauri 开发模式
 - React 不重复实现 Core 的契约规则；
 - Tauri Host 不直接修改 TOML 以绕开 Core。
 
-## UI 自动化（020 / 022）
+## UI 自动化（020 / 022 / 023）
 
 ```powershell
 npm run test:ui
@@ -82,9 +86,9 @@ npm run test:ui
 - 通过 Vite preview 运行生产构建；
 - 测试在页面加载前注入测试专用 `window.__TAURI_INTERNALS__` fixture；
 - 生产代码不包含 fixture，真实 Tauri 后端仍由 host tests 覆盖；
-- 15 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
-  布局保存，以及 Instance 重命名、换模块、Slot 下创建子实例、子树删除、
-  Root 删除禁用、非法重命名本地拦截、拒绝事务不落盘。
-- `src-tauri/src/lib.rs` 另有 9 个 host tests，其中 4 个直接使用真实
+- 18 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
+  布局保存，以及 Instance 重命名/换模块/创建/子树删除/非法 ID/拒绝事务，
+  Binding 移动、Detach 诊断、required Slot 子树创建。
+- `src-tauri/src/lib.rs` 另有 12 个 host tests，其中 7 个直接使用真实
   `ProjectSession` 验证多命令事务与 TOML 写回（创建 + Binding、删除级联、
-  拒绝不写文件、重命名重写 root/引用）。
+  拒绝不写文件、重命名 root/引用、Binding 移动、Binding 子树创建、Detach 拒绝）。

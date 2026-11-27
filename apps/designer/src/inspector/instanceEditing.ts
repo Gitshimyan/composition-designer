@@ -40,21 +40,18 @@ export function requiredProperties(
   return module.contract.properties.filter((property) => property.required);
 }
 
-/**
- * 能否在创建后立即通过校验：模块不得声明必填 Slot，否则需要先创建其子结构
- * （属于 023 的 Slot 感知结构编辑）。
- */
-export function isCreatableStandalone(module: ModuleDefinition): boolean {
-  return module.contract.slots.every((slot) => !slot.required);
+/** required Slot 至少要有一个子实例，才能在创建后立即合法。 */
+export function requiredSlots(module: ModuleDefinition): SlotContract[] {
+  return module.contract.slots.filter((slot) => slot.required);
 }
 
-export function creatableModules(
+/** Slot 契约接受范围内的模块（含自身还带 required Slot 的复合模块）。 */
+export function acceptedModules(
   modules: ModuleDefinition[],
-  accepts: string[],
+  slot: SlotContract,
 ): ModuleDefinition[] {
-  return moduleOptions(modules).filter(
-    (module) =>
-      accepts.includes(module.id) && isCreatableStandalone(module),
+  return moduleOptions(modules).filter((module) =>
+    slot.accepts.includes(module.id),
   );
 }
 
@@ -82,6 +79,103 @@ export function parentOf(
   instanceId: string,
 ): string | null {
   return bindings.find((binding) => binding.child === instanceId)?.parent ?? null;
+}
+
+export function parentBinding(
+  bindings: Binding[],
+  childId: string,
+): Binding | undefined {
+  return bindings.find((binding) => binding.child === childId);
+}
+
+export function childBindings(
+  bindings: Binding[],
+  parentId: string,
+): Binding[] {
+  return bindings.filter((binding) => binding.parent === parentId);
+}
+
+export function slotChildren(
+  bindings: Binding[],
+  parentId: string,
+  slotId: string,
+): string[] {
+  return bindings
+    .filter(
+      (binding) => binding.parent === parentId && binding.slot === slotId,
+    )
+    .map((binding) => binding.child);
+}
+
+/** 目标实例的全部后代（不含自身），用于移动 Binding 时排除成环的父级候选。 */
+export function descendantIds(
+  bindings: Binding[],
+  instanceId: string,
+): Set<string> {
+  const result = new Set<string>();
+  for (const child of childrenOf(bindings, instanceId)) {
+    for (const id of subtreeIds(bindings, child)) {
+      result.add(id);
+    }
+  }
+  return result;
+}
+
+export interface BindingParentOption {
+  instance: Instance;
+  module: ModuleDefinition;
+  /** 该父模块中接受当前 child 模块的 Slot。 */
+  slots: SlotContract[];
+}
+
+/**
+ * 可把子实例移入的父级：模块已加载、至少有一个 Slot 接受子模块、且不是自身后代。
+ * 是否满足 cardinality / 单父级等仍由 Core 判定。
+ */
+export function bindingParentOptions(
+  instances: Instance[],
+  bindings: Binding[],
+  modules: ModuleDefinition[],
+  child: Instance,
+): BindingParentOption[] {
+  const descendants = descendantIds(bindings, child.id);
+  const options: BindingParentOption[] = [];
+  for (const instance of instances) {
+    if (instance.id === child.id || descendants.has(instance.id)) continue;
+    const module = findModule(
+      modules,
+      instance.module.id,
+      instance.module.version,
+    );
+    if (!module) continue;
+    const slots = module.contract.slots.filter((slot) =>
+      slot.accepts.includes(child.module.id),
+    );
+    if (slots.length === 0) continue;
+    options.push({ instance, module, slots });
+  }
+  return options.sort((a, b) => a.instance.id.localeCompare(b.instance.id));
+}
+
+export function moveBindingCommands(
+  bindingId: string,
+  parentId: string,
+  slotId: string,
+  childId: string,
+): EditCommand[] {
+  return [
+    {
+      type: "update_binding",
+      id: bindingId,
+      parent: parentId,
+      slot: slotId,
+      child: childId,
+    },
+  ];
+}
+
+export function detachBindingCommands(bindingId: string): EditCommand[] {
+  return [{ type: "delete_binding", id: bindingId }];
 }
 
 export function childrenOf(

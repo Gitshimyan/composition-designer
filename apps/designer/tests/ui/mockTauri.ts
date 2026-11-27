@@ -101,6 +101,30 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
             summary.added += 1;
             break;
           }
+          case "update_binding": {
+            const id = String(command.id);
+            const binding = composition.bindings.find(
+              (candidate) => candidate.id === id,
+            );
+            if (!binding) throw new Error(`missing binding ${id}`);
+            binding.parent = String(command.parent);
+            binding.slot = String(command.slot);
+            binding.child = String(command.child);
+            changes.push({ object_id: `binding:${id}`, kind: "modified" });
+            summary.modified += 1;
+            break;
+          }
+          case "delete_binding": {
+            const id = String(command.id);
+            const index = composition.bindings.findIndex(
+              (binding) => binding.id === id,
+            );
+            if (index < 0) throw new Error(`missing binding ${id}`);
+            composition.bindings.splice(index, 1);
+            changes.push({ object_id: `binding:${id}`, kind: "removed" });
+            summary.removed += 1;
+            break;
+          }
           case "delete_instance": {
             const id = String(command.id);
             if (id === composition.root) {
@@ -228,6 +252,11 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
     }
 
     function transactionResponse(transaction: { commands: MockCommand[] }) {
+      if (
+        transaction.commands.some((command) => command.type === "delete_binding")
+      ) {
+        return detachRejectedResponse();
+      }
       const result = applyCommands(transaction.commands);
       return {
         accepted: true,
@@ -235,6 +264,27 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
         diff: result.diff,
         diagnostics: [],
         snapshot: result.snapshot,
+      };
+    }
+
+    function detachRejectedResponse() {
+      return {
+        accepted: false,
+        replayed: false,
+        diff: null,
+        diagnostics: [
+          {
+            code: "structure-unreachable-instance",
+            severity: "error",
+            message: "instance would not be reachable from root",
+            file: "composition/main.toml",
+            range: {
+              start: { line: 1, column: 1 },
+              end: { line: 1, column: 1 },
+            },
+          },
+        ],
+        snapshot: current,
       };
     }
 

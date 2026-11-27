@@ -655,4 +655,150 @@ mod tests {
         assert!(text.contains("parent = \"shell\""));
         let _ = fs::remove_dir_all(&root);
     }
+
+    #[test]
+    fn binding_move_rewrites_parent_and_slot() {
+        let root = example_copy("nested-composition", "composition-binding-move");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let transaction = Transaction::new(
+            "move-hello-to-panel-2",
+            session.workspace().revision(),
+            vec![Command::UpdateBinding {
+                id: local("panel-1-hello"),
+                parent: local("panel-2"),
+                slot: local("body"),
+                child: local("hello"),
+            }],
+        );
+        let outcome = session.apply(&transaction);
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+        let model = validation.model.expect("model");
+        assert_eq!(model.composition.bindings.len(), 7);
+        let binding = model
+            .composition
+            .bindings
+            .iter()
+            .find(|binding| binding.id.as_str() == "panel-1-hello")
+            .expect("binding");
+        assert_eq!(binding.parent.as_str(), "panel-2");
+        assert_eq!(binding.slot.as_str(), "body");
+        assert_eq!(binding.child.as_str(), "hello");
+
+        let reopened = ProjectSession::open(&root).unwrap();
+        let persisted = reopened
+            .workspace()
+            .model()
+            .composition
+            .bindings
+            .iter()
+            .find(|binding| binding.id.as_str() == "panel-1-hello")
+            .expect("persisted binding");
+        assert_eq!(persisted.parent.as_str(), "panel-2");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn binding_subtree_creation_writes_instances_and_bindings() {
+        let root = example_copy("nested-composition", "composition-binding-subtree");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let mut page_config = BTreeMap::new();
+        page_config.insert(local("title"), ConfigValue::String("Page 3".into()));
+        let mut panel_config = BTreeMap::new();
+        panel_config.insert(local("heading"), ConfigValue::String("Panel 3".into()));
+        let mut leaf_config = BTreeMap::new();
+        leaf_config.insert(local("label"), ConfigValue::String("Leaf 3".into()));
+        let transaction = Transaction::new(
+            "create-page-3-subtree",
+            session.workspace().revision(),
+            vec![
+                Command::CreateInstance {
+                    id: local("page-3"),
+                    module: module("ui.page"),
+                    version: version("1.0.0"),
+                    config: page_config,
+                },
+                Command::CreateInstance {
+                    id: local("panel-3"),
+                    module: module("ui.panel"),
+                    version: version("1.0.0"),
+                    config: panel_config,
+                },
+                Command::CreateInstance {
+                    id: local("leaf-3"),
+                    module: module("leaf.widget"),
+                    version: version("1.0.0"),
+                    config: leaf_config,
+                },
+                Command::CreateBinding {
+                    id: local("app-content-page-3"),
+                    parent: local("app"),
+                    slot: local("content"),
+                    child: local("page-3"),
+                },
+                Command::CreateBinding {
+                    id: local("page-3-main"),
+                    parent: local("page-3"),
+                    slot: local("main"),
+                    child: local("panel-3"),
+                },
+                Command::CreateBinding {
+                    id: local("panel-3-body"),
+                    parent: local("panel-3"),
+                    slot: local("body"),
+                    child: local("leaf-3"),
+                },
+            ],
+        );
+        let outcome = session.apply(&transaction);
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+        let model = validation.model.expect("model");
+        assert_eq!(model.composition.instances.len(), 11);
+        assert_eq!(model.composition.bindings.len(), 10);
+
+        let reopened = ProjectSession::open(&root).unwrap();
+        let persisted = reopened.workspace().model();
+        assert!(persisted
+            .composition
+            .bindings
+            .iter()
+            .any(|binding| binding.id.as_str() == "panel-3-body"
+                && binding.parent.as_str() == "panel-3"
+                && binding.child.as_str() == "leaf-3"));
+        let text = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        assert!(text.contains("id = \"page-3\""));
+        assert!(text.contains("child = \"leaf-3\""));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn binding_detach_is_rejected_without_writing() {
+        let root = example_copy("minimal-project", "composition-binding-detach");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let path = root.join("composition/main.toml");
+        let before = fs::read_to_string(&path).unwrap();
+        let transaction = Transaction::new(
+            "detach-app-content",
+            session.workspace().revision(),
+            vec![Command::DeleteBinding {
+                id: local("app-content"),
+            }],
+        );
+        let outcome = session.apply(&transaction);
+        assert!(!outcome.is_accepted());
+        assert!(outcome.diagnostics().iter().any(|diagnostic| {
+            diagnostic.code.as_str() == "structure-unreachable-instance"
+        }));
+        assert_eq!(fs::read_to_string(&path).unwrap(), before);
+        assert_eq!(
+            session.workspace().model().composition.bindings.len(),
+            1
+        );
+        let _ = fs::remove_dir_all(&root);
+    }
 }

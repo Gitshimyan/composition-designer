@@ -172,6 +172,12 @@ const modules: ModuleDefinition[] = [
           required: true,
           accepts: ["leaf.badge", "leaf.widget", "ui.panel"],
         },
+        {
+          id: "aside",
+          cardinality: "optional_one",
+          required: false,
+          accepts: ["leaf.badge", "leaf.widget"],
+        },
       ],
       ports: [],
       dependencies: [],
@@ -182,7 +188,7 @@ const modules: ModuleDefinition[] = [
     id: "ui.panel",
     version: "1.0.0",
     kind: "composite",
-    description: "Panel with an optional body",
+    description: "Panel with a required body",
     contract: {
       properties: [
         {
@@ -197,8 +203,8 @@ const modules: ModuleDefinition[] = [
       slots: [
         {
           id: "body",
-          cardinality: "optional_one",
-          required: false,
+          cardinality: "one",
+          required: true,
           accepts: ["leaf.badge", "leaf.widget"],
         },
       ],

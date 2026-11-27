@@ -91,7 +91,7 @@ Connection/Dependency 视图属于 024，完整 Before/After Review 属于 025�
   - 换模块时在同一事务 Unset 不兼容/未知配置并补齐新必填属性；
   - 删除按子树先子后父，复用 `DeleteInstance` 的级联语义。
 - 遗留：
-  - 带必填 Slot 的复合模块无法通过本卡 UI 创建，需要 023 的 Slot 感知结构编辑；
+  - 带必填 Slot 的复合模块无法通过本卡 UI 创建（023 的递归结构创建已补齐）；
   - 换模块只能选择已加载的模块/版本；尚无模块库/版本下载；
   - Dependency Provider 只展示受影响关系，重绑定属于 024；
   - Instance 命令的 UI 测试使用 IPC fixture，真实 WebView2 交互仍由 host tests 覆盖；
