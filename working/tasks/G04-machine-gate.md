@@ -60,6 +60,9 @@
     `coverage_status` 与 `unresolved_items`；
   - 7 个单元测试 + 1 个真实仓库 report 集成测试；
   - CI 已运行 report 模式；block 模式已验证在 coverage 不一致时退出 1；
+  - 集成 PR #2 CI 通过（run 45997141339）并已合并；合并后 main push CI 通过
+    （run 45997795133）；
+  - 失败探针 PR #1 CI fail 且 `mergeStateStatus=BLOCKED`，已关闭；分支保护有效；
   - `changes/000-template.yaml` 增加 `coverage_status`；
   - **UW-010 关闭**（机器门禁 report 实现）。
 - 未启用 / 后续：
