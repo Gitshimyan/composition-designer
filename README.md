@@ -1,8 +1,7 @@
 # Composition Designer
 
-> v0.2 M6 完成（020–027）：Instance/Binding/Connection/Dependency 编辑、完整 Change Review、
-> Glide 全链路、PR 强制门禁；G01–G05 完成（change-gate block 已启用）。
-> 下一阶段：M7 Source Authoring。
+> v0.2 M6 与 G01–G05 完成；已重排 v0.3 计划：下一卡为 M7 Source 设计决议（028）。
+> M7 Source Authoring → M8 Agent → H1 可靠性 → M9 生态（条件承诺）。
 > 下一步行动入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
