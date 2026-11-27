@@ -8,6 +8,10 @@
 
 > 授权审计（2026-11-27）：审计建议 **Extend + Modify；破坏性协议/字段语义变化再评估 Rearchitect**；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-011、UW-016、UW-025
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 013 已有 Canvas/Tree 与只读 Inspector。014 增加：

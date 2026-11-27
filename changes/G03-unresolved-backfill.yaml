@@ -1,0 +1,44 @@
+change:
+  id: change.G03-unresolved-backfill
+  intent: 对 001–025 做历史未实现工作回溯，建立逐卡去向、扩展未决登记、补充 coverage_status/open_items，不实现任何未决能力。
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "G01 后默认 Modify；无 Extend/Rearchitect 变更"
+  targets:
+    - docs/reviews/2026-11-27-unimplemented-work-backfill.md
+    - docs/reviews/README.md
+    - docs/reviews/2026-11-27-audit-response.md
+    - docs/ai/architecture-entry.md
+    - README.md
+    - working/plan.md
+    - working/decisions
+    - working/tasks
+    - changes/G03-unresolved-backfill.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - historical_backfill
+      - unresolved_work_register
+      - task_coverage_metadata
+      - plan_and_docs
+    forbidden:
+      - product_code
+      - design_baseline
+      - toml_schema
+      - command_protocol
+      - capability_implementation
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - check all markdown relative links
+    - git diff --check
+    - confirm no changes under crates/ or apps/
+    - record unexecuted YAML parse and tests in the G03 card
+  notes: 只做历史回溯、登记与任务卡元数据；不改原始范围/验收/授权，不实现 UW 能力。

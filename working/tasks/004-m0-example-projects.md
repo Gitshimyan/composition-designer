@@ -8,6 +8,10 @@
 
 > 授权审计（2026-11-27）：审计建议 **Extend + Compose**（示例类型 + 真实组合声明）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-026
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 设计基线 §12.1 要求为 12 类错误与边界准备样例，但仓库里还没有任何项目目录。样例既是

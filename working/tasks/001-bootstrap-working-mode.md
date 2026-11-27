@@ -6,6 +6,10 @@
 - 授权：Rearchitect（初始化工程配置、工作规则与目录结构）
 - 变更声明：无（初始化，无既有范围可声明）
 
+- coverage_status：complete
+- open_items：无
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 本仓库此前只有 `docs/design/v0.1-design.md`。Composition-First 的 working 模式是：

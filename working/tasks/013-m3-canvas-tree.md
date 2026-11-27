@@ -6,6 +6,10 @@
 - 授权：Extend（新前端依赖、新布局文件与 Tauri 命令）
 - 变更声明：`changes/013-canvas-tree.yaml`
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-019、UW-024
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 012 已有只读 `ProjectSnapshot` 与 Explorer/Composition/Inspector/Diagnostics。013 把中间的

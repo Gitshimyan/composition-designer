@@ -9,6 +9,10 @@
 
 > 授权审计（2026-11-27）：审计建议 **Extend；workspace 纳入/排除与宿主工程边界部分另需 Rearchitect**（条件性）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-024
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 技术栈（用户确认）
 
 | 层 | 选择 |

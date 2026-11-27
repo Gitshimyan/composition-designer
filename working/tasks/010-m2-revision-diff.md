@@ -8,6 +8,10 @@
 
 > 授权审计（2026-11-27）：审计建议 **Modify + Rearchitect**（事务历史/幂等/Diff 契约）；Manifest 的 `expected_command_changes=true` 与授权记录不一致，仅记录不追溯改写。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-014、UW-015、UW-025
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 009 已有命令和内存原子事务，但 Revision 只递增 `seq`、没有历史；同一 request_id 未处理；

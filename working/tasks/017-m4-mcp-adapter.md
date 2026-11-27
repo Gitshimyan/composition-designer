@@ -5,6 +5,10 @@
 - 授权：Extend（新 `composition-mcp` crate、MCP 消息实现）
 - 变更声明：`changes/017-mcp-adapter.yaml`
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-020
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 016 已有 JSONL 协议。017 增加标准 MCP stdio 适配器：

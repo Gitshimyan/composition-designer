@@ -8,6 +8,10 @@
 
 > 授权审计（2026-11-27）：审计建议 **Rearchitect**（领域模型/对象关系冻结）；原始授权字段保持不变。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 
+- coverage_status：complete
+- open_items：无
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景
 
 设计基线 §3 列出了 9 类对象，但只给了定义与职责，没有给出最小字段、ID 规则和关系不变量。

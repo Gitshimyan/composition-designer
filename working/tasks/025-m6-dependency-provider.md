@@ -8,6 +8,10 @@
 > 授权审计（2026-11-27）：Extend + Modify 分类正确；Manifest 已补 `crates/composition-protocol` 与 `protocol_transaction_test`。见 [审计记录](../../docs/reviews/2026-11-27-authorization-audit-record.md)。
 - 依赖：024 的 Dependency 只读投影；021 试点结论
 
+- coverage_status：complete_with_deferred_items
+- open_items：UW-005、UW-011
+- 历史回溯：[2026-11-27 未实现工作回溯](../../docs/reviews/2026-11-27-unimplemented-work-backfill.md)
+
 ## 背景与授权审计
 
 024 在 Dependency 视图中明确记录：v0.1 的 12 条编辑命令没有“设置 Dependency Provider”，
