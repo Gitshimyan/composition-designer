@@ -2,8 +2,8 @@
 
 > 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）
 > 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)
-> 测试基线：146 Core/Protocol/MCP/CLI + 18 UI + 12 Tauri 测试
-> 当前阶段：v0.2 M6 进行中；020–023 完成，024 待开始
+> 测试基线：146 Core/Protocol/MCP/CLI + 23 UI + 14 Tauri 测试
+> 当前阶段：v0.2 M6 进行中；020–024 完成，025 待开始
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -24,8 +24,10 @@ Designer、Source 与 Agent 入口。
 - 021 已完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，Core 验证通过；
 - 022 已完成：Instance 创建/删除/重命名/换模块与版本/配置调整，走统一事务与 Review；
 - 023 已完成：Binding Move/Detach/required Slot 子树创建，Slot 信息与影响可审查；
-- 缺口：CI 尚未远端执行；Connection/Dependency 编辑视图、Source 编辑；
-- 下一步 024：Connection / Dependency 视图。
+- 024 已完成：Structure/Connections/Dependencies 三视图共享模型，Connection 可编辑，
+  Dependency 只读投影；
+- 缺口：CI 尚未远端执行；Dependency Provider 编辑需要 Extend；Source 编辑；
+- 下一步 025：完整 Change Review。
 
 ## 3. 路线图
 
@@ -44,8 +46,8 @@ Designer、Source 与 Agent 入口。
 | 2 | 021 | 真实项目试点与 Schema 复核 | 020；Glide Task+Terminal | done |
 | 3 | 022 | Instance 编辑 | 021 结论 | done |
 | 4 | 023 | Binding 编辑 | 022 | done |
-| 5 | 024 | Connection / Dependency 视图 | 022–023 | next |
-| 6 | 025 | 完整 Change Review | 022–024 | queued |
+| 5 | 024 | Connection / Dependency 视图 | 022–023 | done |
+| 6 | 025 | 完整 Change Review | 022–024 | next |
 
 ### 020 — 自动化质量门禁与 UI 测试基础（done）
 
@@ -102,6 +104,23 @@ Designer、Source 与 Agent 入口。
 
 已知边界：Move 的 child 固定（创建时选择 child）；Detach 单独提交在单根模型下必被
 拒绝，移除子结构使用 Delete。
+
+### 024 — Connection / Dependency 视图（done）
+
+已完成：
+
+- Stage 增加 Structure / Connections / Dependencies 三个视图，共享 `selectedId`；
+- Connection 视图：连接列表、每实例 Port 投影（方向/type/protocol/multi/连接），
+  Create/Edit/Delete 全部经 prepare → Review → apply；
+- Dependency 视图：按实例分组展示要求、required/optional、候选、显式/自动 Provider
+  与解析状态；
+- 23 条 Playwright UI 链路（新增 5 条关系视图链路）；
+- 14 个 Tauri host tests，其中 10 个真实 `ProjectSession` 写回测试
+  （新增 Connection 创建/修改/删除、非法方向拒绝）；
+- 复用冻结命令，不新增 Schema/命令。
+
+明确的 Extend 缺口：v0.1 没有设置 Dependency Provider 的命令，Dependency 视图只读；
+Provider 编辑需要新增命令 Schema + Core + Adapter 一致，不能仅靠 UI。
 
 ### 022–025 — 完整编辑链
 
@@ -174,9 +193,11 @@ npm run test:ui
 | 2026-11-27 | 021 | Glide Task + Terminal 只读试点；7 模块/7 实例/6 Binding/6 Connection/3 Dependency；valid=true |
 | 2026-11-27 | 022 | Instance 创建/删除/重命名/换模块/配置调整；15 UI + 9 Tauri 测试通过；复用冻结命令 |
 | 2026-11-27 | 023 | Binding Move/Detach/required Slot 递归子树创建；18 UI + 12 Tauri 测试通过 |
+| 2026-11-27 | 024 | 三视图 + Connection 编辑 + Dependency 只读投影；23 UI + 14 Tauri 测试通过 |
 
 ## 10. 下一步
 
-023 已完成。下一步 **024 — Connection / Dependency 视图**：为 Port Connection 与
-Dependency Provider 建立独立视图与编辑路径，三个视图共享同一 Composition Model，
-不画成同一种无类型边；所有操作继续经 Core 事务与 Review。
+024 已完成。下一步 **025 — 完整 Change Review**：按对象类别展示新增/删除/修改、
+Before/After、Binding/Connection/Dependency 影响与完整诊断，支持取消/确认；
+Dependency Provider 编辑如需进入 v0.2，应先单独评估 Extend（新命令与 Schema），
+不能混在 Review 卡里静默扩展。

@@ -1,0 +1,41 @@
+change:
+  id: change.024-relation-views
+  intent: 为 Designer 增加 Structure/Connection/Dependency 三个共享模型的关系视图，并让 Connection 经统一事务创建/修改/删除。
+  authorization: modify
+  targets:
+    - apps/designer/src
+    - apps/designer/tests
+    - apps/designer/src-tauri/src
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - working
+    - AGENTS.md
+    - changes
+  operations:
+    - modify
+  scope:
+    allowed:
+      - designer_react_ui
+      - designer_tauri_host_tests
+      - playwright_ui_tests
+      - task_card_and_plan
+    forbidden:
+      - toml_schema
+      - command_protocol
+      - design_baseline
+      - composition_semantics
+      - module_definitions
+      - cargo_workspace_config
+      - dependency_provider_editing
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cd apps/designer && npm run build
+    - cd apps/designer && npm run test:ui
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 复用冻结的 create_connection / update_connection / delete_connection；Dependency Provider 编辑需要新命令，属 Extend，本卡只做只读投影并记录缺口。

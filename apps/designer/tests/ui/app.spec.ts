@@ -16,7 +16,7 @@ test("opens a valid project and shows the structure", async ({ page }) => {
   await openValid(page);
   await expect(page.getByText("Minimal Project", { exact: true }).first()).toBeVisible();
   await expect(page.locator(".tree-node").filter({ hasText: "hello" })).toBeVisible();
-  await expect(page.locator(".stage-counts")).toContainText("3 structural bindings");
+  await expect(page.locator(".stage-counts")).toContainText("4 structural bindings");
 });
 
 test("shows an invalid project with diagnostics", async ({ page }) => {

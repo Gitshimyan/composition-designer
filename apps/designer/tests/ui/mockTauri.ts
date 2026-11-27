@@ -125,6 +125,47 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
             summary.removed += 1;
             break;
           }
+          case "create_connection": {
+            const id = String(command.id);
+            composition.connections.push({
+              id,
+              from: command.from as { instance: string; port: string },
+              to: command.to as { instance: string; port: string },
+              source: { file: "composition/main.toml" },
+            });
+            changes.push({ object_id: `connection:${id}`, kind: "added" });
+            summary.added += 1;
+            break;
+          }
+          case "update_connection": {
+            const id = String(command.id);
+            const connection = composition.connections.find(
+              (candidate) => candidate.id === id,
+            );
+            if (!connection) throw new Error(`missing connection ${id}`);
+            connection.from = command.from as {
+              instance: string;
+              port: string;
+            };
+            connection.to = command.to as {
+              instance: string;
+              port: string;
+            };
+            changes.push({ object_id: `connection:${id}`, kind: "modified" });
+            summary.modified += 1;
+            break;
+          }
+          case "delete_connection": {
+            const id = String(command.id);
+            const index = composition.connections.findIndex(
+              (connection) => connection.id === id,
+            );
+            if (index < 0) throw new Error(`missing connection ${id}`);
+            composition.connections.splice(index, 1);
+            changes.push({ object_id: `connection:${id}`, kind: "removed" });
+            summary.removed += 1;
+            break;
+          }
           case "delete_instance": {
             const id = String(command.id);
             if (id === composition.root) {

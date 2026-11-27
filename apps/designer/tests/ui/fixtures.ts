@@ -1,6 +1,8 @@
 import type {
   Binding,
   CompositionModel,
+  Connection,
+  DependencyResolution,
   Instance,
   ModuleDefinition,
   ProjectSnapshot,
@@ -59,7 +61,7 @@ const instances: Instance[] = [
     module: { id: "ui.panel", version: "1.0.0" },
     config: { heading: "Box" },
     effective_config: { heading: "Box" },
-    dependency_providers: {},
+    dependency_providers: { logger: "logger" },
     source: { file: "composition/main.toml" },
   },
   {
@@ -67,6 +69,14 @@ const instances: Instance[] = [
     module: { id: "leaf.widget", version: "1.0.0" },
     config: { label: "Hint" },
     effective_config: { label: "Hint" },
+    dependency_providers: {},
+    source: { file: "composition/main.toml" },
+  },
+  {
+    id: "logger",
+    module: { id: "svc.logger", version: "1.0.0" },
+    config: {},
+    effective_config: {},
     dependency_providers: {},
     source: { file: "composition/main.toml" },
   },
@@ -93,6 +103,32 @@ const bindings: Binding[] = [
     slot: "body",
     child: "hint",
     source: { file: "composition/main.toml" },
+  },
+  {
+    id: "app-content-logger",
+    parent: "app",
+    slot: "content",
+    child: "logger",
+    source: { file: "composition/main.toml" },
+  },
+];
+
+const connections: Connection[] = [
+  {
+    id: "box-log-line",
+    from: { instance: "box", port: "log" },
+    to: { instance: "logger", port: "line" },
+    source: { file: "composition/main.toml" },
+  },
+];
+
+const dependencies: DependencyResolution[] = [
+  {
+    requirement_id: "logger",
+    from_instance: "box",
+    provider_instance: "logger",
+    optional: false,
+    status: "resolved",
   },
 ];
 
@@ -170,7 +206,7 @@ const modules: ModuleDefinition[] = [
           id: "content",
           cardinality: "many",
           required: true,
-          accepts: ["leaf.badge", "leaf.widget", "ui.panel"],
+          accepts: ["leaf.badge", "leaf.widget", "ui.panel", "svc.logger"],
         },
         {
           id: "aside",
@@ -208,10 +244,53 @@ const modules: ModuleDefinition[] = [
           accepts: ["leaf.badge", "leaf.widget"],
         },
       ],
-      ports: [],
-      dependencies: [],
+      ports: [
+        {
+          id: "log",
+          direction: "output",
+          type: "log.line",
+          multi: true,
+          protocol: "log.v1",
+        },
+      ],
+      dependencies: [
+        {
+          id: "logger",
+          module: "svc.logger",
+          version: "1.0.0",
+          optional: false,
+        },
+      ],
     },
     source: { file: "modules/panel/module.toml" },
+  },
+  {
+    id: "svc.logger",
+    version: "1.0.0",
+    kind: "primitive",
+    description: "Log sink",
+    contract: {
+      properties: [],
+      slots: [],
+      ports: [
+        {
+          id: "line",
+          direction: "input",
+          type: "log.line",
+          multi: false,
+          protocol: "log.v1",
+        },
+        {
+          id: "audit",
+          direction: "input",
+          type: "log.line",
+          multi: false,
+          protocol: "log.v1",
+        },
+      ],
+      dependencies: [],
+    },
+    source: { file: "modules/logger/module.toml" },
   },
 ];
 
@@ -231,11 +310,11 @@ function model(seq = 0, sourceDigest = digest): CompositionModel {
       root: "app",
       instances: structuredClone(instances),
       bindings: structuredClone(bindings),
-      connections: [],
+      connections: structuredClone(connections),
       source: { file: "composition/main.toml" },
     },
     modules: structuredClone(modules),
-    dependencies: [],
+    dependencies: structuredClone(dependencies),
     diagnostics: [],
     revision: { seq, source_digest: sourceDigest },
   };

@@ -499,7 +499,7 @@ mod tests {
         let _ = fs::remove_dir_all(&root);
     }
 
-    use composition_domain::{ConfigValue, ModuleId, Version};
+    use composition_domain::{ConfigValue, ModuleId, PortRef, Version};
     use composition_editor::Command;
 
     fn local(value: &str) -> LocalId {
@@ -516,6 +516,16 @@ mod tests {
 
     fn example_copy(name: &str, prefix: &str) -> PathBuf {
         let source = PathBuf::from(example(name));
+        let root = std::env::temp_dir().join(format!("{prefix}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        copy_dir(&source, &root);
+        root
+    }
+
+    fn pilot_copy(name: &str, prefix: &str) -> PathBuf {
+        let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../working/pilots")
+            .join(name);
         let root = std::env::temp_dir().join(format!("{prefix}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         copy_dir(&source, &root);
@@ -798,6 +808,115 @@ mod tests {
         assert_eq!(
             session.workspace().model().composition.bindings.len(),
             1
+        );
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn connection_create_update_delete_round_trips() {
+        let root = pilot_copy("glide-task-terminal", "composition-connection");
+        let mut session = ProjectSession::open(&root).unwrap();
+
+        let outcome = session.apply(&Transaction::new(
+            "delete-tasks-to-runner",
+            session.workspace().revision(),
+            vec![Command::DeleteConnection {
+                id: local("tasks-to-runner"),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+        assert_eq!(
+            session.workspace().model().composition.connections.len(),
+            5
+        );
+
+        let outcome = session.apply(&Transaction::new(
+            "create-tasks-to-runner-2",
+            session.workspace().revision(),
+            vec![Command::CreateConnection {
+                id: local("tasks-to-runner-2"),
+                from: PortRef::new(local("task-panel"), local("run")),
+                to: PortRef::new(local("task-runner"), local("start")),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+        assert_eq!(
+            session.workspace().model().composition.connections.len(),
+            6
+        );
+
+        let outcome = session.apply(&Transaction::new(
+            "delete-runner-to-tasks",
+            session.workspace().revision(),
+            vec![Command::DeleteConnection {
+                id: local("runner-to-tasks"),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+
+        let outcome = session.apply(&Transaction::new(
+            "update-tasks-to-runner-2",
+            session.workspace().revision(),
+            vec![Command::UpdateConnection {
+                id: local("tasks-to-runner-2"),
+                from: PortRef::new(local("task-runner"), local("events")),
+                to: PortRef::new(local("task-panel"), local("events")),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+        let model = validation.model.expect("model");
+        assert_eq!(model.composition.connections.len(), 5);
+        let connection = model
+            .composition
+            .connections
+            .iter()
+            .find(|connection| connection.id.as_str() == "tasks-to-runner-2")
+            .expect("connection");
+        assert_eq!(connection.from.instance.as_str(), "task-runner");
+        assert_eq!(connection.from.port.as_str(), "events");
+        assert_eq!(connection.to.instance.as_str(), "task-panel");
+        assert_eq!(connection.to.port.as_str(), "events");
+
+        let reopened = ProjectSession::open(&root).unwrap();
+        assert!(reopened
+            .workspace()
+            .model()
+            .composition
+            .connections
+            .iter()
+            .any(|connection| connection.id.as_str() == "tasks-to-runner-2"));
+        let text = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        assert!(text.contains("id = \"tasks-to-runner-2\""));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn connection_invalid_direction_is_rejected_without_writing() {
+        let root = pilot_copy("glide-task-terminal", "composition-connection-reject");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let path = root.join("composition/main.toml");
+        let before = fs::read_to_string(&path).unwrap();
+        let outcome = session.apply(&Transaction::new(
+            "bad-connection-direction",
+            session.workspace().revision(),
+            vec![Command::CreateConnection {
+                id: local("bad-connection"),
+                from: PortRef::new(local("task-panel"), local("run")),
+                to: PortRef::new(local("task-runner"), local("events")),
+            }],
+        ));
+        assert!(!outcome.is_accepted());
+        assert!(outcome
+            .diagnostics()
+            .iter()
+            .any(|diagnostic| diagnostic.code.as_str() == "connection-direction-invalid"));
+        assert_eq!(fs::read_to_string(&path).unwrap(), before);
+        assert_eq!(
+            session.workspace().model().composition.connections.len(),
+            6
         );
         let _ = fs::remove_dir_all(&root);
     }

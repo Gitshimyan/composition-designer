@@ -20,9 +20,13 @@ import CreateInstanceDialog from "./inspector/CreateInstanceDialog";
 import InstanceActions from "./inspector/InstanceActions";
 import { parseDraft, toDraftValue } from "./inspector/configDraft";
 import { autoLayout, buildStructure } from "./layout";
+import ConnectionDialog from "./relations/ConnectionDialog";
+import ConnectionView from "./relations/ConnectionView";
+import DependencyView from "./relations/DependencyView";
 import SourceView from "./source/SourceView";
 import type {
   CompositionModel,
+  Connection,
   Diagnostic,
   EditCommand,
   EditResponse,
@@ -73,6 +77,12 @@ export default function App() {
     slotId: string;
   } | null>(null);
   const [bindingDraft, setBindingDraft] = useState<string | null>(null);
+  const [connectionDraft, setConnectionDraft] = useState<
+    { mode: "create" } | { mode: "edit"; id: string } | null
+  >(null);
+  const [stageView, setStageView] = useState<
+    "structure" | "connections" | "dependencies"
+  >("structure");
 
   useEffect(() => {
     let cancelled = false;
@@ -173,6 +183,8 @@ export default function App() {
     setPendingReview(null);
     setCreateDraft(null);
     setBindingDraft(null);
+    setConnectionDraft(null);
+    setStageView("structure");
     void loadLayout(snapshot.root)
       .then((saved) => {
         if (cancelled) return;
@@ -279,6 +291,7 @@ export default function App() {
       setPendingReview(null);
       setCreateDraft(null);
       setBindingDraft(null);
+      setConnectionDraft(null);
       setBottomTab("diagnostics");
       setRevealLine(null);
       if (next.model) {
@@ -398,6 +411,7 @@ export default function App() {
       setPendingReview(null);
       setCreateDraft(null);
       setBindingDraft(null);
+      setConnectionDraft(null);
       if (response.snapshot.canEdit) {
         try {
           setSource(await readSource());
@@ -422,6 +436,14 @@ export default function App() {
       line: diagnostic.range?.start.line ?? 1,
       nonce: (current?.nonce ?? 0) + 1,
     }));
+  }
+
+  function handleDeleteConnection(connection: Connection) {
+    void reviewCommands(
+      [{ type: "delete_connection", id: connection.id }],
+      `Delete connection ${connection.id}`,
+      { selectAfter: connection.from.instance },
+    );
   }
 
   const moduleKinds = useMemo(
@@ -459,6 +481,17 @@ export default function App() {
   const bindingDraftChild = bindingDraftValue
     ? instances.find((instance) => instance.id === bindingDraftValue.child)
     : undefined;
+  const draftConnection =
+    connectionDraft?.mode === "edit"
+      ? connections.find((connection) => connection.id === connectionDraft.id)
+      : undefined;
+  const modulePortCount = modules.reduce(
+    (total, module) => total + module.contract.ports.length,
+    0,
+  );
+  const resolvedDependencyCount = dependencies.filter(
+    (dependency) => dependency.status === "resolved",
+  ).length;
 
   const status = describeStatus(loadState, snapshot, error);
   const digest = snapshot?.sourceDigest ?? model?.revision?.source_digest ?? null;
@@ -641,7 +674,7 @@ export default function App() {
           </div>
         </aside>
 
-        <section className="panel stage" aria-label="Composition canvas">
+        <section className="panel stage" aria-label="Composition views">
           {snapshot === null ? (
             <EmptyState
               onChoose={() => void handleChooseProject()}
@@ -660,28 +693,92 @@ export default function App() {
                   </span>
                 }
               />
-              <CompositionCanvas
-                rootId={rootId}
-                instances={instances}
-                bindings={bindings}
-                positions={positions}
-                selectedId={selectedId}
-                focusRequest={focusRequest}
-                fitNonce={fitNonce}
-                moduleKinds={moduleKinds}
-                onSelect={handleSelectCanvas}
-                onMoveNode={handleMoveNode}
-                onCommitNode={handleCommitNode}
-                onResetLayout={handleResetLayout}
-              />
+              <div className="stage-views" role="tablist" aria-label="Relation views">
+                {(
+                  [
+                    ["structure", "Structure", bindings.length],
+                    ["connections", "Connections", connections.length],
+                    ["dependencies", "Dependencies", dependencies.length],
+                  ] as const
+                ).map(([value, label, count]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={stageView === value}
+                    className={`stage-view-tab ${
+                      stageView === value ? "is-active" : ""
+                    }`}
+                    onClick={() => setStageView(value)}
+                  >
+                    {label} <span className="tab-count">{count}</span>
+                  </button>
+                ))}
+              </div>
+              {stageView === "structure" ? (
+                <CompositionCanvas
+                  rootId={rootId}
+                  instances={instances}
+                  bindings={bindings}
+                  positions={positions}
+                  selectedId={selectedId}
+                  focusRequest={focusRequest}
+                  fitNonce={fitNonce}
+                  moduleKinds={moduleKinds}
+                  onSelect={handleSelectCanvas}
+                  onMoveNode={handleMoveNode}
+                  onCommitNode={handleCommitNode}
+                  onResetLayout={handleResetLayout}
+                />
+              ) : stageView === "connections" ? (
+                <ConnectionView
+                  instances={instances}
+                  modules={modules}
+                  connections={connections}
+                  selectedId={selectedId}
+                  canEdit={canEdit && !externalDirty}
+                  onSelectInstance={handleSelectTree}
+                  onCreateConnection={() => setConnectionDraft({ mode: "create" })}
+                  onEditConnection={(connection) =>
+                    setConnectionDraft({ mode: "edit", id: connection.id })
+                  }
+                  onDeleteConnection={handleDeleteConnection}
+                />
+              ) : (
+                <DependencyView
+                  instances={instances}
+                  modules={modules}
+                  dependencies={dependencies}
+                  selectedId={selectedId}
+                  onSelectInstance={handleSelectTree}
+                />
+              )}
               <footer className="stage-footer">
                 <span className="stage-note">
-                  Drag to arrange · positions write to .designer/layout.toml · structure edits go through Core transactions
+                  {stageView === "structure"
+                    ? "Drag to arrange · positions write to .designer/layout.toml · structure edits go through Core transactions"
+                    : stageView === "connections"
+                      ? "Port connections · direction/type/protocol come from module contracts · edits go through Core transactions"
+                      : "Dependency resolutions · read-only projection · provider editing requires an Extend decision"}
                 </span>
                 <div className="stage-counts">
-                  <span>{bindings.length} structural bindings</span>
-                  <span>{connections.length} port connections</span>
-                  <span>{dependencies.length} dependency resolutions</span>
+                  {stageView === "structure" ? (
+                    <>
+                      <span>{bindings.length} structural bindings</span>
+                      <span>{connections.length} port connections</span>
+                      <span>{dependencies.length} dependency resolutions</span>
+                    </>
+                  ) : stageView === "connections" ? (
+                    <>
+                      <span>{connections.length} port connections</span>
+                      <span>{modulePortCount} module ports</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{dependencies.length} dependency resolutions</span>
+                      <span>{resolvedDependencyCount} resolved</span>
+                    </>
+                  )}
                 </div>
               </footer>
             </>
@@ -878,6 +975,26 @@ export default function App() {
           }
         />
       )}
+
+      {connectionDraft &&
+        (connectionDraft.mode === "create" || draftConnection) && (
+          <ConnectionDialog
+            key={
+              connectionDraft.mode === "edit"
+                ? connectionDraft.id
+                : "new-connection"
+            }
+            connection={draftConnection}
+            instances={instances}
+            modules={modules}
+            connections={connections}
+            suspended={pendingReview !== null}
+            onCancel={() => setConnectionDraft(null)}
+            onReview={(commands, description, options) =>
+              void reviewCommands(commands, description, options)
+            }
+          />
+        )}
 
       {pendingReview && (
         <ChangeReview
