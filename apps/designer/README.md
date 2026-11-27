@@ -53,3 +53,16 @@ npm run tauri dev   # Tauri 开发模式
 - CodeMirror 只负责编辑体验与基础语法反馈，不实现项目语义校验；
 - React 不重复实现 Core 的契约规则；
 - Tauri Host 不直接修改 TOML 以绕开 Core。
+
+## UI 自动化（020）
+
+```powershell
+npm run test:ui
+```
+
+- Playwright 使用系统 Edge（`channel: "msedge"`），不额外下载浏览器；
+- 通过 Vite preview 运行生产构建；
+- 测试在页面加载前注入测试专用 `window.__TAURI_INTERNALS__` fixture；
+- 生产代码不包含 fixture，真实 Tauri 后端仍由 host tests 覆盖；
+- 8 条链路覆盖 valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
+  布局保存不改变 Source Digest。

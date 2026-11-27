@@ -9,6 +9,9 @@ target/
 dist/
 coverage/
 *.tsbuildinfo
+apps/designer/test-results/
+apps/designer/playwright-report/
+apps/designer/.playwright/
 
 # Tauri generated schemas
 apps/designer/src-tauri/gen/

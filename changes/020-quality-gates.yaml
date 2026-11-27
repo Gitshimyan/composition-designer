@@ -1,0 +1,44 @@
+change:
+  id: change.m6-quality-gates
+  intent: 建立 Windows CI 与 Playwright UI 自动化，覆盖关键 Designer 查看、配置、外部同步和布局链路
+  authorization: extend
+  targets:
+    - .github/workflows
+    - apps/designer/package.json
+    - apps/designer/package-lock.json
+    - apps/designer/playwright.config.ts
+    - apps/designer/tests/ui
+    - apps/designer/README.md
+    - .gitignore
+    - README.md
+    - AGENTS.md
+    - docs/ai
+    - working
+  operations:
+    - extend
+    - modify
+  scope:
+    allowed:
+      - ci_workflow
+      - playwright_ui_tests
+      - test_ipc_fixture
+      - test_tooling
+      - documentation
+      - task_card
+    forbidden:
+      - domain_model
+      - toml_schema
+      - production_ipc_semantics
+      - design_baseline
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - npm run build
+    - npm run test:ui
+  notes: UI 使用 Vite preview + IPC fixture；生产代码和真实 Tauri IPC 未改变；CI 尚未远端执行。

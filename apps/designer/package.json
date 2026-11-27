@@ -12,7 +12,8 @@
     "start-invalid": ".\\src-tauri\\target\\debug\\composition-designer.exe --project ..\\..\\examples\\invalid-projects\\connections\\errors",
     "start-topmost": ".\\src-tauri\\target\\debug\\composition-designer.exe --project ..\\..\\examples\\minimal-project --topmost",
     "desktop": "npm run build && cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test:ui": "npm run build && playwright test"
   },
   "dependencies": {
     "@codemirror/language": "^6.0.0",
@@ -28,6 +29,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.0",
     "@tauri-apps/cli": "^2.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

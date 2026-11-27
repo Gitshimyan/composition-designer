@@ -1,7 +1,7 @@
 # Composition Designer
 
-> v0.2 计划中：v0.1 已冻结；下一阶段为 M6 Complete Composition Authoring。当前下一步是
-> [020 自动化质量门禁与 UI 测试](./working/tasks/020-m6-quality-gates.md)，尚未开工。
+> v0.2 进行中：v0.1 已冻结；M6-001 的 Windows CI 与 8 条 Playwright UI 链路已完成。
+> 下一步 021 真实项目试点，需要代表性子系统输入。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
 Model 描述，通过 TOML 持久化；可视化 Canvas、TOML Source、Agent Interface 与 CLI 都只能
@@ -50,7 +50,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
 | Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
-| v0.2 / M6 | 计划中：020 CI/UI 测试为下一卡；未开工 |
+| v0.2 / M6 | 020 已完成（CI 远端待推送）；021 等待真实项目 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
@@ -65,6 +65,7 @@ M1–M3 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代�
 composition-designer/
 ├── AGENTS.md                              # AI 工作规则
 ├── README.md
+├── .github/workflows/                     # Windows CI（020）
 │
 ├── crates/                                # Rust Core（M1 起；职责见 crates/README.md）
 │   ├── composition-domain/                # 已建立（005）

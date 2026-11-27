@@ -1,9 +1,9 @@
 # Composition Designer — v0.2 执行计划
 
-> 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）  
-> 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)  
-> 测试基线：146 Core/Protocol/MCP/CLI + 5 Tauri 测试  
-> 当前阶段：v0.2 计划中；M6 未开工  
+> 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）
+> 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)
+> 测试基线：146 Core/Protocol/MCP/CLI + 8 UI + 5 Tauri 测试
+> 当前阶段：v0.2 M6 进行中；020 完成，021 待真实项目
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -20,8 +20,9 @@ Designer、Source 与 Agent 入口。
 - v0.1 M0–M5 已冻结并通过 A01–A18 验收；
 - 评审已归档；v0.1 领域模型、TOML Schema、命令协议不因 v0.2 UI 需求直接修改；
 - 当前 GUI：Canvas/Tree 查看、Inspector 配置编辑、Change Review、只读 Source、外部变更 Reload；
-- 缺口：Instance/Binding/Connection/Dependency 完整编辑、Source 编辑、CI/UI 自动化；
-- 当前没有 M6 代码改动；020 卡处于 planned。
+- 020 已完成：Windows CI 文件、Playwright 1.65 + 8 条 UI 链路、本地 `npm run test:ui`；
+- 缺口：CI 尚未远端执行；Instance/Binding/Connection/Dependency 完整编辑、Source 编辑；
+- 下一步 021 需要用户提供真实项目的代表性子系统，当前不能开工。
 
 ## 3. 路线图
 
@@ -36,26 +37,23 @@ Designer、Source 与 Agent 入口。
 
 | 顺序 | 卡 | 方向 | 依赖 | 状态 |
 |---|---|---|---|---|
-| 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | planned |
-| 2 | 021 | 真实项目试点与 Schema 复核 | 020；需用户提供代表性子系统 | planned |
+| 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | done（CI 远端待推送） |
+| 2 | 021 | 真实项目试点与 Schema 复核 | 020；需用户提供代表性子系统 | blocked (input) |
 | 3 | 022 | Instance 编辑 | 021 结论 | queued |
 | 4 | 023 | Binding 编辑 | 022 | queued |
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | queued |
 | 6 | 025 | 完整 Change Review | 022–024 | queued |
 
-### 020 — 自动化质量门禁与 UI 测试基础
+### 020 — 自动化质量门禁与 UI 测试基础（done）
 
-交付：
+已完成：
 
-- Windows-first GitHub Actions workflow；
-- `cargo test` / clippy / fmt、Tauri host tests；
-- TypeScript 检查、Vite production build；
-- MCP e2e；
-- 前端 UI 自动化基础与首批关键链路；
-- 本地可运行的 `npm run test:ui`（即使尚未推送到 GitHub，也要本地通过）。
-
-UI 测试选型在卡内确认：优先 Playwright + 受控 IPC fixture，覆盖前端行为；Tauri 真实宿主
-仍由 host tests 与手动 smoke 覆盖。若真实 WebView2 自动化成本可控，再补 tauri-driver smoke。
+- `.github/workflows/ci.yml`（windows-latest、最小权限、Cargo/npm 缓存）；
+- 146 Rust + 5 Tauri host + MCP e2e + TypeScript/Vite + Playwright 接入；
+- Playwright 1.65 + 系统 Edge；测试专用 IPC fixture；
+- 8 条 UI 链路：valid/invalid/select/edit+apply/cancel/reject/external/layout；
+- `npm run test:ui` 本地通过（build + 8 passed）；
+- CI 远端尚未执行，因为尚未推送。
 
 ### 021 — 真实项目试点
 
@@ -99,7 +97,7 @@ CI 在 PR 上执行并阻止失败合并（推送后生效）。
 
 - Source 只读；
 - Binding/Connection/Dependency 编辑 UI 未完成；
-- 无 GitHub Actions、无前端 UI 自动化；
+- GitHub Actions workflow 已建立但未远端执行；UI 自动化使用 IPC fixture，不是真实 WebView2；
 - 外部修改用 2s 轮询 + 整项目 digest，无 watcher/三向合并；
 - Revision 历史与 request 幂等只在进程内；
 - 单 composition 入口；
@@ -118,8 +116,7 @@ cargo test -p composition-mcp --test e2e
 cd apps/designer
 npm run build
 npm run desktop
-# 020 增加后：
-# npm run test:ui
+npm run test:ui
 ```
 
 构建、测试、桌面启动通过 `host_task` 执行；分析、编辑在沙箱内完成。
@@ -130,9 +127,10 @@ npm run desktop
 |---|---|---|
 | 2026-11-26 | M0–M5 | v0.1 完成；146 Core + 5 Tauri 测试；A01–A18 通过 |
 | 2026-11-27 | 结构迁移 | 设计基线 → `docs/design/`；评审 → `docs/reviews/`；根目录清理 |
-| 2026-11-27 | v0.2 计划 | 采纳 M6 为下一阶段；020 质量门禁卡进入 planned；未开工 |
+| 2026-11-27 | v0.2 计划 | 采纳 M6 为下一阶段；020 质量门禁卡进入 planned |
+| 2026-11-27 | 020 | Windows CI + Playwright 8 条 UI 链路；本地 146 Rust + 5 Tauri + 8 UI 通过；CI 远端待推送 |
 
 ## 10. 下一步
 
-先创建并执行 **020 — 自动化质量门禁与 UI 测试基础**。在此之前不启动 021，也不修改
-v0.1 领域模型。
+020 已完成。下一步 **021 — 真实项目试点与 Schema 复核**，需要用户提供一个真实项目的
+代表性子系统；在获得该输入前不启动 021，也不修改 v0.1 领域模型。

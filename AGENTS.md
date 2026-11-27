@@ -56,7 +56,7 @@ Schema 校验与变更检查承担。门禁建立之前，修改范围由任务�
 `git push`**；阶段评审需要推送时，先确认目标仓库与分支。不得在普通实现、修文档或结卡后
 自动推送。
 
-当前阶段（v0.1 M0–M5 完成、v0.2 计划中）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
+当前阶段（v0.2 M6 020 完成、021 待输入）**没有自动变更校验**；声明是书面契约，结卡时必须人工核对。
 仓库门禁建立后，越权或声明不一致必须视为失败，不能绕过。
 
 ## 4. 实现流程（M1 起）
@@ -104,6 +104,11 @@ npm run setup
 npm run build
 npm run desktop
 npm start
+
+# v0.2 M6（020 完成）
+cd apps/designer
+npm run test:ui
+cd ../..
 
 # M4（016–018 完成）
 cargo run -p composition-cli -- query examples/minimal-project validate
