@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 进行中 |
-| 当前阶段 | v0.2 M6 进行中：020 CI/UI、021 Glide Task+Terminal 试点完成；022 Instance 编辑下一步 |
+| 当前阶段 | v0.2 M6 进行中：020 CI/UI、021 Glide 试点、022 Instance 编辑完成；023 Binding 编辑下一步 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../reviews/2026-11-27-project-review-and-roadmap.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -131,5 +131,8 @@
   CI 远端尚未执行（等阶段性推送）；
 - M6 021 完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，
   `validate` 通过；缺口为接口身份、runtime 容器、Profile、技术元数据；
+- M6 022 完成：Designer Instance 创建（Slot 下 + 首个 Binding）、删除子树、重命名、
+  换模块/版本与配置调整，全部经 prepare/Review/apply；15 UI + 9 Tauri 测试；
+  带必填 Slot 的复合模块子树创建留待 023；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

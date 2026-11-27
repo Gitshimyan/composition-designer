@@ -498,4 +498,161 @@ mod tests {
         assert_eq!(load_layout(root_string).unwrap(), nodes);
         let _ = fs::remove_dir_all(&root);
     }
+
+    use composition_domain::{ConfigValue, ModuleId, Version};
+    use composition_editor::Command;
+
+    fn local(value: &str) -> LocalId {
+        LocalId::parse(value).unwrap()
+    }
+
+    fn module(value: &str) -> ModuleId {
+        ModuleId::parse(value).unwrap()
+    }
+
+    fn version(value: &str) -> Version {
+        Version::parse(value).unwrap()
+    }
+
+    fn example_copy(name: &str, prefix: &str) -> PathBuf {
+        let source = PathBuf::from(example(name));
+        let root = std::env::temp_dir().join(format!("{prefix}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        copy_dir(&source, &root);
+        root
+    }
+
+    #[test]
+    fn instance_create_transaction_writes_instance_and_binding() {
+        let root = example_copy("nested-composition", "composition-instance-create");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let mut config = BTreeMap::new();
+        config.insert(local("label"), ConfigValue::String("Status 2".into()));
+        let transaction = Transaction::new(
+            "create-status-2",
+            session.workspace().revision(),
+            vec![
+                Command::CreateInstance {
+                    id: local("status-2"),
+                    module: module("leaf.widget"),
+                    version: version("1.0.0"),
+                    config,
+                },
+                Command::CreateBinding {
+                    id: local("panel-1-status-2"),
+                    parent: local("panel-1"),
+                    slot: local("body"),
+                    child: local("status-2"),
+                },
+            ],
+        );
+        let outcome = session.apply(&transaction);
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+        let model = validation.model.expect("model");
+        assert_eq!(model.composition.instances.len(), 9);
+        assert_eq!(model.composition.bindings.len(), 8);
+
+        let reopened = ProjectSession::open(&root).unwrap();
+        let instance = reopened
+            .workspace()
+            .model()
+            .composition
+            .instances
+            .iter()
+            .find(|instance| instance.id.as_str() == "status-2")
+            .expect("persisted instance");
+        assert_eq!(
+            instance.config.get(&local("label")),
+            Some(&ConfigValue::String("Status 2".into()))
+        );
+        let text = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        assert!(text.contains("id = \"status-2\""));
+        assert!(text.contains("child = \"status-2\""));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn instance_delete_transaction_cascades_relations() {
+        let root = example_copy("nested-composition", "composition-instance-delete");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let transaction = Transaction::new(
+            "delete-hello",
+            session.workspace().revision(),
+            vec![Command::DeleteInstance {
+                id: local("hello"),
+            }],
+        );
+        let outcome = session.apply(&transaction);
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+        let model = validation.model.expect("model");
+        assert_eq!(model.composition.instances.len(), 7);
+        assert_eq!(model.composition.bindings.len(), 6);
+        assert!(model
+            .composition
+            .instances
+            .iter()
+            .all(|instance| instance.id.as_str() != "hello"));
+        assert!(model
+            .composition
+            .bindings
+            .iter()
+            .all(|binding| binding.id.as_str() != "panel-1-hello"));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn instance_delete_rejection_leaves_files_untouched() {
+        let root = example_copy("minimal-project", "composition-instance-reject");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let path = root.join("composition/main.toml");
+        let before = fs::read_to_string(&path).unwrap();
+        let transaction = Transaction::new(
+            "delete-required-child",
+            session.workspace().revision(),
+            vec![Command::DeleteInstance {
+                id: local("hello"),
+            }],
+        );
+        let outcome = session.apply(&transaction);
+        assert!(!outcome.is_accepted());
+        assert!(outcome
+            .diagnostics()
+            .iter()
+            .any(|diagnostic| diagnostic.code.as_str() == "structure-slot-cardinality"));
+        assert_eq!(fs::read_to_string(&path).unwrap(), before);
+        assert_eq!(session.workspace().model().composition.instances.len(), 2);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn instance_rename_rewrites_root_and_references() {
+        let root = example_copy("minimal-project", "composition-instance-rename");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let transaction = Transaction::new(
+            "rename-root",
+            session.workspace().revision(),
+            vec![Command::RenameInstance {
+                from: local("app"),
+                to: local("shell"),
+            }],
+        );
+        let outcome = session.apply(&transaction);
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
+        let model = validation.model.expect("model");
+        assert_eq!(model.composition.root.as_str(), "shell");
+        assert_eq!(model.composition.bindings[0].parent.as_str(), "shell");
+        let text = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        assert!(text.contains("root = \"shell\""));
+        assert!(text.contains("parent = \"shell\""));
+        let _ = fs::remove_dir_all(&root);
+    }
 }

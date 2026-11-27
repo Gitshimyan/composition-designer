@@ -54,11 +54,37 @@ export interface PropertyContract {
   items?: PropertyContract | null;
 }
 
+export type SlotCardinality = "one" | "optional_one" | "many";
+
+export interface SlotContract {
+  id: string;
+  cardinality: SlotCardinality;
+  required: boolean;
+  accepts: string[];
+}
+
+export type PortDirection = "input" | "output";
+
+export interface PortContract {
+  id: string;
+  direction: PortDirection;
+  type: string;
+  multi: boolean;
+  protocol?: string | null;
+}
+
+export interface DependencyContract {
+  id: string;
+  module: string;
+  version?: string | null;
+  optional: boolean;
+}
+
 export interface Contract {
   properties: PropertyContract[];
-  slots: unknown[];
-  ports: unknown[];
-  dependencies: unknown[];
+  slots: SlotContract[];
+  ports: PortContract[];
+  dependencies: DependencyContract[];
 }
 
 export interface ModuleDefinition {
@@ -144,6 +170,28 @@ export interface ProjectSnapshot {
 
 export type EditCommand =
   | {
+      type: "create_instance";
+      id: string;
+      module: string;
+      version: string;
+      config: Record<string, unknown>;
+    }
+  | {
+      type: "delete_instance";
+      id: string;
+    }
+  | {
+      type: "rename_instance";
+      from: string;
+      to: string;
+    }
+  | {
+      type: "update_instance_module";
+      id: string;
+      module: string;
+      version: string;
+    }
+  | {
       type: "set_config";
       instance: string;
       property: string;
@@ -153,12 +201,53 @@ export type EditCommand =
       type: "unset_config";
       instance: string;
       property: string;
+    }
+  | {
+      type: "create_binding";
+      id: string;
+      parent: string;
+      slot: string;
+      child: string;
+    }
+  | {
+      type: "update_binding";
+      id: string;
+      parent: string;
+      slot: string;
+      child: string;
+    }
+  | {
+      type: "delete_binding";
+      id: string;
+    }
+  | {
+      type: "create_connection";
+      id: string;
+      from: PortRef;
+      to: PortRef;
+    }
+  | {
+      type: "update_connection";
+      id: string;
+      from: PortRef;
+      to: PortRef;
+    }
+  | {
+      type: "delete_connection";
+      id: string;
     };
 
 export interface Transaction {
   request_id: string;
   base_revision: Revision;
   commands: EditCommand[];
+}
+
+/** UI-only intent carried through Change Review; never sent over IPC. */
+export interface ReviewOptions {
+  selectAfter?: string | null;
+  focusAfter?: boolean;
+  alias?: { from: string; to: string };
 }
 
 export interface DiffSummary {

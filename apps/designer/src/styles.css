@@ -1927,3 +1927,223 @@ code,
 .status-warn {
   color: var(--warning);
 }
+
+/* ---------- 022: instance editing ---------- */
+.instance-actions .action-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.instance-actions .action-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(8, 12, 18, 0.35);
+}
+
+.instance-actions .action-form > label,
+.dialog-fields > label {
+  color: var(--faint);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.instance-actions .action-form .config-input-row input,
+.instance-actions .action-form .config-input-row select,
+.dialog-fields input,
+.dialog-fields select {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.action-note {
+  color: var(--faint);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.impact-panel {
+  border-color: rgba(255, 123, 123, 0.28);
+  background: rgba(255, 123, 123, 0.05);
+}
+
+.impact-title {
+  color: var(--danger);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.slots-block {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+}
+
+.slot-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 7px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(8, 12, 18, 0.3);
+}
+
+.slot-row-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.slot-row-head code {
+  color: var(--text);
+  font-size: 9px;
+}
+
+.slot-cardinality {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.slot-cardinality.is-many {
+  color: var(--accent);
+  border-color: rgba(94, 224, 189, 0.25);
+}
+
+.slot-count,
+.slot-full {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 8px;
+}
+
+.slot-full {
+  color: var(--warning);
+}
+
+.slot-accepts {
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.slot-note {
+  color: var(--faint);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.dialog-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 7, 11, 0.62);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-veil.is-suspended {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.dialog-card {
+  width: min(520px, 100%);
+  max-height: 82vh;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--panel-raised);
+  box-shadow: var(--shadow);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dialog-head h2 {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.dialog-close {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--faint);
+  background: transparent;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dialog-slot-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.dialog-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.dialog-config {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.dialog-config .config-row {
+  margin-top: 6px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.dialog-note {
+  margin: 10px 0 0;
+  color: var(--faint);
+  font-size: 8px;
+  line-height: 1.5;
+}

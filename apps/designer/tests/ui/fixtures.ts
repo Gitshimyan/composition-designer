@@ -54,9 +54,32 @@ const instances: Instance[] = [
     dependency_providers: {},
     source: { file: "composition/main.toml" },
   },
+  {
+    id: "box",
+    module: { id: "ui.panel", version: "1.0.0" },
+    config: { heading: "Box" },
+    effective_config: { heading: "Box" },
+    dependency_providers: {},
+    source: { file: "composition/main.toml" },
+  },
+  {
+    id: "hint",
+    module: { id: "leaf.widget", version: "1.0.0" },
+    config: { label: "Hint" },
+    effective_config: { label: "Hint" },
+    dependency_providers: {},
+    source: { file: "composition/main.toml" },
+  },
 ];
 
 const bindings: Binding[] = [
+  {
+    id: "app-content-box",
+    parent: "app",
+    slot: "content",
+    child: "box",
+    source: { file: "composition/main.toml" },
+  },
   {
     id: "app-content",
     parent: "app",
@@ -64,9 +87,46 @@ const bindings: Binding[] = [
     child: "hello",
     source: { file: "composition/main.toml" },
   },
+  {
+    id: "box-body",
+    parent: "box",
+    slot: "body",
+    child: "hint",
+    source: { file: "composition/main.toml" },
+  },
 ];
 
 const modules: ModuleDefinition[] = [
+  {
+    id: "leaf.badge",
+    version: "1.0.0",
+    kind: "primitive",
+    description: "Compact badge widget",
+    contract: {
+      properties: [
+        {
+          id: "label",
+          type: "string",
+          required: true,
+          default: null,
+          description: null,
+          values: [],
+        },
+        {
+          id: "tone",
+          type: "enum",
+          required: true,
+          default: null,
+          description: null,
+          values: ["info", "warn"],
+        },
+      ],
+      slots: [],
+      ports: [],
+      dependencies: [],
+    },
+    source: { file: "modules/badge/module.toml" },
+  },
   {
     id: "leaf.widget",
     version: "1.0.0",
@@ -105,11 +165,47 @@ const modules: ModuleDefinition[] = [
           values: [],
         },
       ],
-      slots: [{ id: "content", cardinality: "one", required: true }],
+      slots: [
+        {
+          id: "content",
+          cardinality: "many",
+          required: true,
+          accepts: ["leaf.badge", "leaf.widget", "ui.panel"],
+        },
+      ],
       ports: [],
       dependencies: [],
     },
     source: { file: "modules/shell/module.toml" },
+  },
+  {
+    id: "ui.panel",
+    version: "1.0.0",
+    kind: "composite",
+    description: "Panel with an optional body",
+    contract: {
+      properties: [
+        {
+          id: "heading",
+          type: "string",
+          required: false,
+          default: null,
+          description: null,
+          values: [],
+        },
+      ],
+      slots: [
+        {
+          id: "body",
+          cardinality: "optional_one",
+          required: false,
+          accepts: ["leaf.badge", "leaf.widget"],
+        },
+      ],
+      ports: [],
+      dependencies: [],
+    },
+    source: { file: "modules/panel/module.toml" },
   },
 ];
 

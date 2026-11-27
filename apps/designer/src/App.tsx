@@ -15,9 +15,13 @@ import {
 } from "./api";
 import CompositionCanvas from "./canvas/CompositionCanvas";
 import StructureTree from "./explorer/StructureTree";
+import CreateInstanceDialog from "./inspector/CreateInstanceDialog";
+import InstanceActions from "./inspector/InstanceActions";
+import { parseDraft, toDraftValue } from "./inspector/configDraft";
 import { autoLayout, buildStructure } from "./layout";
 import SourceView from "./source/SourceView";
 import type {
+  CompositionModel,
   Diagnostic,
   EditCommand,
   EditResponse,
@@ -27,6 +31,7 @@ import type {
   NodePosition,
   ProjectSnapshot,
   PropertyContract,
+  ReviewOptions,
   SourcePayload,
   Transaction,
 } from "./types";
@@ -56,11 +61,16 @@ export default function App() {
     transaction: Transaction;
     preview: EditResponse;
     description: string;
+    options: ReviewOptions;
   } | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [external, setExternal] = useState<ExternalChangeState | null>(null);
   const [reloading, setReloading] = useState(false);
+  const [createDraft, setCreateDraft] = useState<{
+    parentId: string;
+    slotId: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -159,6 +169,7 @@ export default function App() {
     setBottomTab("diagnostics");
     setRevealLine(null);
     setPendingReview(null);
+    setCreateDraft(null);
     void loadLayout(snapshot.root)
       .then((saved) => {
         if (cancelled) return;
@@ -263,6 +274,7 @@ export default function App() {
       setSnapshot(next);
       setExternal(null);
       setPendingReview(null);
+      setCreateDraft(null);
       setBottomTab("diagnostics");
       setRevealLine(null);
       if (next.model) {
@@ -307,7 +319,11 @@ export default function App() {
     setSelectedId(id);
   }
 
-  async function reviewCommands(commands: EditCommand[], description: string) {
+  async function reviewCommands(
+    commands: EditCommand[],
+    description: string,
+    options: ReviewOptions = {},
+  ) {
     if (!model?.revision || !snapshot?.canEdit) {
       setEditError("This project is not editable.");
       return;
@@ -332,7 +348,7 @@ export default function App() {
     setEditError(null);
     try {
       const preview = await prepareTransaction(transaction);
-      setPendingReview({ transaction, preview, description });
+      setPendingReview({ transaction, preview, description, options });
     } catch (reason) {
       setEditError(reason instanceof Error ? reason.message : String(reason));
     } finally {
@@ -355,7 +371,28 @@ export default function App() {
         setPendingReview({ ...pendingReview, preview: response });
         return;
       }
+      const nextModel = response.snapshot.model;
+      if (nextModel) {
+        setPositions((current) =>
+          reconcilePositions(
+            nextModel,
+            current,
+            pendingReview.options.alias,
+          ),
+        );
+      }
+      if (pendingReview.options.selectAfter !== undefined) {
+        const nextId = pendingReview.options.selectAfter;
+        setSelectedId(nextId);
+        if (nextId && pendingReview.options.focusAfter) {
+          setFocusRequest((current) => ({
+            id: nextId,
+            nonce: (current?.nonce ?? 0) + 1,
+          }));
+        }
+      }
       setPendingReview(null);
+      setCreateDraft(null);
       if (response.snapshot.canEdit) {
         try {
           setSource(await readSource());
@@ -398,6 +435,19 @@ export default function App() {
           module.version === selectedInstance.module.version,
       )
     : undefined;
+  const createParent = createDraft
+    ? instances.find((instance) => instance.id === createDraft.parentId)
+    : undefined;
+  const createParentModule = createParent
+    ? modules.find(
+        (module) =>
+          module.id === createParent.module.id &&
+          module.version === createParent.module.version,
+      )
+    : undefined;
+  const createSlot = createParentModule?.contract.slots.find(
+    (slot) => slot.id === createDraft?.slotId,
+  );
 
   const status = describeStatus(loadState, snapshot, error);
   const digest = snapshot?.sourceDigest ?? model?.revision?.source_digest ?? null;
@@ -615,7 +665,7 @@ export default function App() {
               />
               <footer className="stage-footer">
                 <span className="stage-note">
-                  Drag to arrange · positions write to .designer/layout.toml · composition is read-only
+                  Drag to arrange · positions write to .designer/layout.toml · instance edits go through Core transactions
                 </span>
                 <div className="stage-counts">
                   <span>{bindings.length} structural bindings</span>
@@ -643,6 +693,25 @@ export default function App() {
                 onReview={(commands, description) =>
                   void reviewCommands(commands, description)
                 }
+                actions={
+                  <InstanceActions
+                    key={`${selectedInstance.id}:${model?.revision?.seq ?? 0}`}
+                    instance={selectedInstance}
+                    instances={instances}
+                    bindings={bindings}
+                    connections={connections}
+                    dependencies={dependencies}
+                    modules={modules}
+                    rootId={rootId}
+                    canEdit={canEdit && !externalDirty}
+                    onCreateChild={(parent, slot) =>
+                      setCreateDraft({ parentId: parent.id, slotId: slot.id })
+                    }
+                    onReview={(commands, description, options) =>
+                      void reviewCommands(commands, description, options)
+                    }
+                  />
+                }
               />
             ) : project ? (
               <>
@@ -660,7 +729,7 @@ export default function App() {
                   <Property label="Valid" value={valid ? "yes" : "no"} />
                 </section>
                 <div className="inspector-hint">
-                  Select a node or tree row to inspect an instance. Editing arrives in 014.
+                  Select a node or tree row to inspect and edit an instance.
                 </div>
               </>
             ) : (
@@ -761,10 +830,26 @@ export default function App() {
           <span className="status-digest" title={digest ?? undefined}>
             sha {shortDigest}
           </span>
-          <span className="status-sep">read-only shell</span>
-          <span className="status-version">M3.013</span>
+          <span className="status-sep">instance editing</span>
+          <span className="status-version">M6.022</span>
         </div>
       </footer>
+
+      {createDraft && createParent && createSlot && (
+        <CreateInstanceDialog
+          key={`${createParent.id}:${createSlot.id}`}
+          parent={createParent}
+          slot={createSlot}
+          instances={instances}
+          bindings={bindings}
+          modules={modules}
+          suspended={pendingReview !== null}
+          onCancel={() => setCreateDraft(null)}
+          onReview={(commands, description, options) =>
+            void reviewCommands(commands, description, options)
+          }
+        />
+      )}
 
       {pendingReview && (
         <ChangeReview
@@ -843,6 +928,7 @@ function SelectionDetails({
   canEdit,
   revisionSeq,
   onReview,
+  actions,
 }: {
   instance: Instance;
   moduleKind?: string;
@@ -853,6 +939,7 @@ function SelectionDetails({
   canEdit: boolean;
   revisionSeq: number;
   onReview: (commands: EditCommand[], description: string) => void;
+  actions: ReactNode;
 }) {
   return (
     <>
@@ -890,6 +977,7 @@ function SelectionDetails({
           </div>
         )}
       </section>
+      {actions}
       <section className="inspector-section">
         <div className="section-label">Contract</div>
         <Property label="Properties" value={String(properties.length)} />
@@ -1037,38 +1125,26 @@ function PropertyEditor({
   );
 }
 
-function toDraftValue(value: unknown, type: string): string {
-  if (value === undefined || value === null) return "";
-  if (type === "boolean") return value ? "true" : "false";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
-
-function parseDraft(
-  draft: string,
-  property: PropertyContract,
-): { value: unknown } | { error: string } {
-  if (property.type === "boolean") return { value: draft === "true" };
-  if (property.type === "integer") {
-    const value = Number.parseInt(draft, 10);
-    if (Number.isNaN(value)) return { error: "Expected an integer" };
-    return { value };
-  }
-  if (property.type === "float") {
-    const value = Number.parseFloat(draft);
-    if (Number.isNaN(value)) return { error: "Expected a number" };
-    return { value };
-  }
-  if (property.type === "array") {
-    try {
-      const value = JSON.parse(draft);
-      if (!Array.isArray(value)) return { error: "Expected an array" };
-      return { value };
-    } catch {
-      return { error: "Expected valid JSON array" };
+function reconcilePositions(
+  model: CompositionModel,
+  previous: LayoutNodes,
+  alias?: { from: string; to: string },
+): LayoutNodes {
+  const suggested = autoLayout(
+    model.composition.instances,
+    model.composition.bindings,
+    model.composition.root,
+  );
+  const next: LayoutNodes = {};
+  for (const instance of model.composition.instances) {
+    const id = instance.id;
+    let existing = previous[id];
+    if (!existing && alias && id === alias.to) {
+      existing = previous[alias.from];
     }
+    next[id] = existing ?? suggested[id] ?? { x: 0, y: 0 };
   }
-  return { value: draft };
+  return next;
 }
 
 
@@ -1170,8 +1246,8 @@ function EmptyState({ onChoose, onPath }: { onChoose: () => void; onPath: () => 
       </h1>
       <p>
         Open a Composition Designer project to inspect its normalized model, module contracts and
-        validation diagnostics. This shell is read-only; the desktop host delegates every read to
-        the Rust Core.
+        validation diagnostics. Select an instance to edit it through Core transactions; node
+        positions stay in <code>.designer/</code>.
       </p>
       <div className="empty-actions">
         <button type="button" className="button button-primary" onClick={onChoose}>

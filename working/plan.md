@@ -2,8 +2,8 @@
 
 > 当前设计基线：[`docs/design/v0.1-design.md`](../docs/design/v0.1-design.md)（Draft，v0.1 冻结）
 > 外部评审：[`docs/reviews/2026-11-27-project-review-and-roadmap.md`](../docs/reviews/2026-11-27-project-review-and-roadmap.md)
-> 测试基线：146 Core/Protocol/MCP/CLI + 8 UI + 5 Tauri 测试
-> 当前阶段：v0.2 M6 进行中；020–021 完成，022 待开始
+> 测试基线：146 Core/Protocol/MCP/CLI + 15 UI + 9 Tauri 测试
+> 当前阶段：v0.2 M6 进行中；020–022 完成，023 待开始
 > 推进规则：一次只推进一张任务卡；只有用户明确要求时才推送远端，平时只做本地 commit。
 
 ## 1. 目标
@@ -22,8 +22,9 @@ Designer、Source 与 Agent 入口。
 - 当前 GUI：Canvas/Tree 查看、Inspector 配置编辑、Change Review、只读 Source、外部变更 Reload；
 - 020 已完成：Windows CI 文件、Playwright 1.65 + 8 条 UI 链路、本地 `npm run test:ui`；
 - 021 已完成：Glide Task + Terminal 只读试点，7 模块/7 实例/6 Binding/6 Connection/3 Dependency，Core 验证通过；
-- 缺口：CI 尚未远端执行；Instance/Binding/Connection/Dependency 完整编辑、Source 编辑；
-- 下一步 022：Instance 编辑。
+- 022 已完成：Instance 创建/删除/重命名/换模块与版本/配置调整，走统一事务与 Review；
+- 缺口：CI 尚未远端执行；Binding/Connection/Dependency 完整编辑、Source 编辑；
+- 下一步 023：Binding 编辑。
 
 ## 3. 路线图
 
@@ -40,8 +41,8 @@ Designer、Source 与 Agent 入口。
 |---|---|---|---|---|
 | 1 | 020 | 自动化质量门禁与 UI 测试基础 | 无 | done（CI 远端待推送） |
 | 2 | 021 | 真实项目试点与 Schema 复核 | 020；Glide Task+Terminal | done |
-| 3 | 022 | Instance 编辑 | 021 结论 | next |
-| 4 | 023 | Binding 编辑 | 022 | queued |
+| 3 | 022 | Instance 编辑 | 021 结论 | done |
+| 4 | 023 | Binding 编辑 | 022 | next |
 | 5 | 024 | Connection / Dependency 视图 | 022–023 | queued |
 | 6 | 025 | 完整 Change Review | 022–024 | queued |
 
@@ -65,6 +66,23 @@ Designer、Source 与 Agent 入口。
 - 表达：结构、依赖、端口、连接、实例 Config；
 - 缺口：接口/契约独立身份、项目级 Profile、运行时/技术元数据、Profile-scoped tasks；
 - 不复制 Glide 源码，不修改 v0.1 Schema。
+
+### 022 — Instance 编辑（done）
+
+已完成：
+
+- Inspector：重命名、换 Module/Version（配置 Unset/Reset/必填 Set 同一事务）、
+  删除（子树/连接/依赖影响预览）、在 Slot 下创建子实例（`create_instance` +
+  `create_binding`）；
+- 所有操作 `prepare_transaction` → Review → `apply_transaction`；取消/拒绝不写入；
+- 删除 Root 禁用；非法/重复 ID 本地拦截；
+- 15 条 Playwright UI 链路（新增 7 条 Instance 链路）；
+- 9 个 Tauri host tests，其中 4 个用真实 `ProjectSession` 验证创建、删除级联、
+  拒绝不写文件、重命名 root/引用；
+- 复用 009 冻结命令，不新增 Schema/命令。
+
+已知边界：创建候选只包含“创建后即可合法”的模块（不带必填 Slot）；带必填 Slot 的
+复合模块整棵子树创建留给 023。
 
 ### 022–025 — 完整编辑链
 
@@ -135,9 +153,10 @@ npm run test:ui
 | 2026-11-27 | v0.2 计划 | 采纳 M6 为下一阶段；020 质量门禁卡进入 planned |
 | 2026-11-27 | 020 | Windows CI + Playwright 8 条 UI 链路；本地 146 Rust + 5 Tauri + 8 UI 通过；CI 远端待推送 |
 | 2026-11-27 | 021 | Glide Task + Terminal 只读试点；7 模块/7 实例/6 Binding/6 Connection/3 Dependency；valid=true |
+| 2026-11-27 | 022 | Instance 创建/删除/重命名/换模块/配置调整；15 UI + 9 Tauri 测试通过；复用冻结命令 |
 
 ## 10. 下一步
 
-021 已完成。下一步 **022 — Instance 编辑**：先用现有模型完成模块选择、创建/删除/重命名、
-换模块/版本、配置重置与级联影响 Review；G1/G2/G3 等 Schema 缺口留到对应 UI 需求出现时
-再评估，不提前修改 v0.1 模型。
+022 已完成。下一步 **023 — Binding 编辑**：在现有 022 的事务/Review 基础上加入
+Slot 感知的父子结构编辑（重新选择 parent/slot/child、删除 Binding、带必填 Slot 的
+复合模块子树创建），GUI 不复制 Slot/Cardinality 规则，候选关系由 Core 验证。

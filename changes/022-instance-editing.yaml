@@ -1,0 +1,40 @@
+change:
+  id: change.022-instance-editing
+  intent: 在 Designer 中通过统一事务完成 Instance 创建、删除、重命名、换模块/版本与配置调整，并预览级联影响。
+  authorization: modify
+  targets:
+    - apps/designer/src
+    - apps/designer/tests
+    - apps/designer/src-tauri/src
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - working
+    - AGENTS.md
+    - changes
+  operations:
+    - modify
+  scope:
+    allowed:
+      - designer_react_ui
+      - designer_tauri_host_tests
+      - playwright_ui_tests
+      - task_card_and_plan
+    forbidden:
+      - toml_schema
+      - command_protocol
+      - design_baseline
+      - composition_semantics
+      - module_definitions
+      - cargo_workspace_config
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cd apps/designer && npm run build
+    - cd apps/designer && npm run test:ui
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 复用 009 已冻结的 12 条编辑命令；不新增命令、字段、错误码或 UI 之外的语义规则。

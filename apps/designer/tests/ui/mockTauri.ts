@@ -10,6 +10,16 @@ interface MockPayload {
   sourceText: string;
 }
 
+type MockSnapshot = ReturnType<typeof validSnapshot>;
+type MockCommand = { type: string } & Record<string, unknown>;
+
+interface Change {
+  object_id: string;
+  kind: "added" | "removed" | "modified";
+  before?: unknown;
+  after?: unknown;
+}
+
 /**
  * Install a test-only Tauri IPC bridge before the app loads.
  * Production builds never include this module; tests run against Vite preview
@@ -32,6 +42,7 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
       prepareCalls: 0,
       saveLayoutCalls: 0,
       lastLayout: null as unknown,
+      lastCommands: [] as MockCommand[],
       get snapshot() {
         return current;
       },
@@ -42,58 +53,188 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
       configurable: true,
     });
 
-    function updatedSnapshot(
-      command: { instance: string; property: string; value: unknown },
+    function changed(
+      changes: Change[],
+      summary: { added: number; removed: number; modified: number },
     ) {
-      const next = structuredClone(current);
-      const instance = next.model?.composition.instances.find(
-        (item) => item.id === command.instance,
-      );
-      if (instance) {
-        instance.config[command.property] = command.value;
-        instance.effective_config[command.property] = command.value;
-        next.model!.revision = {
-          seq: (next.model!.revision?.seq ?? 0) + 1,
-          source_digest: `sha256:mock-${testState.applyCalls + 1}`,
-        };
-        next.sourceDigest = next.model!.revision?.source_digest ?? null;
-      }
-      return next;
+      return { changes, summary };
     }
 
-    function transactionResponse(transaction: {
-      commands: Array<{
-        type: string;
-        instance: string;
-        property: string;
-        value?: unknown;
-      }>;
-    }) {
-      const command = transaction.commands[0];
-      const next = updatedSnapshot({
-        instance: command.instance,
-        property: command.property,
-        value: command.value,
-      });
-      const before = current.model?.composition.instances.find(
-        (item) => item.id === command.instance,
-      )?.config[command.property];
+    function applyCommands(commands: MockCommand[]) {
+      const next: MockSnapshot = structuredClone(current);
+      const model = next.model;
+      if (!model) throw new Error("mock transaction requires a valid model");
+      const composition = model.composition;
+      const changes: Change[] = [];
+      const summary = { added: 0, removed: 0, modified: 0 };
+
+      for (const command of commands) {
+        switch (command.type) {
+          case "create_instance": {
+            const id = String(command.id);
+            const config = (command.config ?? {}) as Record<string, unknown>;
+            composition.instances.push({
+              id,
+              module: {
+                id: String(command.module),
+                version: String(command.version),
+              },
+              config: structuredClone(config),
+              effective_config: structuredClone(config),
+              dependency_providers: {},
+              source: { file: "composition/main.toml" },
+            });
+            changes.push({ object_id: `instance:${id}`, kind: "added" });
+            summary.added += 1;
+            break;
+          }
+          case "create_binding": {
+            const id = String(command.id);
+            composition.bindings.push({
+              id,
+              parent: String(command.parent),
+              slot: String(command.slot),
+              child: String(command.child),
+              source: { file: "composition/main.toml" },
+            });
+            changes.push({ object_id: `binding:${id}`, kind: "added" });
+            summary.added += 1;
+            break;
+          }
+          case "delete_instance": {
+            const id = String(command.id);
+            if (id === composition.root) {
+              throw new Error("root instance cannot be deleted");
+            }
+            const index = composition.instances.findIndex(
+              (instance) => instance.id === id,
+            );
+            if (index < 0) throw new Error(`missing instance ${id}`);
+            composition.instances.splice(index, 1);
+            composition.bindings = composition.bindings.filter(
+              (binding) => binding.parent !== id && binding.child !== id,
+            );
+            composition.connections = composition.connections.filter(
+              (connection) =>
+                connection.from.instance !== id &&
+                connection.to.instance !== id,
+            );
+            for (const instance of composition.instances) {
+              for (const [key, provider] of Object.entries(
+                instance.dependency_providers,
+              )) {
+                if (provider === id) delete instance.dependency_providers[key];
+              }
+            }
+            changes.push({ object_id: `instance:${id}`, kind: "removed" });
+            summary.removed += 1;
+            break;
+          }
+          case "rename_instance": {
+            const from = String(command.from);
+            const to = String(command.to);
+            const instance = composition.instances.find(
+              (candidate) => candidate.id === from,
+            );
+            if (!instance) throw new Error(`missing instance ${from}`);
+            if (
+              composition.instances.some((candidate) => candidate.id === to)
+            ) {
+              throw new Error(`instance ${to} already exists`);
+            }
+            instance.id = to;
+            if (composition.root === from) composition.root = to;
+            for (const binding of composition.bindings) {
+              if (binding.parent === from) binding.parent = to;
+              if (binding.child === from) binding.child = to;
+            }
+            for (const connection of composition.connections) {
+              if (connection.from.instance === from) {
+                connection.from.instance = to;
+              }
+              if (connection.to.instance === from) {
+                connection.to.instance = to;
+              }
+            }
+            for (const candidate of composition.instances) {
+              for (const [key, provider] of Object.entries(
+                candidate.dependency_providers,
+              )) {
+                if (provider === from) {
+                  candidate.dependency_providers[key] = to;
+                }
+              }
+            }
+            changes.push(
+              { object_id: `instance:${from}`, kind: "removed" },
+              { object_id: `instance:${to}`, kind: "added" },
+            );
+            summary.modified += 1;
+            break;
+          }
+          case "update_instance_module": {
+            const id = String(command.id);
+            const instance = composition.instances.find(
+              (candidate) => candidate.id === id,
+            );
+            if (!instance) throw new Error(`missing instance ${id}`);
+            instance.module = {
+              id: String(command.module),
+              version: String(command.version),
+            };
+            changes.push({ object_id: `instance:${id}`, kind: "modified" });
+            summary.modified += 1;
+            break;
+          }
+          case "set_config": {
+            const instance = composition.instances.find(
+              (candidate) => candidate.id === command.instance,
+            );
+            if (!instance) throw new Error(`missing instance ${command.instance}`);
+            instance.config[String(command.property)] = command.value;
+            instance.effective_config[String(command.property)] = command.value;
+            changes.push({
+              object_id: `instance:${command.instance}`,
+              kind: "modified",
+            });
+            summary.modified += 1;
+            break;
+          }
+          case "unset_config": {
+            const instance = composition.instances.find(
+              (candidate) => candidate.id === command.instance,
+            );
+            if (!instance) throw new Error(`missing instance ${command.instance}`);
+            delete instance.config[String(command.property)];
+            delete instance.effective_config[String(command.property)];
+            changes.push({
+              object_id: `instance:${command.instance}`,
+              kind: "modified",
+            });
+            summary.modified += 1;
+            break;
+          }
+          default:
+            throw new Error(`unmocked command: ${command.type}`);
+        }
+      }
+
+      const seq = (model.revision?.seq ?? 0) + 1;
+      model.revision = { seq, source_digest: `sha256:mock-${seq}` };
+      next.sourceDigest = model.revision.source_digest;
+      next.valid = true;
+      next.errorCount = 0;
+      return { snapshot: next, diff: changed(changes, summary) };
+    }
+
+    function transactionResponse(transaction: { commands: MockCommand[] }) {
+      const result = applyCommands(transaction.commands);
       return {
         accepted: true,
         replayed: false,
-        diff: {
-          summary: { added: 0, removed: 0, modified: 1 },
-          changes: [
-            {
-              object_id: command.instance,
-              kind: "modified",
-              before: { [command.property]: before },
-              after: { [command.property]: command.value },
-            },
-          ],
-        },
+        diff: result.diff,
         diagnostics: [],
-        snapshot: next,
+        snapshot: result.snapshot,
       };
     }
 
@@ -146,34 +287,22 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
         case "reload_project":
           testState.dirty = false;
           return structuredClone(current);
-        case "prepare_transaction":
+        case "prepare_transaction": {
           testState.prepareCalls += 1;
+          const transaction = args.transaction as { commands: MockCommand[] };
+          testState.lastCommands = transaction.commands;
           if (data.mode === "edit-failure") return rejectedResponse();
-          return transactionResponse(
-            args.transaction as {
-              commands: Array<{
-                type: string;
-                instance: string;
-                property: string;
-                value?: unknown;
-              }>;
-            },
-          );
-        case "apply_transaction":
+          return transactionResponse(transaction);
+        }
+        case "apply_transaction": {
           testState.applyCalls += 1;
+          const transaction = args.transaction as { commands: MockCommand[] };
+          testState.lastCommands = transaction.commands;
           if (data.mode === "edit-failure") return rejectedResponse();
-          const response = transactionResponse(
-            args.transaction as {
-              commands: Array<{
-                type: string;
-                instance: string;
-                property: string;
-                value?: unknown;
-              }>;
-            },
-          );
+          const response = transactionResponse(transaction);
           current = response.snapshot;
           return response;
+        }
         case "plugin:dialog|open":
           return null;
         default:
