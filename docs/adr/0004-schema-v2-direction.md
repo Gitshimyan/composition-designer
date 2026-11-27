@@ -1,7 +1,7 @@
 # ADR-0004 — Schema v2 方向：接口身份、服务 scope 与项目 Profile
 
-- 状态：**Proposed（2026-11-27；等待用户决策）**
-- 授权：仅设计研究；未获 Rearchitect 实施批准
+- 状态：**Accepted（2026-11-27）**
+- 授权：用户 2026-11-27 明确确认推荐方案（v2.0/v2.1、接口标记、实例 scope、Profile 入口、S1 在 M7 后）
 - 关联：[`2026-11-27-g7-domain-gaps.md`](../reviews/2026-11-27-g7-domain-gaps.md)、
   [`composition-schema-v1.md`](../spec/composition-schema-v1.md)、
   [`domain-model-v1.md`](../spec/domain-model-v1.md)、021 / G07 任务卡
@@ -67,12 +67,14 @@ Glide Task + Terminal 试点证明 v0.1 能表达拓扑，但不能表达：
 - **单 Composition + Profile overlay**：合并、验证、Diff 语义复杂，容易变成隐式兼容；
 - **自动迁移 v1 → v2**：违反“不静默修复/升级”原则。
 
-## 未决
+## 未决 / 已确认
 
-- 是否接受 v2.0/v2.1 分阶段方案；
-- 接口用模块契约标记还是独立接口文件；
-- service 用实例 scope 还是 composition 级 services 表；
-- Profile 用完整入口还是 overlay；
-- S1 放在 M7 之后、M8 之前，还是提前。
+以下方向已由用户 2026-11-27 确认：
 
-在用户明确批准前，不修改 Schema、领域模型、设计基线或产品代码。
+- 接受 v2.0/v2.1 分阶段方案；
+- 接口采用模块契约内的接口标记；
+- service 采用实例 `scope`；
+- Profile 采用完整 Composition 入口；
+- S1 放在 M7 之后、M8 之前。
+
+实施仍需逐卡授权；在 S1/S2 实现前，不修改 Schema、领域模型或设计基线。

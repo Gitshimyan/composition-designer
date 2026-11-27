@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成 |
-| 当前阶段 | v0.2 M6 完成；G01–G07 完成；ADR-0004 Schema v2 待决策；下一卡 028 M7 Source 设计 |
+| 当前阶段 | v0.2 M6 完成；G01–G08 完成；ADR-0004 Accepted；028 完成，ADR-0005 Proposed；029 待授权 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
@@ -166,7 +166,8 @@
   失败探针 PR #1 被 BLOCKED；
 - G05 完成：CI 切换 block 模式；重叠 Manifest 任一授权即可；workspace 164 测试；
 - G06 完成：Post-M6 计划重排；M7 Source 设计为下一卡；
-- G07 完成：G1/G2/G3 设计研究；ADR-0004 Proposed（v2.0 接口+service scope，
-  v2.1 Profile+多入口）；未改 Schema/领域模型；
+- G07 完成：G1/G2/G3 设计研究；ADR-0004 Accepted（v2.0 接口+service，v2.1 Profile+多入口）；
+- 028 完成：Source 设计研究；ADR-0005 Proposed（独占 `replace_source` + 事务复用）；
+  029 新命令/事务协议仍需 Extend + Rearchitect；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

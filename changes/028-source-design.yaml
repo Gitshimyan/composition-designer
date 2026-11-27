@@ -1,0 +1,41 @@
+change:
+  id: change.028-source-design
+  intent: 完成 M7 Source 编辑事务设计研究，产出 ADR-0005 与 029 实施前提，不实现 Source 编辑。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "设计研究；用户 2026-11-27 确认 ADR-0004 后继续"
+  targets:
+    - README.md
+    - docs/adr
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/tasks/028-m7-source-design.md
+    - working/decisions/decision-history.md
+    - changes/028-source-design.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - source_design_research
+      - adr_proposal
+      - roadmap_update
+    forbidden:
+      - source_editing_implementation
+      - command_protocol
+      - toml_schema
+      - design_baseline
+      - product_code
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - markdown relative link check
+    - git diff --check
+    - confirm no changes under crates/ or apps/
+  notes: 只完成 Source 事务设计；029 新命令与事务协议变更仍需 Extend + Rearchitect 批准。

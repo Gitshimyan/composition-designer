@@ -39,14 +39,15 @@
 
 - 结果：
   - 新增 [`2026-11-27-g7-domain-gaps.md`](../../docs/reviews/2026-11-27-g7-domain-gaps.md)；
-  - 新增 [`ADR-0004`](../../docs/adr/0004-schema-v2-direction.md)（Proposed）：
+  - 新增 [`ADR-0004`](../../docs/adr/0004-schema-v2-direction.md)：
     - v2.0 = G1 模块契约接口标记 + G2 实例 scope；
     - v2.1 = G3 Profile-scoped Composition 入口（依赖多入口）；
     - v1 继续可读，不自动迁移；
-    - M7 不阻塞；S1 v2.0 建议在 M7 后、M8 前；M9 被 S1/S2 解锁。
+    - M7 不阻塞；S1 v2.0 在 M7 后、M8 前；M9 被 S1/S2 解锁；
+  - 用户 2026-11-27 明确确认 ADR-0004 推荐方案；ADR 状态更新为 Accepted。
 - 未决：
-  - UW-002/003/004 仍为 pending_decision，等待用户批准 v2.0/v2.1 方向；
-  - 实施需要 Rearchitect（及 `create_instance` scope 的 Extend）。
+  - UW-002/003/004 方向已接受，但实现仍待 S1/S2 逐卡 Rearchitect 授权；
+  - `create_instance` scope 实施需要 Extend。
 - 验证：
   - 设计文档/链接检查；
   - 未运行产品测试（无代码变更）。
