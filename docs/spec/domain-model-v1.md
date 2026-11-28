@@ -4,6 +4,9 @@
 - 适用范围：Composition Designer v0.1
 - 关联：[`composition-schema-v1.md`](./composition-schema-v1.md)、[`error-codes-v1.md`](./error-codes-v1.md)、[`../glossary.md`](../glossary.md)
 
+> v2.0 的不变量增量（MOD-9/10、INS-6/7、BND-9/10、DEP-6/7/8）与对象标识扩展见
+> [`composition-schema-v2.md`](./composition-schema-v2.md) §2、§5；本文件的 v1 语义不变。
+
 本文件定义 v0.1 的领域对象、关系语义与不变量。它不依赖 TOML 语法；TOML 字段名、默认值与
 错误代码在 `composition-schema-v1.md` 中映射。任何实现（Core / CLI / Designer / Agent Adapter）
 都必须满足这里的语义，不得各自发明规则。

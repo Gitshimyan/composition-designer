@@ -1,0 +1,65 @@
+change:
+  id: change.032-schema-v2-freeze
+  intent: 冻结 Schema v2.0 的接口身份、依赖目标、实例 scope、诊断代码、命令 scope 与 v1 兼容矩阵，产出 ADR-0006 与 v2.0 规范，不实现代码。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+      - extend
+      - rearchitect
+    approved:
+      - modify
+      - extend
+      - rearchitect
+    evidence: "用户 2026-11-28 明确授权：先更新文档，之后进行 032（Rearchitect + Extend）；D-021"
+  targets:
+    - README.md
+    - docs/spec/composition-schema-v2.md
+    - docs/spec/error-codes-v2.md
+    - docs/spec/README.md
+    - docs/spec/composition-schema-v1.md
+    - docs/spec/domain-model-v1.md
+    - docs/spec/command-schema-v1.md
+    - docs/adr/0004-schema-v2-direction.md
+    - docs/adr/0006-schema-v2-freeze.md
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/032-schema-v2-freeze.md
+    - changes/032-schema-v2-freeze.yaml
+  operations:
+    - modify
+    - extend
+    - rearchitect
+  scope:
+    allowed:
+      - v2_semantics_freeze
+      - new_spec_documents
+      - adr_record
+      - v1_pointer_notes
+      - plan_and_uw_update
+      - docs_index_update
+    forbidden:
+      - product_code
+      - crates
+      - apps
+      - toml_implementation
+      - new_editor_command
+      - examples_changes
+      - design_baseline
+      - v2_1_profiles
+  unresolved_items:
+    - UW-002
+    - UW-003
+    - UW-032
+  impact:
+    expected_schema_changes: true
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - markdown link check
+    - git diff --check
+    - confirm no changes under crates/ or apps/
+    - cross-check v2 spec against error codes and command schema
+  notes: 只冻结语义与文档；033–035 才实现 Domain/Loader/Validation/Commands/UI。v2.1 与接口方法形状明确排除。

@@ -2,7 +2,7 @@
 
 > v0.2 M6 与 G01–G08 完成；ADR-0004/0005 Accepted。
 > M7 Source Authoring 完成（029–031：编辑 Source、文本+对象 Review、Glide 验收）。
-> 下一步 S1 Schema v2.0（032–035）。
+> S1 032 完成：Schema v2.0 语义冻结（ADR-0006）；下一步 033–035 实现。
 > 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
@@ -29,7 +29,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 隐式 Adapter、多 Agent 调度、在 TOML 中执行脚本。边界详见设计基线 §1.2 / §14 与
 [ADR-0002](./docs/adr/0002-v01-unsupported.md)。
 
-## 2. 当前状态（2026-11-27）
+## 2. 当前状态（2026-11-28）
 
 | 项 | 状态 |
 |---|---|
@@ -42,25 +42,28 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | TOML 加载与 Source Map（M1 006 / M5 019） | 已建立：`composition-toml`，29 项测试 |
 | Core：解析 / 验证（M1 007 / M5 019） | 已建立：`composition-core`，9 项测试、26/26 数据集 |
 | CLI（M1 008 / M4 016） | 已建立：`composition-cli`，10 项测试 |
-| 编辑命令与事务（M2 009–011 / M5 019 / 025） | 已建立：`composition-editor`，38 项测试；14 条命令 |
+| 编辑命令与事务（M2 009–011 / M5 019 / 025 / 029） | 已建立：`composition-editor`，44 项测试；15 条命令 |
 | Revision / 幂等 / Diff | 已建立（M2 010） |
 | 保留格式 TOML 写回 | 已建立（M2 011；025 增加 Dependency Provider） |
 | Designer 外壳（M3 012） | 已建立：Tauri 2 + React 19 + TS + Vite 7 |
 | Canvas / Tree（M3 013） | 已建立：`@xyflow/react`、结构树、布局持久化 |
-| Inspector / Source（M3 014） | 已建立：配置编辑、Change Review、只读 CodeMirror Source |
+| Inspector / Source（M3 014 / M7 030） | 已建立：配置编辑、Change Review、可编辑 CodeMirror Source、草稿/冲突只读 |
 | 外部修改同步（M3 015） | 已建立：digest 轮询、冲突守卫、Reload |
 | Agent Protocol（M4 016） | 已建立：query/transaction/JSONL、CLI query/apply |
 | MCP Adapter（M4 017） | 已建立：stdio JSON-RPC、6 tools / 4 resources |
 | Agent Skill / 端到端（M4 018） | 已建立：Skill、MCP 配置、真实 stdio e2e |
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
 | v0.2 / M6 | M6 完成（020–027）：Glide 全链路、完整 Review、PR 强制门禁；G01–G05 完成，change-gate block |
+| M7 Source Authoring（029–031） | 完成：`replace_source` 独占事务、可编辑 Source、文本+对象 Diff、Glide 验收；G06–G08 完成 |
+| S1 Schema v2.0（032） | 032 完成：接口身份/接口依赖/实例 scope/8 个诊断/命令 scope 冻结；ADR-0006 Accepted；033–035 实现 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
 Core/Protocol/MCP 通过 `cargo test` / `clippy` / `fmt`，Designer 通过 `npm run build` 与
-Tauri 宿主测试。M0–M5 已完成；v0.1 验收报告见
+Tauri 宿主测试。M0–M7 已完成；v0.1 验收报告见
 [`docs/acceptance-v0.1.md`](./docs/acceptance-v0.1.md)。
-M1–M3 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代表项目可以运行或部署。
+M1–M7 的“通过”指解析/校验/CLI/编辑/Designer 可复现，不代表项目可以运行或部署。
+Source 编辑首版仅覆盖 Composition 入口，模块文件仍只读（UW-031）。
 
 ## 3. 目录结构
 
@@ -157,14 +160,20 @@ composition-designer/
 - [术语表](./docs/glossary.md)
 - [领域模型 v1](./docs/spec/domain-model-v1.md)
 - [Composition Schema v1](./docs/spec/composition-schema-v1.md)
+- [Composition Schema v2.0](./docs/spec/composition-schema-v2.md)
 - [命令 Schema v1](./docs/spec/command-schema-v1.md)
 - [Designer Layout v1](./docs/spec/designer-layout-v1.md)
 - [Composition Protocol v1](./docs/spec/protocol-v1.md)
 - [MCP Adapter v1](./docs/spec/mcp-adapter-v1.md)
 - [v0.1 验收报告](./docs/acceptance-v0.1.md)
 - [错误代码 v1](./docs/spec/error-codes-v1.md)
+- [错误代码 v2.0](./docs/spec/error-codes-v2.md)
 - [ADR-0001 领域模型与 Schema 冻结](./docs/adr/0001-domain-and-schema-freeze.md)
 - [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)
+- [ADR-0003 Dependency Provider 命令](./docs/adr/0003-dependency-provider-command.md)
+- [ADR-0004 Schema v2 方向](./docs/adr/0004-schema-v2-direction.md)
+- [ADR-0005 Source 编辑事务](./docs/adr/0005-source-editing-transaction.md)
+- [ADR-0006 Schema v2.0 冻结](./docs/adr/0006-schema-v2-freeze.md)
 - [crates 职责与依赖方向](./crates/README.md)
 - [Designer UI 区域](./apps/designer/README.md)
 - [Agent Skill / MCP 配置](./agent/README.md)

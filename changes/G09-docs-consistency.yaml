@@ -1,0 +1,39 @@
+change:
+  id: change.G09-docs-consistency
+  intent: 修正 M7 完成后的文档漂移，使计划、README 与 Designer README 对 Source 能力、测试基线和 ADR 状态的描述与实现一致。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "用户 2026-11-28 明确要求先更新文档；描述性文档修正属默认 Modify"
+  targets:
+    - README.md
+    - apps/designer/README.md
+    - working/plan.md
+    - working/decisions/decision-history.md
+    - working/tasks/G09-docs-consistency.md
+    - changes/G09-docs-consistency.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - docs_consistency_fix
+      - test_count_update
+      - plan_and_decision_update
+    forbidden:
+      - product_code
+      - command_protocol
+      - toml_schema
+      - design_baseline
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - test counts match source (30 UI, 16 Tauri)
+    - git diff --check
+    - confirm no changes under crates/ or apps/designer/src
+  notes: 只修正描述性文档；不改变 M7 能力边界，也不实施 032。

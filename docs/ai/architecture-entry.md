@@ -9,11 +9,11 @@
 | 项 | 值 |
 |---|---|
 | 项目 | Composition Designer |
-| 版本 | v0.1 冻结；v0.2 M6 完成 |
-| 当前阶段 | v0.2 M6 完成；G01–G08 完成；ADR-0004/0005 Accepted；M7 Source 完成；下一阶段 S1 Schema v2.0 |
+| 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
+| 当前阶段 | M7 Source 完成；G09 文档一致性完成；**S1 032 完成（Schema v2.0 语义冻结，ADR-0006）**；下一步 033–035 实现 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
-| 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
+| 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
@@ -116,7 +116,7 @@
 | 设计基线（Rearchitect） | `docs/design/v0.1-design.md` |
 | 评审与路线图 | `docs/reviews/2026-11-27-project-review-and-roadmap.md` |
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
-| TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
+| TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（v1 已冻结）；v2.0 增量见 `docs/spec/composition-schema-v2.md`、`docs/spec/error-codes-v2.md`（032 冻结，033–035 实现） |
 | 编辑命令 Schema | `docs/spec/command-schema-v1.md`（M2 009） |
 | Layout 格式 | `docs/spec/designer-layout-v1.md`（M3 013） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
@@ -172,5 +172,8 @@
   外部冲突守卫；
 - 030/031 完成：CodeMirror 可编辑 Source、Review/Discard/冲突只读；Glide 试点 Source
   验收；workspace 173、UI 30、Tauri 16；M7 完成；
+- 032 完成：Schema v2.0 语义冻结（ADR-0006、`composition-schema-v2.md`、
+  `error-codes-v2.md`）：版本矩阵、接口标记、接口依赖、实例 scope、8 个新诊断、
+  `create_instance.scope`；无代码变更；033–035 实现；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

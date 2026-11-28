@@ -1,10 +1,10 @@
 # apps/designer/
 
 v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–015 已建立外壳、
-结构 Canvas/Tree、Inspector 配置编辑/Change Review、只读 CodeMirror Source 与外部修改
+结构 Canvas/Tree、Inspector 配置编辑/Change Review、CodeMirror Source 与外部修改
 同步/Reload；M6 022–025 增加 Instance/Binding/Connection/Dependency 编辑，
-026 完成 Change Review 的分类、Before/After、依赖影响与完整诊断；027 在 Glide 试点副本
-完成 CLI/Protocol 全链路验收。**
+026 完成 Change Review 的分类、Before/After、依赖影响与完整诊断；M7 029–031 把 Source
+升级为可编辑（草稿/Review/冲突只读），027 在 Glide 试点副本完成 CLI/Protocol 全链路验收。**
 
 | 区域 | 目录 | 职责 |
 |---|---|---|
@@ -13,7 +13,7 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
 | Inspector | `src/inspector/` | 实例详情、配置编辑、Instance/Binding 操作与 Change Review |
 | Relation Views | `src/relations/` | Connection 列表/端口投影与编辑、Dependency 只读投影（024） |
 | Change Review | `src/review/` | 分类、Before/After、命令、Dependency 影响、完整诊断（026） |
-| TOML Source | `src/source/` | CodeMirror 6 只读 Source、诊断定位（014） |
+| TOML Source | `src/source/` | CodeMirror 6 可编辑 Source、草稿/Review/冲突只读与诊断定位（014、030） |
 | Diagnostics | `src/diagnostics/` | 错误/警告、源码位置、修正提示 |
 | Agent Status | `src/agent-status/` | Agent 会话、Revision 与操作记录 |
 | Tauri Host | `src-tauri/` | `open_project` / 编辑事务 / layout / source IPC |
@@ -42,7 +42,8 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
 - Diagnostics：L1–L7 代码、消息、文件:行:列；点击可跳到 Source；
 - Change Review（026）：命令列表、Instance/Binding/Connection 分类、Before/After、
   Dependency Provider 影响、完整诊断与 accepted/rejected 分区；取消不写入，拒绝/失败保留诊断；
-- TOML Source：CodeMirror 6 只读展示 composition 入口；
+- TOML Source（030）：CodeMirror 6 可编辑 composition 入口；draft、Review 文本 + 对象
+  Diff、Discard；外部变更时只读并提示 Reload；仅 Composition 入口，模块文件仍只读（UW-031）；
 - 外部修改：2s digest 轮询；dirty 时禁编辑并提示 Reload；
 - 空状态 / 无效项目 / 有效项目三种界面；
 - 布局只写 `.designer/layout.toml`，编辑写 `composition/**` 但只经 Core 事务；
@@ -94,7 +95,7 @@ npm run tauri dev   # Tauri 开发模式
 - React 不重复实现 Core 的契约规则；
 - Tauri Host 不直接修改 TOML 以绕开 Core。
 
-## UI 自动化（020 / 022–026）
+## UI 自动化（020 / 022–026 / 030）
 
 ```powershell
 npm run test:ui
@@ -104,13 +105,14 @@ npm run test:ui
 - 通过 Vite preview 运行生产构建；
 - 测试在页面加载前注入测试专用 `window.__TAURI_INTERNALS__` fixture；
 - 生产代码不包含 fixture，真实 Tauri 后端仍由 host tests 覆盖；
-- 28 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
+- 30 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
   布局保存，Instance 重命名/换模块/创建/子树删除/非法 ID/拒绝事务，
   Binding 移动、Detach 诊断、required Slot 子树创建，
   三视图切换/选择保持、Connection 创建/修改/删除、Dependency 投影、
-  Provider 设置/清空，以及完整 Review 的 Before/After、多命令分类、
-  Connection 字段与 Dependency 影响。
-- `src-tauri/src/lib.rs` 另有 15 个 host tests，其中 11 个直接使用真实
-  `ProjectSession` 验证多命令事务与 TOML 写回（创建 + Binding、删除级联、
-  拒绝不写文件、重命名 root/引用、Binding 移动、Binding 子树创建、Detach 拒绝、
-  Connection 创建/修改/删除、非法方向拒绝、Dependency Provider 设置/清空）。
+  Provider 设置/清空，完整 Review 的 Before/After、多命令分类、
+  Connection 字段与 Dependency 影响，以及 Source 编辑 + 文本 Diff 与非法文本拒绝。
+- `src-tauri/src/lib.rs` 另有 16 个 host tests，其中 12 个直接使用真实
+  `ProjectSession` 验证多命令事务与 TOML 写回（Source 文本写回、创建 + Binding、
+  删除级联、拒绝不写文件、重命名 root/引用、Binding 移动、Binding 子树创建、
+  Detach 拒绝、Connection 创建/修改/删除、非法方向拒绝、
+  Dependency Provider 设置/清空）。

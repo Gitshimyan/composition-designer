@@ -25,3 +25,5 @@
 | D-018 | 2026-11-27 | 完成 030 Source UI | M7；Modify | CodeMirror 编辑、draft、Review/文本 Diff、Discard、冲突只读；30 UI |
 | D-019 | 2026-11-27 | 完成 031 M7 Source 验收 | M7；Modify | Glide 试点 Source 编辑；173 tests/16 Tauri/30 UI；M7 完成 |
 | D-020 | 2026-11-27 | 关闭 UW-011，登记 UW-031 | M7 完成后的覆盖审计 | Composition Source 已实现；模块文件编辑仍只读，转 UW-031 deferred |
+| D-021 | 2026-11-28 | 明确授权：先修正文档漂移（G09），再执行 032 Schema v2.0 ADR 批准与接口/服务语义冻结（Rearchitect + Extend） | 用户对话 | G09 文档一致性；032 可执行；033–035 仍需逐卡授权 |
+| D-022 | 2026-11-28 | 完成 032 Schema v2.0 语义冻结 | 用户授权（D-021）；032 卡 | ADR-0006、v2.0 规范与 8 个新代码；接口/scope/命令/兼容矩阵冻结；UW-002/003 in_progress；新增 UW-032；无代码变更 |

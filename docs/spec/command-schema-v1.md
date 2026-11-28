@@ -69,6 +69,15 @@ Source 命令（029 / ADR-0005）：
 - 只编辑 `workspace.composition` 指向的入口；模块定义仍只读；
 - 不做自动格式化、隐式修复、三向合并。
 
+### v2.0 注记（S1 032 冻结，033/034 实现）
+
+- `create_instance` 增加可选 `scope`：`structure`（默认）或 `service`；
+- v1 项目显式传 `scope`（即使值为 `structure`）→ `edit-invalid-command`；
+- v2 项目的 `service` 实例必须是 `primitive` 模块，由候选校验报
+  `contract-service-module-invalid`；
+- 其余命令形态不变；接口依赖的 provider 有效性由候选模型判定；
+- 完整语义见 [`composition-schema-v2.md`](./composition-schema-v2.md) §8。
+
 模块定义（`modules/**/module.toml`）在 v0.1 是只读的，不在命令范围内。
 
 ## 3. 事务规则
