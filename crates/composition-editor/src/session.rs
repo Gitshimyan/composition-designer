@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
@@ -528,12 +529,32 @@ impl ProjectSession {
         let _ = fs::remove_file(&temp);
         let _ = fs::remove_file(&backup);
 
-        fs::write(&temp, new_text).map_err(|error| {
+        let mut temp_file = fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&temp)
+            .map_err(|error| {
+                vec![transaction_failed(format!(
+                    "cannot create temporary {}: {error}",
+                    temp.display()
+                ))]
+            })?;
+        temp_file.write_all(new_text.as_bytes()).map_err(|error| {
+            let _ = fs::remove_file(&temp);
             vec![transaction_failed(format!(
                 "cannot write temporary {}: {error}",
                 temp.display()
             ))]
         })?;
+        temp_file.sync_all().map_err(|error| {
+            let _ = fs::remove_file(&temp);
+            vec![transaction_failed(format!(
+                "cannot flush temporary {}: {error}",
+                temp.display()
+            ))]
+        })?;
+        drop(temp_file);
         if let Err(error) = fs::rename(&path, &backup) {
             let _ = fs::remove_file(&temp);
             return Err(vec![transaction_failed(format!(
@@ -541,6 +562,7 @@ impl ProjectSession {
                 path.display()
             ))]);
         }
+        sync_directory_best_effort(path.parent());
         if let Err(error) = fs::rename(&temp, &path) {
             let _ = fs::rename(&backup, &path);
             let _ = fs::remove_file(&temp);
@@ -549,6 +571,7 @@ impl ProjectSession {
                 path.display()
             ))]);
         }
+        sync_directory_best_effort(path.parent());
 
         let validation = validate_project_with_profile(&self.root, self.profile.as_deref());
         if !validation.is_valid() {
@@ -558,6 +581,7 @@ impl ProjectSession {
                     "edited TOML is invalid and rollback failed: {error}"
                 ))]);
             }
+            sync_directory_best_effort(path.parent());
             let mut diagnostics = validation.diagnostics;
             if diagnostics.is_empty() {
                 diagnostics.push(transaction_failed(
@@ -567,6 +591,7 @@ impl ProjectSession {
             return Err(diagnostics);
         }
         let _ = fs::remove_file(&backup);
+        sync_directory_best_effort(path.parent());
         Ok(validation)
     }
 }
@@ -641,7 +666,27 @@ fn recover_composition_file(root: &Path, entry: &str) -> bool {
     let Some((_, backup)) = newest else {
         return false;
     };
-    fs::rename(backup, &path).is_ok()
+    if fs::rename(backup, &path).is_ok() {
+        sync_directory_best_effort(path.parent());
+        true
+    } else {
+        false
+    }
+}
+
+/// Best-effort directory durability. Unix flushes the directory entry; Windows
+/// has no portable directory fsync, so the file fsync + rename remain the barrier.
+fn sync_directory_best_effort(directory: Option<&Path>) {
+    #[cfg(unix)]
+    {
+        if let Some(directory) = directory {
+            let _ = fs::File::open(directory).and_then(|file| file.sync_all());
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = directory;
+    }
 }
 
 fn transaction_failed(message: impl Into<String>) -> Diagnostic {

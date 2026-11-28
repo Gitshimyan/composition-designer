@@ -2,7 +2,7 @@
 
 > 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010；G05 关闭 UW-030；
 > 032 冻结 v2.0 语义，UW-002/UW-003 转 in_progress，新增 UW-032；034 完成入口，035 完成 Glide v2 验收并关闭 UW-002/003；
-> 039 冻结 v2.1（format 3），UW-004/UW-018 转 in_progress；041 完成 CLI/MCP/Designer 入口与验收，关闭 UW-004/UW-018；042 完成 undo/redo，关闭 UW-014；043 持久化 Revision/request，关闭 UW-015。
+> 039 冻结 v2.1（format 3），UW-004/UW-018 转 in_progress；041 完成 CLI/MCP/Designer 入口与验收，关闭 UW-004/UW-018；042 完成 undo/redo，关闭 UW-014；043 持久化 Revision/request，关闭 UW-015；044 完成 fsync/崩溃恢复，关闭 UW-019。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -11,12 +11,12 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 32 |
-| 已实现 / 已关闭 | 17 |
+| 已实现 / 已关闭 | 18 |
 | 等待用户决策（pending_decision） | 5 |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 0 |
 | 进行中（in_progress） | 0 |
-| 明确延期（deferred） | 10 |
+| 明确延期（deferred） | 9 |
 
 ## 2. 登记表
 
@@ -40,7 +40,7 @@
 | UW-015 | 009 / 010 / 011 / 016 / 019 → 043 | Revision 历史与 request 幂等跨进程持久化 | 可靠性 | implemented | Modify / Extend（存储方案） | 重启后历史/幂等丢失 | 043 `.designer/state/<profile>.json`；重启恢复、过期/损坏丢弃 |
 | UW-016 | 014 | Inspector array 属性编辑 | UI 能力 | pending_decision | Modify | array 配置只能读/手改 TOML | 可在后续小卡补齐 |
 | UW-017 | 015 | 外部修改 watcher、三向合并、Review 草稿保留、layout 合并 | 产品能力 | deferred | Modify / Extend | 2s 轮询；Reload 丢弃 Review/布局 | M7 或独立评估 |
-| UW-019 | 011 / 013 / 019 | fsync 级崩溃恢复 | 可靠性 | deferred | Modify | 断电窗口仍存在 | 后续独立评估 |
+| UW-019 | 011 / 013 / 019 → 044 | fsync 级崩溃恢复 | 可靠性 | implemented | Modify | 断电窗口仍存在 | 044 文件 fsync + 目录 fsync（Unix）+ 备份恢复；Windows 目录 fsync best-effort |
 | UW-020 | 017 / 018 / 019 | MCP subscriptions/progress/cancel/auth/多项目 | 协议能力 | deferred | Extend | Agent 长任务/多项目能力不足 | 037 以只读 batch 覆盖批量读取；progress/cancel 仍无长任务证据，继续 deferred |
 | UW-021 | 018 | Agent Skill LLM 评测、跨平台配置生成 | 工程能力 | deferred | Extend | 仅工具链 e2e，仅 Windows 脚本 | 038 完成确定性 skill_eval + configure.mjs；LLM 质量评测仍 deferred |
 | UW-022 | 022 | 模块库/版本发现与下载 | 产品能力 | deferred | Extend / Rearchitect | 只能选已加载模块 | M9 方向 |

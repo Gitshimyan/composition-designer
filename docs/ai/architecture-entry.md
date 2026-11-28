@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
-| 当前阶段 | S1、M8、S2 完成；**H1 042–043 完成**；下一步 044 fsync/崩溃恢复（需授权） |
+| 当前阶段 | S1、M8、S2 完成；**H1 042–044 完成**；下一步 045 watcher/合并（需授权） |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
@@ -198,5 +198,7 @@
   Designer 按钮/快捷键；UW-014 关闭；241 workspace + 36 UI + 17 Tauri；
 - 043 完成：`.designer/state/<profile>.json` 持久化 Revision/request；重启恢复
   seq 与 request 幂等；过期/损坏状态丢弃；UW-015 关闭；247 workspace；
+- 044 完成：写临时文件 + 文件 fsync + 备份 + rename + 目录 fsync（Unix）+ 校验 + 清理；
+  崩溃窗口恢复测试；UW-019 关闭；251 workspace；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。
