@@ -6,7 +6,7 @@ use composition_domain::{
     InstanceScope, InterfaceId, LocalId, ModuleDefinition, ModuleId, ModuleKind, ObjectId,
     PortContract, PortDirection, Project, Revision, SchemaVersion, SourceDigest, Version,
 };
-use composition_toml::{load_project, LoadedWorkspace};
+use composition_toml::{load_project, load_project_with_profile, LoadedWorkspace};
 
 use crate::decode::decode;
 use crate::source_map::SourceMap;
@@ -32,6 +32,15 @@ impl ValidationResult {
 
 pub fn validate_project(root: impl AsRef<std::path::Path>) -> ValidationResult {
     let loaded = load_project(root);
+    validate_loaded(&loaded)
+}
+
+/// 按 profile 选择验证项目；`None` / `Some("default")` 使用 `workspace.composition`。
+pub fn validate_project_with_profile(
+    root: impl AsRef<std::path::Path>,
+    profile: Option<&str>,
+) -> ValidationResult {
+    let loaded = load_project_with_profile(root, profile);
     validate_loaded(&loaded)
 }
 
@@ -278,7 +287,7 @@ fn validate_parts(
 
     let mut model = CompositionModel::new(project.clone(), composition);
     model.modules = registry.into_values().collect();
-    if project.schema_version.is_v2() {
+    if project.schema_version.supports_interfaces() {
         for module in &mut model.modules {
             module.contract.enable_v2_output();
         }
@@ -318,45 +327,83 @@ fn check_versions(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let project_version = project.schema_version;
-    if project_version == SchemaVersion::V1 {
-        if composition.schema_version != SchemaVersion::V1 {
+    match project_version {
+        SchemaVersion::V1 => {
+            if composition.schema_version != SchemaVersion::V1 {
+                push_at(
+                    source_map,
+                    diagnostics,
+                    ErrorCode::SchemaUnsupportedVersion,
+                    "composition.schema_version must be 1 in a v1 project",
+                    &ObjectId::composition(),
+                );
+            }
+        }
+        SchemaVersion::V2 => {
+            if composition.schema_version != SchemaVersion::V2 {
+                let (code, message) = if composition.schema_version == SchemaVersion::V1 {
+                    (
+                        ErrorCode::SchemaVersionMismatch,
+                        "v2 project requires composition.schema_version = 2",
+                    )
+                } else {
+                    (
+                        ErrorCode::SchemaUnsupportedVersion,
+                        "unsupported composition.schema_version",
+                    )
+                };
+                push_at(
+                    source_map,
+                    diagnostics,
+                    code,
+                    message,
+                    &ObjectId::composition(),
+                );
+            }
+        }
+        SchemaVersion::V3 => {
+            if composition.schema_version != SchemaVersion::V3 {
+                let (code, message) = if matches!(
+                    composition.schema_version,
+                    SchemaVersion::V1 | SchemaVersion::V2
+                ) {
+                    (
+                        ErrorCode::SchemaVersionMismatch,
+                        "v3 project requires composition.schema_version = 3",
+                    )
+                } else {
+                    (
+                        ErrorCode::SchemaUnsupportedVersion,
+                        "unsupported composition.schema_version",
+                    )
+                };
+                push_at(
+                    source_map,
+                    diagnostics,
+                    code,
+                    message,
+                    &ObjectId::composition(),
+                );
+            }
+        }
+        other => {
             push_at(
                 source_map,
                 diagnostics,
                 ErrorCode::SchemaUnsupportedVersion,
-                "composition.schema_version must be 1 in a v1 project",
-                &ObjectId::composition(),
+                format!("unsupported project.schema_version {other}"),
+                &ObjectId::project(),
             );
         }
-    } else if project_version == SchemaVersion::V2
-        && composition.schema_version != SchemaVersion::V2
-    {
-        let (code, message) = if composition.schema_version == SchemaVersion::V1 {
-            (
-                ErrorCode::SchemaVersionMismatch,
-                "v2 project requires composition.schema_version = 2",
-            )
-        } else {
-            (
-                ErrorCode::SchemaUnsupportedVersion,
-                "unsupported composition.schema_version",
-            )
-        };
-        push_at(
-            source_map,
-            diagnostics,
-            code,
-            message,
-            &ObjectId::composition(),
-        );
     }
 
     for module in registry.values() {
         let module_version = module.contract.schema_version();
-        let supported = if project_version.is_v2() {
-            module_version.is_supported()
-        } else {
-            module_version == SchemaVersion::V1
+        let supported = match project_version {
+            SchemaVersion::V1 => module_version == SchemaVersion::V1,
+            SchemaVersion::V2 => matches!(module_version, SchemaVersion::V1 | SchemaVersion::V2),
+            SchemaVersion::V3 => module_version.is_supported(),
+            _ => false,
         };
         if !supported {
             push_at(

@@ -31,6 +31,9 @@ pub enum ErrorCode {
     SchemaDuplicateEntry,
     SchemaConstraintMismatch,
     SchemaVersionMismatch,
+    ProfileNotFound,
+    ProfileUnsupported,
+    ProfileReservedName,
     // L3 — identity and references
     IdDuplicateModule,
     IdDuplicateInstance,
@@ -94,7 +97,7 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 77] = [
+    pub const ALL: [Self; 80] = [
         Self::FileProjectMissing,
         Self::FileCompositionMissing,
         Self::FileModuleRootMissing,
@@ -118,6 +121,9 @@ impl ErrorCode {
         Self::SchemaDuplicateEntry,
         Self::SchemaConstraintMismatch,
         Self::SchemaVersionMismatch,
+        Self::ProfileNotFound,
+        Self::ProfileUnsupported,
+        Self::ProfileReservedName,
         Self::IdDuplicateModule,
         Self::IdDuplicateInstance,
         Self::IdDuplicateBinding,
@@ -199,6 +205,9 @@ impl ErrorCode {
             Self::SchemaDuplicateEntry => "schema-duplicate-entry",
             Self::SchemaConstraintMismatch => "schema-constraint-mismatch",
             Self::SchemaVersionMismatch => "schema-version-mismatch",
+            Self::ProfileNotFound => "profile-not-found",
+            Self::ProfileUnsupported => "profile-unsupported",
+            Self::ProfileReservedName => "profile-reserved-name",
             Self::IdDuplicateModule => "id-duplicate-module",
             Self::IdDuplicateInstance => "id-duplicate-instance",
             Self::IdDuplicateBinding => "id-duplicate-binding",
@@ -287,7 +296,10 @@ impl ErrorCode {
             | Self::SchemaEmptyValue
             | Self::SchemaDuplicateEntry
             | Self::SchemaConstraintMismatch
-            | Self::SchemaVersionMismatch => ErrorLayer::L2,
+            | Self::SchemaVersionMismatch
+            | Self::ProfileNotFound
+            | Self::ProfileUnsupported
+            | Self::ProfileReservedName => ErrorLayer::L2,
             Self::IdDuplicateModule
             | Self::IdDuplicateInstance
             | Self::IdDuplicateBinding
@@ -398,9 +410,9 @@ mod tests {
 
     #[test]
     fn all_codes_are_listed_once() {
-        assert_eq!(ErrorCode::ALL.len(), 77);
+        assert_eq!(ErrorCode::ALL.len(), 80);
         let unique: HashSet<&str> = ErrorCode::ALL.iter().map(|code| code.as_str()).collect();
-        assert_eq!(unique.len(), 77);
+        assert_eq!(unique.len(), 80);
     }
 
     #[test]
@@ -413,7 +425,7 @@ mod tests {
             .iter()
             .filter(|code| code.is_reserved())
             .count();
-        assert_eq!(validation, 71);
+        assert_eq!(validation, 74);
         assert_eq!(reserved, 6);
     }
 

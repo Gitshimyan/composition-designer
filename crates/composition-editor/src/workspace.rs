@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use composition_core::{validate_model, validate_project, SourceMap, ValidationResult};
+use composition_core::{
+    validate_model, validate_project, validate_project_with_profile, SourceMap, ValidationResult,
+};
 use composition_domain::{
     Binding, CompositionModel, Diagnostic, ErrorCode, Instance, InstanceScope, ModuleRef, ObjectId,
     PortRef, Revision, SchemaVersion,
@@ -60,6 +62,13 @@ impl EditorWorkspace {
 
     pub fn open(root: impl AsRef<std::path::Path>) -> Result<Self, Vec<Diagnostic>> {
         Self::from_validation(validate_project(root))
+    }
+
+    pub fn open_with_profile(
+        root: impl AsRef<std::path::Path>,
+        profile: Option<&str>,
+    ) -> Result<Self, Vec<Diagnostic>> {
+        Self::from_validation(validate_project_with_profile(root, profile))
     }
 
     pub fn model(&self) -> &CompositionModel {

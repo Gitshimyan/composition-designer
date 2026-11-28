@@ -32,7 +32,7 @@ pub use error_code::{ErrorCode, ErrorLayer, Severity};
 pub use ids::{InterfaceId, LocalId, ModuleId, TypeId, Version};
 pub use model::{
     CompositionModel, DependencyResolution, DependencyStatus, DependencyTargetInfo,
-    DependencyTargetKind, Project,
+    DependencyTargetKind, ProfileDefinition, Project,
 };
 pub use module::{ModuleDefinition, ModuleKind};
 pub use revision::{Revision, SourceDigest};

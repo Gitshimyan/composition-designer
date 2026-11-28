@@ -11,6 +11,12 @@ use crate::schema::SchemaVersion;
 use crate::source::SourceRef;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ProfileDefinition {
+    pub name: String,
+    pub composition: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Project {
     pub schema_version: SchemaVersion,
     pub id: ModuleId,
@@ -18,6 +24,15 @@ pub struct Project {
     pub composition_entry: String,
     pub module_roots: Vec<String>,
     pub source: Option<SourceRef>,
+    /// v2.1：`workspace.composition`（默认 profile 的入口）。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_composition: Option<String>,
+    /// v2.1：`"default"` 或具名 profile。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_profile: Option<String>,
+    /// v2.1：具名 profile（不含默认），按 name 升序。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub profiles: Vec<ProfileDefinition>,
 }
 
 impl Project {
@@ -35,6 +50,9 @@ impl Project {
             composition_entry: composition_entry.into(),
             module_roots,
             source: None,
+            default_composition: None,
+            active_profile: None,
+            profiles: Vec::new(),
         }
     }
 }

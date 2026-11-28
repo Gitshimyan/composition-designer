@@ -34,3 +34,4 @@
 | D-027 | 2026-11-28 | 完成 037 只读 batch | 用户授权 M8；Extend + Rearchitect（协议文档） | batch 1..16、只读白名单、逐项结果；CLI/MCP；218 workspace 测试；progress/cancel 仍 deferred |
 | D-028 | 2026-11-28 | 完成 038 Skill 评测与 M8 收口 | 用户授权 M8；Modify + Extend | skill_eval（minimal + Glide v2）、configure.mjs、EVALUATION；220 workspace 测试；M8 完成 |
 | D-029 | 2026-11-28 | 完成 039 Schema v2.1 语义冻结 | 用户明确授权开始 S2（039–041）；Rearchitect + Extend | format 3、`[profiles]`、选择/Revision/Digest/3 个诊断；ADR-0007；UW-004/018 in_progress；无代码变更 |
+| D-030 | 2026-11-28 | 完成 040 Core/Session profile 实现 | 用户授权 S2；Rearchitect + Modify | v3、Loader/Core 选择、Revision/Digest、Session/Source；233 workspace；v1/v2.0 不变 |

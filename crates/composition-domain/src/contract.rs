@@ -792,7 +792,7 @@ impl Contract {
     pub fn for_schema(schema_version: SchemaVersion) -> Self {
         Self {
             schema_version,
-            v2_output: schema_version.is_v2(),
+            v2_output: schema_version.supports_interfaces(),
             properties: BTreeMap::new(),
             slots: BTreeMap::new(),
             ports: BTreeMap::new(),

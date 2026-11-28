@@ -365,7 +365,7 @@ fn unsupported_schema_version_is_rejected_without_migration() {
     let text = fs::read_to_string(&project_file).unwrap();
     fs::write(
         &project_file,
-        text.replacen("schema_version = 1", "schema_version = 3", 1),
+        text.replacen("schema_version = 1", "schema_version = 4", 1),
     )
     .unwrap();
     let workspace = load_project(&directory);

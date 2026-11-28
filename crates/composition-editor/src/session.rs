@@ -3,11 +3,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use composition_core::{validate_loaded, validate_project, ValidationResult};
+use composition_core::{validate_loaded, validate_project_with_profile, ValidationResult};
 use composition_domain::{
     CompositionModel, ConfigValue, Diagnostic, ErrorCode, LocalId, ObjectId, PortRef, Revision,
 };
-use composition_toml::{load_project, load_project_with_composition_text};
+use composition_toml::{load_project_with_profile, load_project_with_profile_and_composition_text};
 use toml_edit::{Array, ArrayOfTables, DocumentMut, Item, Table, Value};
 
 use crate::command::{Command, Transaction};
@@ -27,6 +27,7 @@ struct SourceCommitted {
 #[derive(Debug)]
 pub struct ProjectSession {
     root: PathBuf,
+    profile: Option<String>,
     composition_entry: String,
     current_text: String,
     document: DocumentMut,
@@ -36,13 +37,20 @@ pub struct ProjectSession {
 
 impl ProjectSession {
     pub fn open(root: impl AsRef<Path>) -> Result<Self, Vec<Diagnostic>> {
+        Self::open_with_profile(root, None)
+    }
+
+    pub fn open_with_profile(
+        root: impl AsRef<Path>,
+        profile: Option<&str>,
+    ) -> Result<Self, Vec<Diagnostic>> {
         let root = root.as_ref().to_path_buf();
-        let mut loaded = load_project(&root);
+        let mut loaded = load_project_with_profile(&root, profile);
         if loaded.composition_file().is_none() {
             if let Some(project) = loaded.project.as_ref() {
                 let entry = project.composition_entry.clone();
                 if recover_composition_file(&root, &entry) {
-                    loaded = load_project(&root);
+                    loaded = load_project_with_profile(&root, profile);
                 }
             }
         }
@@ -62,6 +70,7 @@ impl ProjectSession {
         })?;
         Ok(Self {
             root,
+            profile: profile.map(str::to_owned),
             composition_entry,
             current_text,
             document,
@@ -191,7 +200,11 @@ impl ProjectSession {
             };
         }
 
-        let loaded = load_project_with_composition_text(&self.root, source);
+        let loaded = load_project_with_profile_and_composition_text(
+            &self.root,
+            self.profile.as_deref(),
+            source,
+        );
         let validation = validate_loaded(&loaded);
         if !validation.is_valid() {
             return TransactionOutcome::Rejected {
@@ -231,7 +244,8 @@ impl ProjectSession {
             return rejected_source("replace_source must be the only command in a transaction");
         };
 
-        let disk_digest = validate_project(&self.root).source_digest;
+        let disk_digest =
+            validate_project_with_profile(&self.root, self.profile.as_deref()).source_digest;
         if disk_digest != self.workspace.revision().source_digest {
             return TransactionOutcome::Rejected {
                 diagnostics: vec![Diagnostic::new(
@@ -339,7 +353,7 @@ impl ProjectSession {
             ))]);
         }
 
-        let validation = validate_project(&self.root);
+        let validation = validate_project_with_profile(&self.root, self.profile.as_deref());
         if !validation.is_valid() {
             let _ = fs::remove_file(&path);
             if let Err(error) = fs::rename(&backup, &path) {

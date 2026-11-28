@@ -57,7 +57,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | M7 Source Authoring（029–031） | 完成：`replace_source` 独占事务、可编辑 Source、文本+对象 Diff、Glide 验收；G06–G08 完成 |
 | S1 Schema v2.0（032–035） | 完成：语义冻结、Core 校验、命令/UI/入口、11 个 v2 数据集与 Glide v2 试点验收；UW-002/003 关闭 |
 | M8 Agent Authoring（036–038） | 完成：`context`/`impact`、只读 `batch`、Skill 评测与跨平台配置；220 workspace 测试 |
-| S2 Schema v2.1（039） | 039 完成：format 3、`[profiles]`、选择/Revision/Digest/3 个诊断冻结；ADR-0007；040–041 实现 |
+| S2 Schema v2.1（039–040） | 039 语义冻结；040 Core/Session profile 选择、Revision/Digest；233 workspace 测试；041 入口与验收待做 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；

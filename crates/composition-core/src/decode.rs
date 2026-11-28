@@ -691,7 +691,7 @@ fn decode_contract(
     schema_version: SchemaVersion,
     module_object: &ObjectId,
 ) -> Contract {
-    let is_v2 = schema_version.is_v2();
+    let is_v2 = schema_version.supports_interfaces();
     let mut allowed = vec!["properties", "slots", "ports", "dependencies"];
     if is_v2 {
         allowed.push("interfaces");
@@ -1287,7 +1287,7 @@ fn decode_composition(
     )
     .unwrap_or(1);
     let schema_version = SchemaVersion::new(u16::try_from(schema_version).unwrap_or(0));
-    let composition_is_v2 = schema_version.is_v2();
+    let composition_is_v2 = schema_version.supports_interfaces();
     let id_raw = match required_string(
         &mut ctx,
         composition_table,

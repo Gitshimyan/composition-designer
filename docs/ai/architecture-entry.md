@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
-| 当前阶段 | S1、M8 完成；**S2 039 完成（v2.1 Profile/多入口语义冻结）**；下一步 040–041 |
+| 当前阶段 | S2 039–040 完成（语义冻结 + Core/Session）；下一步 **041 入口与验收** |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
@@ -190,5 +190,7 @@
   `agent/EVALUATION.md`；220 workspace 测试；M8 完成；
 - 039 完成：Schema v2.1（format 3）Profile/多入口语义冻结（ADR-0007、
   `composition-schema-v3.md`、`error-codes-v3.md`）；3 个新代码；无代码变更；040–041 实现；
+- 040 完成：Domain v3、Loader `[profiles]`/选择、Core 版本矩阵与校验、
+  Revision/Digest 作用域、Session/Source 绑定；v1/v2.0 不变；233 workspace；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

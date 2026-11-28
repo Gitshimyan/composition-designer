@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：220 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
-> 当前阶段：S1、M8 完成；**S2 039 完成（v2.1 Profile/多入口语义冻结）**；下一步 040–041。
+> 测试基线：233 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
+> 当前阶段：S2 039–040 完成（语义冻结 + Core/Session）；下一步 **041 入口与验收**。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -54,6 +54,8 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 - M8 036–038 完成：context/impact、只读 batch、Skill 评测与 configure.mjs；220 workspace。
 - S2 039 完成：v2.1（format 3）Profile/多入口语义冻结（ADR-0007、v3 规范与 3 个诊断）；
   UW-004/UW-018 转 in_progress；无代码变更。
+- S2 040 完成：Domain v3、Loader 按 profile 选择、Core 校验/Revision/Digest、
+  Session/Source 作用域；核心 11 + editor 2 测试；v1/v2.0 不变。
 - 未决登记：32 项；13 已关闭、5 等待决策、0 已接受待排期、2 进行中、12 延期、0 等待授权。
 - 关键缺口：S2 实现（040–041）、撤销/历史持久化、fsync、三向合并/草稿保留、
   ConfigValue float wire、模块文件编辑（UW-031）。
@@ -176,7 +178,7 @@ M8 验收：
 | 卡 | 交付 | 授权 | 状态 |
 |---|---|---|---|
 | 039 | ADR + 规范：Profile 表、`schema_version` 矩阵、选择/Revision/Digest、错误码、CLI/MCP/Designer 语义 | Rearchitect + Extend | done |
-| 040 | Domain/Loader/Core/Session：Project profiles、按 profile 加载/校验/Revision/Digest | Rearchitect + Modify | todo |
+| 040 | Domain/Loader/Core/Session：Project profiles、按 profile 加载/校验/Revision/Digest | Rearchitect + Modify | done |
 | 041 | CLI/MCP/Designer profile 选择、Source/Review 按 profile；fixtures 与验收 | Extend + Modify | todo |
 
 交付：
@@ -185,6 +187,9 @@ M8 验收：
   [composition-schema-v3.md](../docs/spec/composition-schema-v3.md)、
   [error-codes-v3.md](../docs/spec/error-codes-v3.md)；format 3、`[profiles]`、
   默认/显式选择、Revision/Digest 作用域、3 个新代码；无代码变更。
+- 040：`SchemaVersion` v3、`Project.profiles/default/active`、`load_project_with_profile`、
+  `validate_project_with_profile`、`ProjectSession::open_with_profile`；
+  3 个诊断；按 profile 的 Digest/Source；v1/v2.0 输出不变。
 
 S2 验收：
 
@@ -301,14 +306,15 @@ npm run desktop
 | 2026-11-28 | 037 | 只读 batch：protocol/CLI/MCP、限流与逐项结果；218 tests；无 progress/cancel |
 | 2026-11-28 | 038 | Skill 评测（minimal + Glide v2）、configure.mjs；220 tests；M8 完成 |
 | 2026-11-28 | 039 | v2.1 语义冻结：format 3、Profile/多入口、选择/Revision/Digest、3 个新代码；无代码变更 |
+| 2026-11-28 | 040 | Domain v3、Loader/Core profile 选择、Revision/Digest、Session/Source 作用域；233 tests |
 
 ## 11. 下一步
 
 M7/S1/M8 完成，S2 进行中。下一步：
 
-1. **040 — Domain/Loader/Core/Session**：Project profiles、按 profile 加载/校验、
-   Revision/Digest；需 Rearchitect + Modify 授权（已在 S2 授权内）；
-2. **041 — 入口与验收**：CLI/MCP/Designer profile 选择、Source/Review、fixtures；
-3. S2 后 H1 可靠性；M9 生态按需；UW-020/UW-031 仍 deferred。
+1. **041 — 入口与验收**：CLI/MCP/Designer profile 选择、Source/Review、v3 fixtures；
+   需 Extend + Modify 授权（已在 S2 授权内）；
+2. S2 后 H1 可靠性；M9 生态按需；UW-020/UW-031 仍 deferred；
+3. 041 验收后关闭 UW-004/UW-018。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。
