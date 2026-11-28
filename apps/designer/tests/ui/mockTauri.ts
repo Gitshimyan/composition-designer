@@ -653,6 +653,9 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           };
         case "reload_project":
           testState.dirty = false;
+          if (data.mode === "valid" && !currentSource.endsWith("# external change\n")) {
+            currentSource = `${currentSource}\n# external change\n`;
+          }
           return structuredClone(current);
         case "prepare_transaction": {
           testState.prepareCalls += 1;

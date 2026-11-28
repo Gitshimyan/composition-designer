@@ -376,17 +376,16 @@ export default function App() {
   async function handleReloadProject() {
     setReloading(true);
     setEditError(null);
+    const review = pendingReview;
     try {
       const next = await reloadProject();
       setSnapshot(next);
       setExternal(null);
-      setPendingReview(null);
       setCreateDraft(null);
-    setServiceDraft(false);
+      setServiceDraft(false);
       setBindingDraft(null);
       setConnectionDraft(null);
       setProviderDraft(null);
-      setBottomTab("diagnostics");
       setRevealLine(null);
       if (next.model) {
         const composition = next.model.composition;
@@ -410,6 +409,23 @@ export default function App() {
         }
       } else {
         setSource(null);
+      }
+      if (review && next.model?.revision) {
+        const rebased = {
+          ...review.transaction,
+          base_revision: next.model.revision,
+        };
+        try {
+          const preview = await prepareTransaction(rebased);
+          setPendingReview({ ...review, transaction: rebased, preview });
+        } catch (reason) {
+          setPendingReview(null);
+          setEditError(
+            reason instanceof Error ? reason.message : String(reason),
+          );
+        }
+      } else if (!next.model) {
+        setPendingReview(null);
       }
     } catch (reason) {
       setEditError(reason instanceof Error ? reason.message : String(reason));
@@ -1227,8 +1243,11 @@ export default function App() {
           transaction={pendingReview.transaction}
           preview={pendingReview.preview}
           description={pendingReview.description}
-          busy={reviewBusy}
+          busy={reviewBusy || reloading}
           error={editError}
+          externalDirty={externalDirty}
+          reloading={reloading}
+          onReload={() => void handleReloadProject()}
           onApply={() => void applyPendingReview()}
           onClose={() => {
             setPendingReview(null);

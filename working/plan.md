@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：251 Core/Protocol/MCP/CLI + 36 UI + 17 Tauri。
-> 当前阶段：S1、M8、S2 完成；**H1 042–044 完成**；下一步 045（需单独授权）。
+> 测试基线：251 Core/Protocol/MCP/CLI + 38 UI + 17 Tauri。
+> 当前阶段：S1、M8、S2 完成；**H1 042–045 完成（045 部分项 deferred）**；下一步 046（需单独授权）。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -64,6 +64,8 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
   幂等恢复；过期/损坏状态丢弃；UW-015 关闭；247 workspace。
 - H1 044 完成：写临时文件 → 文件 fsync → 备份 → rename → 目录 fsync（Unix）→ 校验 →
   删除备份；崩溃窗口恢复测试；UW-019 关闭；251 workspace。
+- H1 045 完成：Source 草稿跨外部修改保留、Review 语义重基、冲突 UX；保留 2s 轮询；
+  原生 watcher/自动三向合并/layout 合并仍 deferred（UW-017）；38 UI。
 - 未决登记：32 项；18 已关闭、5 等待决策、0 已接受待排期、0 进行中、9 延期、0 等待授权。
 - 关键缺口：H1 043–046（Revision 持久化、fsync、外部合并、WebView2 smoke）、
   ConfigValue float wire、模块文件编辑（UW-031）。
@@ -221,8 +223,9 @@ S2 验收（全部满足）：
 - 042 撤销/重做（UW-014）— **done**：会话文本快照、新 Revision、按钮/快捷键；
 - 043 Revision/request 跨进程持久化（UW-015）— **done**：`.designer/state/`、重启恢复；
 - 044 fsync/崩溃恢复（UW-019）— **done**：文件 fsync、目录 fsync（Unix）、备份恢复；
-- 045 外部 watcher/三向合并/草稿保留（UW-017）— 下一步，需单独授权；
-- 046 真实 WebView2 smoke（UW-012）。
+- 045 外部 watcher/三向合并/草稿保留（UW-017）— **部分完成**：草稿保留 + Review 重基；
+  原生 watcher/自动三向合并/layout 合并 deferred；
+- 046 真实 WebView2 smoke（UW-012）— 下一步，需单独授权。
 
 按真实使用反馈排序，不默认全部进入下一版；每张卡单独授权。
 
@@ -322,16 +325,16 @@ npm run desktop
 | 2026-11-28 | 042 | Editor/Designer undo/redo、Tauri IPC、快捷键；241 tests + 36 UI + 17 Tauri；UW-014 关闭 |
 | 2026-11-28 | 043 | Revision/request 跨进程状态（`.designer/state/`）、过期/损坏丢弃；247 tests；UW-015 关闭 |
 | 2026-11-28 | 044 | fsync/目录同步/备份恢复；251 tests；UW-019 关闭 |
+| 2026-11-28 | 045 | 草稿保留 + Review 重基；保留轮询；watcher/三向合并 deferred；38 UI |
 
 ## 11. 下一步
 
 M7/S1/M8/S2 完成，H1 进行中。下一步：
 
-1. **045 — 外部 watcher/三向合并/草稿保留**（UW-017）：需单独授权（Modify + Extend）；
-   先确认是保留现有 2s 轮询还是引入 watcher，以及三向合并的冲突 UI；
-2. **046 — 真实 WebView2 smoke**（UW-012）：需单独授权（Extend/工具链）；
+1. **046 — 真实 WebView2 smoke**（UW-012）：需单独授权（Extend/工具链）；
+2. UW-017 剩余项（原生 watcher、自动三向合并、layout 合并）按真实反馈再评估；
 3. M9 生态按需；UW-020（progress/cancel）、UW-031（模块文件编辑）、
    UW-032（接口形状）仍 deferred；
-4. 044 的 Windows 目录 fsync 为 best-effort；生产环境仍需实际断电/VM 测试。
+4. 045 决策见 ADR-0008：保留 2s 轮询，不做自动合并。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

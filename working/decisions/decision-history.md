@@ -39,3 +39,4 @@
 | D-032 | 2026-11-28 | 完成 042 undo/redo | 用户明确授权 042 undo；Extend + Modify | Editor 文本快照 undo/redo、新 Revision；Tauri IPC；Designer 按钮/快捷键；241 workspace + 36 UI + 17 Tauri；UW-014 关闭 |
 | D-033 | 2026-11-28 | 完成 043 Revision/request 持久化 | 用户明确授权 043；Modify + Extend | `.designer/state/<profile>.json`；重启恢复 seq/request；过期/损坏丢弃；247 workspace；UW-015 关闭 |
 | D-034 | 2026-11-28 | 完成 044 fsync/崩溃恢复 | 用户明确授权 044；Modify | 文件 fsync、目录 fsync（Unix）、备份恢复、清理；251 workspace；UW-019 关闭 |
+| D-035 | 2026-11-28 | 完成 045 草稿/外部修改策略 | 用户授权 045 并要求研究后决策；Modify + Extend | 保留 2s 轮询；Source 草稿保留 + Review 重基；原生 watcher/三向合并 deferred（UW-017）；38 UI |

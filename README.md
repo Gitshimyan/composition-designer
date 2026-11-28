@@ -2,7 +2,7 @@
 
 > v0.2 M6 与 G01–G08 完成；ADR-0004/0005 Accepted。
 > M7 Source Authoring 完成（029–031：编辑 Source、文本+对象 Review、Glide 验收）。
-> S1、M8、S2 完成；H1 042–044 完成：undo/redo、跨进程 Revision/request、fsync/崩溃恢复；下一步 045。
+> S1、M8、S2 完成；H1 042–045 完成：undo/redo、跨进程状态、fsync、草稿保留与 Review 重基；下一步 046。
 > 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
@@ -58,7 +58,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | S1 Schema v2.0（032–035） | 完成：语义冻结、Core 校验、命令/UI/入口、11 个 v2 数据集与 Glide v2 试点验收；UW-002/003 关闭 |
 | M8 Agent Authoring（036–038） | 完成：`context`/`impact`、只读 `batch`、Skill 评测与跨平台配置；220 workspace 测试 |
 | S2 Schema v2.1（039–041） | 完成：format 3 Profile/多入口、CLI/MCP/Designer 选择、v3 数据集；238 workspace + 35 UI + 17 Tauri |
-| H1 可靠性（042–044） | 042 undo/redo；043 跨进程状态；044 fsync/目录同步/崩溃恢复；251 workspace + 36 UI + 17 Tauri |
+| H1 可靠性（042–045） | 042 undo/redo；043 跨进程状态；044 fsync；045 草稿保留 + Review 重基；251 workspace + 38 UI + 17 Tauri |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
@@ -181,6 +181,7 @@ composition-designer/
 - [ADR-0005 Source 编辑事务](./docs/adr/0005-source-editing-transaction.md)
 - [ADR-0006 Schema v2.0 冻结](./docs/adr/0006-schema-v2-freeze.md)
 - [ADR-0007 Schema v2.1 Profile 冻结](./docs/adr/0007-schema-v21-profiles.md)
+- [ADR-0008 外部修改与草稿策略](./docs/adr/0008-external-change-drafts.md)
 - [crates 职责与依赖方向](./crates/README.md)
 - [Designer UI 区域](./apps/designer/README.md)
 - [Agent Skill / MCP 配置](./agent/README.md)

@@ -26,6 +26,8 @@ S1 034 增加 Services 视图、service 创建、scope 与接口目标展示。*
   重启后恢复 seq，过期/损坏状态丢弃；不含 undo 文本栈；
 - 写回：临时文件 + 文件 fsync + 备份 + rename + 目录 fsync（Unix）后校验；崩溃窗口由
   `.bak-*` 恢复；Windows 无目录 fsync，采用 best-effort；
+- 外部修改：2s 轮询；外部 dirty 时阻止写入；Source 草稿保留，Review 在 Reload 后按新
+  Revision 重新准备（`ADR-0008`）；不自动三向合并；
 - Explorer：项目、模块、结构 Tree（层级/slot/选择/聚焦）；
 - Composition：`@xyflow/react` 实例节点 + Binding 边、Fit/Reset、拖动节点；
 - Inspector：

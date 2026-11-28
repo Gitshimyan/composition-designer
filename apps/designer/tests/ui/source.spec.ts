@@ -37,6 +37,29 @@ test("edits source, reviews text diff and applies", async ({ page }) => {
   await expect(editor).toContainText("Edited from source");
 });
 
+test("keeps a source draft across an external reload", async ({ page }) => {
+  const editor = await openSource(page);
+  const draft = sourceText.replace(
+    'title = "Minimal Project"',
+    'title = "Draft kept"',
+  );
+  await replaceSource(page, editor, draft);
+  await page.evaluate(() => {
+    (window as unknown as { __COMPOSITION_TEST__: { dirty: boolean } })
+      .__COMPOSITION_TEST__.dirty = true;
+  });
+
+  const banner = page.locator(".external-banner");
+  await expect(banner).toBeVisible({ timeout: 6_000 });
+  await banner.getByRole("button", { name: "Reload project" }).click();
+  await expect(banner).toBeHidden();
+  await expect(editor).toContainText("Draft kept");
+  await expect(page.locator(".source-mode")).toContainText(
+    "Draft kept across external change",
+  );
+  await expect(page.getByRole("button", { name: "Review source" })).toBeEnabled();
+});
+
 test("rejects invalid source and keeps the draft until discard", async ({ page }) => {
   const editor = await openSource(page);
   const invalid = sourceText.replace(

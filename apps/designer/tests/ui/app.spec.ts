@@ -150,6 +150,28 @@ test("blocks editing after an external change and reloads", async ({ page }) => 
   await expect(page.locator(".project-name")).toHaveText("Minimal Project");
 });
 
+test("rebases an open review after an external reload", async ({ page }) => {
+  await openValid(page);
+  const input = titleRow(page).locator("input");
+  await input.fill("Rebased title");
+  await titleRow(page).getByRole("button", { name: "Review" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+
+  await page.evaluate(() => {
+    (window as unknown as { __COMPOSITION_TEST__: { dirty: boolean } })
+      .__COMPOSITION_TEST__.dirty = true;
+  });
+  const banner = page.locator(".external-banner");
+  await expect(banner).toBeVisible({ timeout: 6_000 });
+  await dialog.getByRole("button", { name: "Reload and revalidate" }).click();
+  await expect(banner).toBeHidden();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Apply transaction" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(input).toHaveValue("Rebased title");
+});
+
 test("saves layout without changing the source digest", async ({ page }) => {
   await openValid(page);
   const digestBefore = await page.locator(".status-digest").getAttribute("title");
