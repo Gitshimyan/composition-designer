@@ -2,8 +2,9 @@ use std::collections::BTreeSet;
 use std::ops::Range;
 
 use composition_domain::{
-    Binding, Composition, ConfigValue, Connection, Contract, DependencyRequirement, Diagnostic,
-    ErrorCode, Instance, LocalId, ModuleDefinition, ModuleId, ModuleKind, ModuleRef, ObjectId,
+    Binding, Composition, ConfigValue, Connection, Contract, DependencyRequirement,
+    DependencyTarget, Diagnostic, ErrorCode, Instance, InstanceScope, InterfaceDeclaration,
+    InterfaceId, LocalId, ModuleDefinition, ModuleId, ModuleKind, ModuleRef, ObjectId,
     PortContract, PortDirection, PortRef, PropertyContract, PropertyType, SchemaVersion,
     SlotCardinality, SlotContract, TypeId, Version,
 };
@@ -30,9 +31,16 @@ pub(crate) fn decode(loaded: &LoadedWorkspace) -> DecodedWorkspace {
     }
 
     let mut modules = Vec::new();
+    let project_version = loaded
+        .project
+        .as_ref()
+        .map(|project| project.schema_version)
+        .unwrap_or(SchemaVersion::V1);
     for file in loaded.module_files() {
         if file.document().is_some() {
-            if let Some(module) = decode_module(file, &mut diagnostics, &mut source_map) {
+            if let Some(module) =
+                decode_module(file, project_version, &mut diagnostics, &mut source_map)
+            {
                 modules.push(module);
             }
         }
@@ -44,7 +52,7 @@ pub(crate) fn decode(loaded: &LoadedWorkspace) -> DecodedWorkspace {
         if let Some(file) = loaded.composition_file() {
             if file.document().is_some() {
                 let (decoded, invalid) =
-                    decode_composition(file, &mut diagnostics, &mut source_map);
+                    decode_composition(file, project_version, &mut diagnostics, &mut source_map);
                 composition = decoded;
                 invalid_instances = invalid;
             }
@@ -514,6 +522,7 @@ fn decode_config_value(
 
 fn decode_module(
     file: &LoadedFile,
+    _project_version: SchemaVersion,
     diagnostics: &mut Vec<Diagnostic>,
     source_map: &mut SourceMap,
 ) -> Option<ModuleDefinition> {
@@ -567,14 +576,6 @@ fn decode_module(
     let schema_version =
         required_integer(&mut ctx, module_table, "schema_version", "module", None)?;
     let schema_version = SchemaVersion::new(u16::try_from(schema_version).unwrap_or(0));
-    if !schema_version.is_supported() {
-        ctx.push(
-            ErrorCode::SchemaUnsupportedVersion,
-            "module.schema_version must be 1 for v0.1",
-            module_table.get("schema_version").and_then(Item::span),
-            None,
-        );
-    }
     let id_raw = required_string(&mut ctx, module_table, "id", "module", None)?;
     let id = match ModuleId::parse(&id_raw) {
         Ok(id) => id,
@@ -658,7 +659,7 @@ fn decode_module(
         );
     }
 
-    let mut contract = Contract::new();
+    let mut contract = Contract::for_schema(schema_version);
     if let Some(contract_table) = optional_table(
         &mut ctx,
         root,
@@ -666,7 +667,14 @@ fn decode_module(
         "module file",
         Some(&module_object),
     ) {
-        contract = decode_contract(&mut ctx, contract_table, &id, &version, &module_object);
+        contract = decode_contract(
+            &mut ctx,
+            contract_table,
+            &id,
+            &version,
+            schema_version,
+            &module_object,
+        );
     }
 
     let mut module = ModuleDefinition::new(id, version, kind, contract);
@@ -680,16 +688,16 @@ fn decode_contract(
     table: &Table,
     module_id: &ModuleId,
     version: &Version,
+    schema_version: SchemaVersion,
     module_object: &ObjectId,
 ) -> Contract {
-    check_unknown(
-        ctx,
-        table,
-        &["properties", "slots", "ports", "dependencies"],
-        "contract",
-        Some(module_object),
-    );
-    let mut contract = Contract::new();
+    let is_v2 = schema_version.is_v2();
+    let mut allowed = vec!["properties", "slots", "ports", "dependencies"];
+    if is_v2 {
+        allowed.push("interfaces");
+    }
+    check_unknown(ctx, table, &allowed, "contract", Some(module_object));
+    let mut contract = Contract::for_schema(schema_version);
 
     if let Some(properties) =
         optional_table(ctx, table, "properties", "contract", Some(module_object))
@@ -767,13 +775,84 @@ fn decode_contract(
         }
     }
 
+    if is_v2 {
+        if let Some(interfaces) =
+            optional_array_tables(ctx, table, "interfaces", "contract", Some(module_object))
+        {
+            for interface_table in interfaces.iter() {
+                check_unknown(
+                    ctx,
+                    interface_table,
+                    &["id", "version"],
+                    "interface",
+                    Some(module_object),
+                );
+                let Some(id_raw) =
+                    required_string(ctx, interface_table, "id", "interface", Some(module_object))
+                else {
+                    continue;
+                };
+                let id = match InterfaceId::parse(&id_raw) {
+                    Ok(id) => id,
+                    Err(error) => {
+                        ctx.push(
+                            error.code(),
+                            error.message(),
+                            interface_table.get("id").and_then(Item::span),
+                            Some(module_object),
+                        );
+                        continue;
+                    }
+                };
+                let Some(interface_version_raw) = required_string(
+                    ctx,
+                    interface_table,
+                    "version",
+                    "interface",
+                    Some(module_object),
+                ) else {
+                    continue;
+                };
+                let interface_version = match Version::parse(&interface_version_raw) {
+                    Ok(version) => version,
+                    Err(error) => {
+                        ctx.push(
+                            error.code(),
+                            error.message(),
+                            interface_table.get("version").and_then(Item::span),
+                            Some(module_object),
+                        );
+                        continue;
+                    }
+                };
+                let object = ObjectId::interface(module_id, version, &id, &interface_version);
+                ctx.map(object.clone(), interface_table.span());
+                if let Err(error) =
+                    contract.insert_interface(InterfaceDeclaration::new(id, interface_version))
+                {
+                    ctx.push(
+                        error.code(),
+                        error.message(),
+                        interface_table.span(),
+                        Some(&object),
+                    );
+                }
+            }
+        }
+    }
+
     if let Some(dependencies) =
         optional_array_tables(ctx, table, "dependencies", "contract", Some(module_object))
     {
         for dependency_table in dependencies.iter() {
-            if let Some(dependency) =
-                decode_dependency(ctx, dependency_table, module_id, version, module_object)
-            {
+            if let Some(dependency) = decode_dependency(
+                ctx,
+                dependency_table,
+                module_id,
+                version,
+                is_v2,
+                module_object,
+            ) {
                 let id = dependency.0;
                 let contract_value = dependency.1;
                 if let Err(error) = contract.insert_dependency(id, contract_value) {
@@ -1048,16 +1127,15 @@ fn decode_dependency(
     table: &Table,
     module_id: &ModuleId,
     version: &Version,
+    is_v2: bool,
     module_object: &ObjectId,
 ) -> Option<(LocalId, DependencyRequirement)> {
     let context = "dependency";
-    check_unknown(
-        ctx,
-        table,
-        &["id", "module", "version", "optional"],
-        context,
-        Some(module_object),
-    );
+    let mut allowed = vec!["id", "module", "version", "optional"];
+    if is_v2 {
+        allowed.push("interface");
+    }
+    check_unknown(ctx, table, &allowed, context, Some(module_object));
     let id_raw = required_string(ctx, table, "id", context, Some(module_object))?;
     let id = match LocalId::parse(&id_raw) {
         Ok(id) => id,
@@ -1073,14 +1151,51 @@ fn decode_dependency(
     };
     let object = ObjectId::dependency(module_id, version, &id);
     ctx.map(object.clone(), table.span());
-    let target_raw = required_string(ctx, table, "module", context, Some(&object))?;
-    let target = match ModuleId::parse(&target_raw) {
-        Ok(target) => target,
-        Err(error) => {
+    let module_target = optional_string(ctx, table, "module", context, Some(&object));
+    let interface_target = if is_v2 {
+        optional_string(ctx, table, "interface", context, Some(&object))
+    } else {
+        None
+    };
+    let target = match (module_target, interface_target) {
+        (Some(_), Some(_)) => {
             ctx.push(
-                error.code(),
-                error.message(),
+                ErrorCode::SchemaInconsistency,
+                "dependency must declare exactly one of module or interface",
                 table.get("module").and_then(Item::span),
+                Some(&object),
+            );
+            return None;
+        }
+        (Some(raw), None) => match ModuleId::parse(&raw) {
+            Ok(target) => DependencyTarget::Module(target),
+            Err(error) => {
+                ctx.push(
+                    error.code(),
+                    error.message(),
+                    table.get("module").and_then(Item::span),
+                    Some(&object),
+                );
+                return None;
+            }
+        },
+        (None, Some(raw)) => match InterfaceId::parse(&raw) {
+            Ok(target) => DependencyTarget::Interface(target),
+            Err(error) => {
+                ctx.push(
+                    error.code(),
+                    error.message(),
+                    table.get("interface").and_then(Item::span),
+                    Some(&object),
+                );
+                return None;
+            }
+        },
+        (None, None) => {
+            ctx.push(
+                ErrorCode::SchemaMissingField,
+                "dependency must declare module or interface",
+                table.span(),
                 Some(&object),
             );
             return None;
@@ -1107,6 +1222,7 @@ fn decode_dependency(
 
 fn decode_composition(
     file: &LoadedFile,
+    _project_version: SchemaVersion,
     diagnostics: &mut Vec<Diagnostic>,
     source_map: &mut SourceMap,
 ) -> (Option<Composition>, BTreeSet<LocalId>) {
@@ -1171,14 +1287,7 @@ fn decode_composition(
     )
     .unwrap_or(1);
     let schema_version = SchemaVersion::new(u16::try_from(schema_version).unwrap_or(0));
-    if !schema_version.is_supported() {
-        ctx.push(
-            ErrorCode::SchemaUnsupportedVersion,
-            "composition.schema_version must be 1 for v0.1",
-            composition_table.get("schema_version").and_then(Item::span),
-            Some(&composition_object),
-        );
-    }
+    let composition_is_v2 = schema_version.is_v2();
     let id_raw = match required_string(
         &mut ctx,
         composition_table,
@@ -1236,7 +1345,12 @@ fn decode_composition(
     ) {
         let mut seen = BTreeSet::new();
         for instance_table in instances.iter() {
-            let object = decode_instance(&mut ctx, instance_table, &mut invalid_instances);
+            let object = decode_instance(
+                &mut ctx,
+                instance_table,
+                composition_is_v2,
+                &mut invalid_instances,
+            );
             if let Some(instance) = object {
                 if !seen.insert(instance.id.clone()) {
                     ctx.push(
@@ -1305,16 +1419,15 @@ fn decode_composition(
 fn decode_instance(
     ctx: &mut Ctx<'_>,
     table: &Table,
+    is_v2: bool,
     invalid_instances: &mut BTreeSet<LocalId>,
 ) -> Option<Instance> {
     let context = "instance";
-    check_unknown(
-        ctx,
-        table,
-        &["id", "module", "version", "config", "dependencies"],
-        context,
-        None,
-    );
+    let mut allowed = vec!["id", "module", "version", "config", "dependencies"];
+    if is_v2 {
+        allowed.push("scope");
+    }
+    check_unknown(ctx, table, &allowed, context, None);
     let id_raw = required_string(ctx, table, "id", context, None)?;
     let id = match LocalId::parse(&id_raw) {
         Ok(id) => id,
@@ -1365,6 +1478,23 @@ fn decode_instance(
     };
 
     let mut instance = Instance::new(id, ModuleRef::new(module, version));
+    if is_v2 {
+        instance.scope = match optional_string(ctx, table, "scope", context, Some(&object)) {
+            None => Some(InstanceScope::Structure),
+            Some(raw) => match InstanceScope::parse(&raw) {
+                Ok(scope) => Some(scope),
+                Err(error) => {
+                    ctx.push(
+                        error.code(),
+                        error.message(),
+                        table.get("scope").and_then(Item::span),
+                        Some(&object),
+                    );
+                    None
+                }
+            },
+        };
+    }
     if let Some(config_table) = optional_table(ctx, table, "config", context, Some(&object)) {
         for (key, item) in config_table.iter() {
             let property_id = match LocalId::parse(key) {

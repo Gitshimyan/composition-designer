@@ -2,7 +2,7 @@
 
 > v0.2 M6 与 G01–G08 完成；ADR-0004/0005 Accepted。
 > M7 Source Authoring 完成（029–031：编辑 Source、文本+对象 Review、Glide 验收）。
-> S1 032 完成：Schema v2.0 语义冻结（ADR-0006）；下一步 033–035 实现。
+> S1 032–033 完成：v2.0 语义冻结（ADR-0006）与 Domain/Loader/Validation 实现；下一步 034–035。
 > 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
@@ -55,7 +55,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
 | v0.2 / M6 | M6 完成（020–027）：Glide 全链路、完整 Review、PR 强制门禁；G01–G05 完成，change-gate block |
 | M7 Source Authoring（029–031） | 完成：`replace_source` 独占事务、可编辑 Source、文本+对象 Diff、Glide 验收；G06–G08 完成 |
-| S1 Schema v2.0（032） | 032 完成：接口身份/接口依赖/实例 scope/8 个诊断/命令 scope 冻结；ADR-0006 Accepted；033–035 实现 |
+| S1 Schema v2.0（032–033） | 032 语义冻结；033 实现接口/依赖/scope 解码与校验、8 个诊断、版本矩阵；189 tests；034–035 待做 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；

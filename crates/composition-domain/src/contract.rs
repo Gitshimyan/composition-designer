@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashSet};
+use std::fmt;
 use std::str::FromStr;
 
 use serde::ser::SerializeStruct;
@@ -6,7 +7,8 @@ use serde::{Serialize, Serializer};
 
 use crate::error::{DomainError, DomainResult};
 use crate::error_code::ErrorCode;
-use crate::ids::{LocalId, ModuleId, TypeId, Version};
+use crate::ids::{InterfaceId, LocalId, ModuleId, TypeId, Version};
+use crate::schema::SchemaVersion;
 use crate::value::ConfigValue;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
@@ -594,16 +596,56 @@ impl PortContract {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+pub struct InterfaceDeclaration {
+    pub id: InterfaceId,
+    pub version: Version,
+}
+
+impl InterfaceDeclaration {
+    pub fn new(id: InterfaceId, version: Version) -> Self {
+        Self { id, version }
+    }
+}
+
+/// 依赖目标：模块（v1）或接口（v2.0），二选一。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DependencyTarget {
+    Module(ModuleId),
+    Interface(InterfaceId),
+}
+
+impl DependencyTarget {
+    pub const fn kind_str(&self) -> &'static str {
+        match self {
+            Self::Module(_) => "module",
+            Self::Interface(_) => "interface",
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Module(id) => id.as_str(),
+            Self::Interface(id) => id.as_str(),
+        }
+    }
+}
+
+impl fmt::Display for DependencyTarget {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DependencyRequirement {
-    #[serde(rename = "module")]
-    pub target: ModuleId,
+    pub target: DependencyTarget,
     pub version: Option<Version>,
     pub optional: bool,
 }
 
 impl DependencyRequirement {
-    pub fn new(target: ModuleId, version: Option<Version>, optional: bool) -> Self {
+    pub fn new(target: DependencyTarget, version: Option<Version>, optional: bool) -> Self {
         Self {
             target,
             version,
@@ -612,12 +654,43 @@ impl DependencyRequirement {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq)]
+impl Serialize for DependencyRequirement {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct(
+            "DependencyRequirement",
+            if self.version.is_some() { 3 } else { 2 },
+        )?;
+        match &self.target {
+            DependencyTarget::Module(id) => state.serialize_field("module", id)?,
+            DependencyTarget::Interface(id) => state.serialize_field("interface", id)?,
+        }
+        if let Some(version) = &self.version {
+            state.serialize_field("version", version)?;
+        }
+        state.serialize_field("optional", &self.optional)?;
+        state.end()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Contract {
+    schema_version: SchemaVersion,
+    /// v2 项目输出统一包含 `interfaces`（v1 模块为空数组）；v1 项目不输出。
+    v2_output: bool,
     properties: BTreeMap<LocalId, PropertyContract>,
     slots: BTreeMap<LocalId, SlotContract>,
     ports: BTreeMap<LocalId, PortContract>,
     dependencies: BTreeMap<LocalId, DependencyRequirement>,
+    interfaces: Vec<InterfaceDeclaration>,
+}
+
+impl Default for Contract {
+    fn default() -> Self {
+        Self::for_schema(SchemaVersion::V1)
+    }
 }
 
 #[derive(Serialize)]
@@ -641,11 +714,35 @@ struct PortEntry<'a> {
     contract: &'a PortContract,
 }
 
-#[derive(Serialize)]
 struct DependencyEntry<'a> {
     id: &'a LocalId,
-    #[serde(flatten)]
     contract: &'a DependencyRequirement,
+}
+
+impl Serialize for DependencyEntry<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct(
+            "DependencyEntry",
+            if self.contract.version.is_some() {
+                4
+            } else {
+                3
+            },
+        )?;
+        state.serialize_field("id", self.id)?;
+        match &self.contract.target {
+            DependencyTarget::Module(id) => state.serialize_field("module", id)?,
+            DependencyTarget::Interface(id) => state.serialize_field("interface", id)?,
+        }
+        if let Some(version) = &self.contract.version {
+            state.serialize_field("version", version)?;
+        }
+        state.serialize_field("optional", &self.contract.optional)?;
+        state.end()
+    }
 }
 
 impl Serialize for Contract {
@@ -673,18 +770,44 @@ impl Serialize for Contract {
             .iter()
             .map(|(id, contract)| DependencyEntry { id, contract })
             .collect();
-        let mut state = serializer.serialize_struct("Contract", 4)?;
+        let with_interfaces = self.v2_output;
+        let mut state =
+            serializer.serialize_struct("Contract", if with_interfaces { 5 } else { 4 })?;
         state.serialize_field("properties", &properties)?;
         state.serialize_field("slots", &slots)?;
         state.serialize_field("ports", &ports)?;
         state.serialize_field("dependencies", &dependencies)?;
+        if with_interfaces {
+            state.serialize_field("interfaces", &self.interfaces)?;
+        }
         state.end()
     }
 }
 
 impl Contract {
     pub fn new() -> Self {
-        Self::default()
+        Self::for_schema(SchemaVersion::V1)
+    }
+
+    pub fn for_schema(schema_version: SchemaVersion) -> Self {
+        Self {
+            schema_version,
+            v2_output: schema_version.is_v2(),
+            properties: BTreeMap::new(),
+            slots: BTreeMap::new(),
+            ports: BTreeMap::new(),
+            dependencies: BTreeMap::new(),
+            interfaces: Vec::new(),
+        }
+    }
+
+    pub fn schema_version(&self) -> SchemaVersion {
+        self.schema_version
+    }
+
+    /// 在 v2 项目中统一输出接口数组（v1 模块为空数组）。
+    pub fn enable_v2_output(&mut self) {
+        self.v2_output = true;
     }
 
     pub fn insert_property(&mut self, id: LocalId, property: PropertyContract) -> DomainResult<()> {
@@ -731,6 +854,21 @@ impl Contract {
         Ok(())
     }
 
+    pub fn insert_interface(&mut self, interface: InterfaceDeclaration) -> DomainResult<()> {
+        if self
+            .interfaces
+            .iter()
+            .any(|existing| existing == &interface)
+        {
+            return Err(DomainError::new(
+                ErrorCode::IdDuplicateInterface,
+                format!("duplicate interface {}@{}", interface.id, interface.version),
+            ));
+        }
+        self.interfaces.push(interface);
+        Ok(())
+    }
+
     pub fn properties(&self) -> &BTreeMap<LocalId, PropertyContract> {
         &self.properties
     }
@@ -745,6 +883,10 @@ impl Contract {
 
     pub fn dependencies(&self) -> &BTreeMap<LocalId, DependencyRequirement> {
         &self.dependencies
+    }
+
+    pub fn interfaces(&self) -> &[InterfaceDeclaration] {
+        &self.interfaces
     }
 
     pub fn property(&self, id: &LocalId) -> Option<&PropertyContract> {
@@ -768,6 +910,7 @@ impl Contract {
             && self.slots.is_empty()
             && self.ports.is_empty()
             && self.dependencies.is_empty()
+            && self.interfaces.is_empty()
     }
 
     pub fn check(&self) -> Vec<DomainError> {
@@ -792,6 +935,7 @@ impl Contract {
 
     /// 规范化集合顺序；不负责去重或修复非法数据。
     pub fn normalize(&mut self) {
+        self.interfaces.sort();
         for property in self.properties.values_mut() {
             property.normalize();
         }

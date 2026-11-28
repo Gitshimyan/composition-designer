@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use composition_domain::{ErrorCode, ErrorLayer};
+use composition_domain::{ErrorCode, ErrorLayer, SchemaVersion};
 use composition_toml::{load_project, LoadedWorkspace};
 
 fn examples_root() -> PathBuf {
@@ -360,6 +360,23 @@ fn composition_parts_are_not_merged_in_v01() {
 
 #[test]
 fn unsupported_schema_version_is_rejected_without_migration() {
+    let directory = temp_copy("schema-version-unsupported");
+    let project_file = directory.join("project.toml");
+    let text = fs::read_to_string(&project_file).unwrap();
+    fs::write(
+        &project_file,
+        text.replacen("schema_version = 1", "schema_version = 3", 1),
+    )
+    .unwrap();
+    let workspace = load_project(&directory);
+    assert!(!workspace.is_valid());
+    assert!(codes(&workspace).contains(&ErrorCode::SchemaUnsupportedVersion));
+    assert!(workspace.project.is_none());
+    let _ = fs::remove_dir_all(&directory);
+}
+
+#[test]
+fn v2_project_schema_version_is_loaded() {
     let directory = temp_copy("schema-version-2");
     let project_file = directory.join("project.toml");
     let text = fs::read_to_string(&project_file).unwrap();
@@ -369,7 +386,13 @@ fn unsupported_schema_version_is_rejected_without_migration() {
     )
     .unwrap();
     let workspace = load_project(&directory);
-    assert!(!workspace.is_valid());
-    assert!(codes(&workspace).contains(&ErrorCode::SchemaUnsupportedVersion));
+    assert!(workspace.is_valid(), "{:?}", workspace.diagnostics);
+    assert_eq!(
+        workspace
+            .project
+            .as_ref()
+            .map(|project| project.schema_version),
+        Some(SchemaVersion::V2)
+    );
     let _ = fs::remove_dir_all(&directory);
 }

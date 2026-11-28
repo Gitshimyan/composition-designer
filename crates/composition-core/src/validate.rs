@@ -1,9 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use composition_domain::{
-    Binding, Composition, CompositionModel, DependencyResolution, DependencyStatus, Diagnostic,
-    ErrorCode, Instance, LocalId, ModuleDefinition, ModuleId, ModuleKind, ObjectId, PortContract,
-    PortDirection, Project, Revision, SourceDigest, Version,
+    Binding, Composition, CompositionModel, DependencyResolution, DependencyStatus,
+    DependencyTarget, DependencyTargetInfo, DependencyTargetKind, Diagnostic, ErrorCode, Instance,
+    InstanceScope, InterfaceId, LocalId, ModuleDefinition, ModuleId, ModuleKind, ObjectId,
+    PortContract, PortDirection, Project, Revision, SchemaVersion, SourceDigest, Version,
 };
 use composition_toml::{load_project, LoadedWorkspace};
 
@@ -114,6 +115,14 @@ fn validate_parts(
         }
     }
 
+    check_versions(
+        project,
+        &composition,
+        &registry,
+        &source_map,
+        &mut diagnostics,
+    );
+
     let instances_by_id: BTreeMap<LocalId, &Instance> = composition
         .instances
         .iter()
@@ -168,6 +177,12 @@ fn validate_parts(
         &source_map,
         &mut diagnostics,
     );
+    check_service_modules(
+        &composition.instances,
+        &resolved,
+        &source_map,
+        &mut diagnostics,
+    );
     let valid_bindings = resolve_bindings(
         &composition,
         &instances_by_id,
@@ -215,12 +230,14 @@ fn validate_parts(
 
     let dependencies = check_dependencies(
         &composition,
-        &instances_by_id,
         &resolved,
+        &registry,
         invalid_instances,
+        project.schema_version.is_v2(),
         &source_map,
         &mut diagnostics,
     );
+    check_service_usage(&composition, &dependencies, &source_map, &mut diagnostics);
 
     if composition.id != project.id {
         push_at(
@@ -261,6 +278,11 @@ fn validate_parts(
 
     let mut model = CompositionModel::new(project.clone(), composition);
     model.modules = registry.into_values().collect();
+    if project.schema_version.is_v2() {
+        for module in &mut model.modules {
+            module.contract.enable_v2_output();
+        }
+    }
     model.dependencies = dependencies;
     model.diagnostics = diagnostics.clone();
     model.revision = Some(Revision::initial(source_digest.clone()));
@@ -285,6 +307,69 @@ fn finish(
         diagnostics,
         source_digest: loaded.source_digest.clone(),
         source_map: SourceMap::new(),
+    }
+}
+
+fn check_versions(
+    project: &Project,
+    composition: &Composition,
+    registry: &BTreeMap<(ModuleId, Version), ModuleDefinition>,
+    source_map: &SourceMap,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let project_version = project.schema_version;
+    if project_version == SchemaVersion::V1 {
+        if composition.schema_version != SchemaVersion::V1 {
+            push_at(
+                source_map,
+                diagnostics,
+                ErrorCode::SchemaUnsupportedVersion,
+                "composition.schema_version must be 1 in a v1 project",
+                &ObjectId::composition(),
+            );
+        }
+    } else if project_version == SchemaVersion::V2
+        && composition.schema_version != SchemaVersion::V2
+    {
+        let (code, message) = if composition.schema_version == SchemaVersion::V1 {
+            (
+                ErrorCode::SchemaVersionMismatch,
+                "v2 project requires composition.schema_version = 2",
+            )
+        } else {
+            (
+                ErrorCode::SchemaUnsupportedVersion,
+                "unsupported composition.schema_version",
+            )
+        };
+        push_at(
+            source_map,
+            diagnostics,
+            code,
+            message,
+            &ObjectId::composition(),
+        );
+    }
+
+    for module in registry.values() {
+        let module_version = module.contract.schema_version();
+        let supported = if project_version.is_v2() {
+            module_version.is_supported()
+        } else {
+            module_version == SchemaVersion::V1
+        };
+        if !supported {
+            push_at(
+                source_map,
+                diagnostics,
+                ErrorCode::SchemaUnsupportedVersion,
+                format!(
+                    "module {}@{} uses unsupported schema_version {}",
+                    module.id, module.version, module_version
+                ),
+                &ObjectId::module(&module.id, &module.version),
+            );
+        }
     }
 }
 
@@ -401,6 +486,40 @@ fn check_instance_configs(
     }
 }
 
+fn is_service(instances: &BTreeMap<LocalId, &Instance>, id: &LocalId) -> bool {
+    instances
+        .get(id)
+        .is_some_and(|instance| instance.scope == Some(InstanceScope::Service))
+}
+
+fn check_service_modules(
+    instances: &[Instance],
+    resolved: &BTreeMap<LocalId, &ModuleDefinition>,
+    source_map: &SourceMap,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    for instance in instances {
+        if instance.scope != Some(InstanceScope::Service) {
+            continue;
+        }
+        let Some(module) = resolved.get(&instance.id) else {
+            continue;
+        };
+        if module.kind != ModuleKind::Primitive {
+            push_at(
+                source_map,
+                diagnostics,
+                ErrorCode::ContractServiceModuleInvalid,
+                format!(
+                    "service {} must use a primitive module, but {}@{} is composite",
+                    instance.id, module.id, module.version
+                ),
+                &ObjectId::instance(&instance.id),
+            );
+        }
+    }
+}
+
 fn resolve_bindings<'a>(
     composition: &'a composition_domain::Composition,
     instances: &BTreeMap<LocalId, &'a Instance>,
@@ -428,6 +547,19 @@ fn resolve_bindings<'a>(
             }
         }
         if !endpoints_ok {
+            continue;
+        }
+        if is_service(instances, &binding.parent) || is_service(instances, &binding.child) {
+            push_at(
+                source_map,
+                diagnostics,
+                ErrorCode::StructureServiceInBinding,
+                format!(
+                    "binding {} must not reference a service instance",
+                    binding.id
+                ),
+                &object,
+            );
             continue;
         }
         let Some(parent_module) = resolved.get(&binding.parent) else {
@@ -476,6 +608,19 @@ fn check_structure(
     source_map: &SourceMap,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
+    if instances
+        .get(&composition.root)
+        .is_some_and(|instance| instance.scope == Some(InstanceScope::Service))
+    {
+        push_at(
+            source_map,
+            diagnostics,
+            ErrorCode::StructureRootScopeInvalid,
+            format!("root {} must be a structure instance", composition.root),
+            &ObjectId::instance(&composition.root),
+        );
+    }
+
     let Some(root_module) = root_module else {
         return;
     };
@@ -545,6 +690,9 @@ fn check_structure(
     }
 
     for (instance_id, module) in resolved {
+        if is_service(instances, instance_id) {
+            continue;
+        }
         for (slot_id, slot) in module.contract.slots() {
             let count = kept
                 .iter()
@@ -590,6 +738,7 @@ fn check_structure(
         if instance == &composition.root
             || cycles.contains(instance)
             || reachable.contains(instance)
+            || is_service(instances, instance)
         {
             continue;
         }
@@ -880,11 +1029,19 @@ fn check_connections(
     }
 }
 
+fn has_instance(composition: &composition_domain::Composition, id: &LocalId) -> bool {
+    composition
+        .instances
+        .iter()
+        .any(|instance| &instance.id == id)
+}
+
 fn check_dependencies(
     composition: &composition_domain::Composition,
-    instances: &BTreeMap<LocalId, &Instance>,
     resolved: &BTreeMap<LocalId, &ModuleDefinition>,
+    registry: &BTreeMap<(ModuleId, Version), ModuleDefinition>,
     invalid_instances: &BTreeSet<LocalId>,
+    v2_output: bool,
     source_map: &SourceMap,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<DependencyResolution> {
@@ -897,108 +1054,158 @@ fn check_dependencies(
         for (requirement_id, requirement) in module.contract.dependencies() {
             let mut status = DependencyStatus::Unresolved;
             let mut provider = None;
-            if let Some(explicit) = instance.dependency_providers.get(requirement_id) {
-                if !instances.contains_key(explicit) {
-                    if !invalid_instances.contains(explicit) {
-                        push_at(
-                            source_map,
-                            diagnostics,
-                            ErrorCode::RefInstanceNotFound,
-                            format!(
-                                "instance {} maps dependency {requirement_id} to missing instance {explicit}",
-                                instance.id
-                            ),
-                            &object,
-                        );
-                    }
-                } else if explicit == &instance.id {
-                    push_at(
-                        source_map,
-                        diagnostics,
-                        ErrorCode::DependencySelf,
-                        format!(
-                            "instance {} cannot provide its own dependency {requirement_id}",
-                            instance.id
-                        ),
-                        &object,
-                    );
-                } else if let Some(provider_module) = resolved.get(explicit) {
-                    if provider_module.id == requirement.target
-                        && requirement
-                            .version
-                            .as_ref()
-                            .is_none_or(|version| &provider_module.version == version)
-                    {
-                        status = DependencyStatus::Resolved;
-                        provider = Some(explicit.clone());
+            match &requirement.target {
+                DependencyTarget::Module(target) => {
+                    if let Some(explicit) = instance.dependency_providers.get(requirement_id) {
+                        if !has_instance(composition, explicit) {
+                            if !invalid_instances.contains(explicit) {
+                                push_at(
+                                    source_map,
+                                    diagnostics,
+                                    ErrorCode::RefInstanceNotFound,
+                                    format!(
+                                        "instance {} maps dependency {requirement_id} to missing instance {explicit}",
+                                        instance.id
+                                    ),
+                                    &object,
+                                );
+                            }
+                        } else if explicit == &instance.id {
+                            push_at(
+                                source_map,
+                                diagnostics,
+                                ErrorCode::DependencySelf,
+                                format!(
+                                    "instance {} cannot provide its own dependency {requirement_id}",
+                                    instance.id
+                                ),
+                                &object,
+                            );
+                        } else if let Some(provider_module) = resolved.get(explicit) {
+                            if provider_module.id == *target
+                                && version_matches(provider_module, requirement.version.as_ref())
+                            {
+                                status = DependencyStatus::Resolved;
+                                provider = Some(explicit.clone());
+                            } else {
+                                push_at(
+                                    source_map,
+                                    diagnostics,
+                                    ErrorCode::DependencyProviderInvalid,
+                                    format!(
+                                        "instance {} dependency {requirement_id} provider {explicit} does not satisfy {}",
+                                        instance.id, target
+                                    ),
+                                    &object,
+                                );
+                            }
+                        }
                     } else {
-                        push_at(
+                        let candidates: Vec<LocalId> = resolved
+                            .iter()
+                            .filter(|(id, candidate)| {
+                                *id != &instance.id
+                                    && candidate.id == *target
+                                    && version_matches(candidate, requirement.version.as_ref())
+                            })
+                            .map(|(id, _)| (*id).clone())
+                            .collect();
+                        (status, provider) = resolve_auto(
+                            instance,
+                            requirement_id,
+                            requirement.optional,
+                            candidates,
+                            &object,
                             source_map,
                             diagnostics,
-                            ErrorCode::DependencyProviderInvalid,
-                            format!(
-                                "instance {} dependency {requirement_id} provider {explicit} does not satisfy {}",
-                                instance.id, requirement.target
-                            ),
-                            &object,
                         );
                     }
                 }
-            } else {
-                let candidates: Vec<(LocalId, &ModuleDefinition)> = resolved
-                    .iter()
-                    .filter(|(id, module)| {
-                        *id != &instance.id
-                            && module.id == requirement.target
-                            && requirement
-                                .version
-                                .as_ref()
-                                .is_none_or(|version| &module.version == version)
-                    })
-                    .map(|(id, module)| ((*id).clone(), *module))
-                    .collect();
-                match candidates.len() {
-                    0 => {
-                        if requirement.optional {
-                            status = DependencyStatus::OptionalUnresolved;
-                            push_at(
-                                source_map,
-                                diagnostics,
-                                ErrorCode::DependencyOptionalUnresolved,
-                                format!(
-                                    "instance {} optional dependency {requirement_id} has no provider",
-                                    instance.id
-                                ),
-                                &object,
-                            );
-                        } else {
-                            push_at(
-                                source_map,
-                                diagnostics,
-                                ErrorCode::DependencyUnresolved,
-                                format!(
-                                    "instance {} dependency {requirement_id} has no provider",
-                                    instance.id
-                                ),
-                                &object,
-                            );
-                        }
-                    }
-                    1 => {
-                        status = DependencyStatus::Resolved;
-                        provider = Some(candidates[0].0.clone());
-                    }
-                    _ => {
-                        status = DependencyStatus::Ambiguous;
+                DependencyTarget::Interface(interface) => {
+                    let declared = registry.values().any(|candidate| {
+                        implements_interface(candidate, interface, requirement.version.as_ref())
+                    });
+                    if !declared {
+                        let requirement_object =
+                            ObjectId::dependency(&module.id, &module.version, requirement_id);
                         push_at(
                             source_map,
                             diagnostics,
-                            ErrorCode::DependencyAmbiguous,
+                            ErrorCode::RefInterfaceNotFound,
                             format!(
-                                "instance {} dependency {requirement_id} has multiple providers",
+                                "instance {} dependency {requirement_id} requires interface {interface} that no module declares",
                                 instance.id
                             ),
+                            &requirement_object,
+                        );
+                    } else if let Some(explicit) = instance.dependency_providers.get(requirement_id)
+                    {
+                        if !has_instance(composition, explicit) {
+                            if !invalid_instances.contains(explicit) {
+                                push_at(
+                                    source_map,
+                                    diagnostics,
+                                    ErrorCode::RefInstanceNotFound,
+                                    format!(
+                                        "instance {} maps dependency {requirement_id} to missing instance {explicit}",
+                                        instance.id
+                                    ),
+                                    &object,
+                                );
+                            }
+                        } else if explicit == &instance.id {
+                            push_at(
+                                source_map,
+                                diagnostics,
+                                ErrorCode::DependencySelf,
+                                format!(
+                                    "instance {} cannot provide its own dependency {requirement_id}",
+                                    instance.id
+                                ),
+                                &object,
+                            );
+                        } else if let Some(provider_module) = resolved.get(explicit) {
+                            if implements_interface(
+                                provider_module,
+                                interface,
+                                requirement.version.as_ref(),
+                            ) {
+                                status = DependencyStatus::Resolved;
+                                provider = Some(explicit.clone());
+                            } else {
+                                push_at(
+                                    source_map,
+                                    diagnostics,
+                                    ErrorCode::DependencyInterfaceMismatch,
+                                    format!(
+                                        "instance {} dependency {requirement_id} provider {explicit} does not implement interface {interface}",
+                                        instance.id
+                                    ),
+                                    &object,
+                                );
+                            }
+                        }
+                    } else {
+                        let candidates: Vec<LocalId> = resolved
+                            .iter()
+                            .filter(|(id, candidate)| {
+                                *id != &instance.id
+                                    && implements_interface(
+                                        candidate,
+                                        interface,
+                                        requirement.version.as_ref(),
+                                    )
+                            })
+                            .map(|(id, _)| (*id).clone())
+                            .collect();
+                        (status, provider) = resolve_auto(
+                            instance,
+                            requirement_id,
+                            requirement.optional,
+                            candidates,
                             &object,
+                            source_map,
+                            diagnostics,
                         );
                     }
                 }
@@ -1006,6 +1213,11 @@ fn check_dependencies(
             results.push(DependencyResolution {
                 requirement_id: requirement_id.clone(),
                 from_instance: instance.id.clone(),
+                target: if v2_output {
+                    Some(dependency_target_info(requirement))
+                } else {
+                    None
+                },
                 provider_instance: provider,
                 optional: requirement.optional,
                 status,
@@ -1014,6 +1226,128 @@ fn check_dependencies(
         }
     }
     results
+}
+
+fn version_matches(module: &ModuleDefinition, version: Option<&Version>) -> bool {
+    version.is_none_or(|version| &module.version == version)
+}
+
+fn implements_interface(
+    module: &ModuleDefinition,
+    interface: &InterfaceId,
+    version: Option<&Version>,
+) -> bool {
+    module.contract.interfaces().iter().any(|declaration| {
+        &declaration.id == interface && version.is_none_or(|v| &declaration.version == v)
+    })
+}
+
+fn dependency_target_info(
+    requirement: &composition_domain::DependencyRequirement,
+) -> DependencyTargetInfo {
+    match &requirement.target {
+        DependencyTarget::Module(id) => DependencyTargetInfo {
+            kind: DependencyTargetKind::Module,
+            id: id.to_string(),
+            version: requirement.version,
+        },
+        DependencyTarget::Interface(id) => DependencyTargetInfo {
+            kind: DependencyTargetKind::Interface,
+            id: id.to_string(),
+            version: requirement.version,
+        },
+    }
+}
+
+fn resolve_auto(
+    instance: &Instance,
+    requirement_id: &LocalId,
+    optional: bool,
+    candidates: Vec<LocalId>,
+    object: &ObjectId,
+    source_map: &SourceMap,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> (DependencyStatus, Option<LocalId>) {
+    match candidates.len() {
+        0 => {
+            if optional {
+                push_at(
+                    source_map,
+                    diagnostics,
+                    ErrorCode::DependencyOptionalUnresolved,
+                    format!(
+                        "instance {} optional dependency {requirement_id} has no provider",
+                        instance.id
+                    ),
+                    object,
+                );
+                (DependencyStatus::OptionalUnresolved, None)
+            } else {
+                push_at(
+                    source_map,
+                    diagnostics,
+                    ErrorCode::DependencyUnresolved,
+                    format!(
+                        "instance {} dependency {requirement_id} has no provider",
+                        instance.id
+                    ),
+                    object,
+                );
+                (DependencyStatus::Unresolved, None)
+            }
+        }
+        1 => (DependencyStatus::Resolved, Some(candidates[0].clone())),
+        _ => {
+            push_at(
+                source_map,
+                diagnostics,
+                ErrorCode::DependencyAmbiguous,
+                format!(
+                    "instance {} dependency {requirement_id} has multiple providers",
+                    instance.id
+                ),
+                object,
+            );
+            (DependencyStatus::Ambiguous, None)
+        }
+    }
+}
+
+fn check_service_usage(
+    composition: &composition_domain::Composition,
+    dependencies: &[DependencyResolution],
+    source_map: &SourceMap,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let mut referenced = BTreeSet::new();
+    for instance in &composition.instances {
+        for provider in instance.dependency_providers.values() {
+            referenced.insert(provider.clone());
+        }
+    }
+    for dependency in dependencies {
+        if let Some(provider) = &dependency.provider_instance {
+            referenced.insert(provider.clone());
+        }
+    }
+    for connection in &composition.connections {
+        referenced.insert(connection.from.instance.clone());
+        referenced.insert(connection.to.instance.clone());
+    }
+    for instance in &composition.instances {
+        if instance.scope == Some(InstanceScope::Service) && !referenced.contains(&instance.id) {
+            push_at(
+                source_map,
+                diagnostics,
+                ErrorCode::ServiceUnused,
+                format!(
+                    "service {} is not used by any dependency or connection",
+                    instance.id
+                ),
+                &ObjectId::instance(&instance.id),
+            );
+        }
+    }
 }
 
 fn push_at(

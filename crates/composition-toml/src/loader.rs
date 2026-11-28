@@ -324,11 +324,12 @@ fn decode_project(file: &LoadedFile, diagnostics: &mut Vec<Diagnostic>) -> Optio
         push_at(
             diagnostics,
             ErrorCode::SchemaUnsupportedVersion,
-            format!("unsupported schema_version {version}; v0.1 expects 1"),
+            format!("unsupported schema_version {version}; expected 1 or 2"),
             file,
             table_field_span(project_table, "schema_version"),
             Some(&object),
         );
+        return None;
     }
 
     let id_raw = required_string(
