@@ -105,6 +105,92 @@ where
             }
             run_apply(Path::new(&path), Path::new(&transaction_path), dry_run)
         }
+        "context" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            if args.next().is_some() {
+                usage();
+                return 2;
+            }
+            run_query(Path::new(&path), "context")
+        }
+        "impact" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let mut module = None;
+            let mut instance = None;
+            let mut transaction = None;
+            while let Some(arg) = args.next() {
+                match arg.as_str() {
+                    "--module" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        module = Some(value);
+                    }
+                    "--instance" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        instance = Some(value);
+                    }
+                    "--transaction" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        transaction = Some(value);
+                    }
+                    flag => {
+                        eprintln!("unknown option {flag}");
+                        usage();
+                        return 2;
+                    }
+                }
+            }
+            let selected = usize::from(module.is_some())
+                + usize::from(instance.is_some())
+                + usize::from(transaction.is_some());
+            if selected != 1 {
+                eprintln!("impact requires exactly one of --module, --instance or --transaction");
+                usage();
+                return 2;
+            }
+            let params = if let Some(selector) = module {
+                let Some((id, version)) = selector.rsplit_once('@') else {
+                    eprintln!("--module expects <id>@<version>");
+                    return 2;
+                };
+                json!({ "module": { "id": id, "version": version } })
+            } else if let Some(instance) = instance {
+                json!({ "instance": instance })
+            } else if let Some(transaction) = transaction {
+                let text = match fs::read_to_string(&transaction) {
+                    Ok(text) => text,
+                    Err(error) => {
+                        eprintln!("cannot read {transaction}: {error}");
+                        return 2;
+                    }
+                };
+                let transaction = match serde_json::from_str::<serde_json::Value>(&text) {
+                    Ok(transaction) => transaction,
+                    Err(error) => {
+                        eprintln!("invalid transaction JSON: {error}");
+                        return 2;
+                    }
+                };
+                json!({ "transaction": transaction })
+            } else {
+                unreachable!()
+            };
+            run_impact(Path::new(&path), params)
+        }
         "inspect" | "resolve" | "validate" => {
             let mut path = None;
             let mut json = false;
@@ -197,6 +283,16 @@ fn run_query(root: &Path, op: &str) -> i32 {
         id: "cli-query".to_owned(),
         op: op.to_owned(),
         params: json!({}),
+    });
+    write_response_pretty(&response)
+}
+
+fn run_impact(root: &Path, params: serde_json::Value) -> i32 {
+    let mut session = ProtocolSession::new(root);
+    let response = session.dispatch(Request {
+        id: "cli-impact".to_owned(),
+        op: "impact".to_owned(),
+        params,
     });
     write_response_pretty(&response)
 }
@@ -344,7 +440,9 @@ fn severity_name(severity: Severity) -> &'static str {
 }
 
 fn usage() {
-    eprintln!("Usage: composition-cli <inspect|resolve|validate|query|apply|jsonl> ...");
+    eprintln!(
+        "Usage: composition-cli <inspect|resolve|validate|context|impact|query|apply|jsonl> ..."
+    );
 }
 
 fn print_help() {
@@ -354,6 +452,10 @@ fn print_help() {
     println!("  composition-cli inspect <project-dir>");
     println!("  composition-cli resolve <project-dir>");
     println!("  composition-cli validate <project-dir> [--json]");
+    println!("  composition-cli context <project-dir>");
+    println!(
+        "  composition-cli impact <project-dir> (--module <id>@<version> | --instance <id> | --transaction <file>)"
+    );
     println!("  composition-cli query <project-dir> <op>");
     println!("  composition-cli apply <project-dir> <transaction.json> [--dry-run]");
     println!("  composition-cli jsonl <project-dir>");
@@ -362,7 +464,9 @@ fn print_help() {
     println!("  inspect   project, module contracts, diagnostics and source digest");
     println!("  resolve   normalized CompositionModel, diagnostics and source digest");
     println!("  validate  validation summary and diagnostics (human by default)");
-    println!("  query     protocol query: inspect | resolve | validate | source");
+    println!("  context   compact agent context (modules, instances, diagnostics, revision)");
+    println!("  impact    module/instance/transaction impact analysis (JSON)");
+    println!("  query     protocol query: inspect | resolve | validate | source | context");
     println!("  apply     protocol transaction from a JSON file (use --dry-run to prepare)");
     println!("  jsonl     line-delimited JSON requests on stdin / responses on stdout");
     println!();

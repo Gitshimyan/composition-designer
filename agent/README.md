@@ -32,6 +32,8 @@ Tools：
 - `composition_resolve`
 - `composition_validate`
 - `composition_source`
+- `composition_context`
+- `composition_impact`
 - `composition_prepare_transaction`
 - `composition_apply_transaction`
 
@@ -41,6 +43,7 @@ Resources：
 - `composition://project/model`
 - `composition://project/diagnostics`
 - `composition://project/source`
+- `composition://project/context`
 
 协议细节见 [protocol-v1.md](../docs/spec/protocol-v1.md)、
 [mcp-adapter-v1.md](../docs/spec/mcp-adapter-v1.md) 与
@@ -66,6 +69,8 @@ cargo test -p composition-mcp --test e2e -- --nocapture
 
 - Agent 不得直接编辑 TOML；所有写操作走 `composition_apply_transaction`。
 - `composition_source` 只读。
+- `composition_context` / `composition_impact` 只读；impact 的 transaction 目标只做 prepare 预览，
+  不写文件、不递增 Revision。
 - 单 MCP server 进程绑定一个项目；切换项目需重新启动或重新配置。
 - External changes / stale Revision 返回 `edit-revision-conflict`，应重新 resolve 后再提交。
 - Agent 必须报告 prepare/apply 的 Diff 与最终 validation，而不是只说“已修改”。

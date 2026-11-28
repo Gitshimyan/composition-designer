@@ -17,18 +17,25 @@ Revision and TOML formatting stay consistent.
 | `composition_resolve` | Normalized model, including `revision.seq` and contract IDs |
 | `composition_validate` | Validity plus L1–L7 diagnostics |
 | `composition_source` | Read-only composition TOML |
+| `composition_context` | Compact project/module/instance/diagnostic context for planning |
+| `composition_impact` | References for a module or instance, or dry-run impact of a transaction |
 | `composition_prepare_transaction` | Validate a transaction and inspect its Diff; no write |
 | `composition_apply_transaction` | Atomically apply a transaction |
 
 Resources: `composition://project/inspect`, `composition://project/model`,
-`composition://project/diagnostics`, `composition://project/source`.
+`composition://project/diagnostics`, `composition://project/source`,
+`composition://project/context`.
 
 ## Workflow
 
 1. **Inspect** the project. If `canEdit` is false, stop and report the diagnostics.
 2. **Resolve** the model. Read `model.revision.seq` / `model.revision.source_digest`.
    Read module contract IDs from `model.modules[].contract`.
-3. Build a transaction:
+3. **Context** with `composition_context` for a compact module/instance index when the project
+   is large. Use `composition_impact` with `{ "instance": "..." }` or
+   `{ "module": { "id": "...", "version": "..." } }` before changing or deleting an object:
+   check parent/child bindings, connections, dependents and explicit providers.
+4. Build a transaction:
 
 ```json
 {
@@ -51,6 +58,9 @@ Resources: `composition://project/inspect`, `composition://project/model`,
 4. Call `composition_prepare_transaction` with `{ "transaction": ... }`.
    - `isError=false` and `accepted=true`: inspect `diff.summary`/`diff.changes`.
    - `isError=true`: read the diagnostics; do not retry the same payload blindly.
+   - For a denied or risky edit, call `composition_impact` with
+     `{ "transaction": ... }`: it runs the same prepare without writing and lists
+     `changedObjects` plus diagnostics.
 5. Call `composition_apply_transaction` with the same transaction.
 6. Call `composition_validate`; report `valid`, error codes and source locations.
 7. Optionally read `composition_source` to confirm the written TOML.
@@ -64,6 +74,10 @@ Resources: `composition://project/inspect`, `composition://project/model`,
 - If you receive `edit-revision-conflict`, the project changed on disk or the Revision is stale:
   re-run `composition_resolve` / reload the MCP server, then prepare a new transaction.
 - `composition_source` is read-only. Source editing is not part of protocol v1.
+- `composition_context` / `composition_impact` are derived from the same model and never write;
+  an impact transaction target is a prepare-only preview, not an apply.
+- `composition_impact` accepts exactly one of `module`, `instance`, `transaction`; never combine
+  them in one call.
 - Layout (`.designer/layout.toml`) and Canvas positions are not project semantics and are not
   exposed by MCP.
 - Prefer one command per transaction for clear review; multiple commands are allowed and atomic.

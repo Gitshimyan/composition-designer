@@ -1,6 +1,7 @@
-# MCP Adapter v1（M4 017）
+# MCP Adapter v1（M4 017；M8 036 Extend）
 
-- 状态：M4 017 冻结（2026-11-26）
+- 状态：M4 017 冻结（2026-11-26）；M8 036 新增 `composition_context` /
+  `composition_impact` 工具与 context 资源（协议语义未变）
 - 传输：MCP stdio（每行一个 JSON-RPC 2.0 消息）
 - 实现：`composition-mcp`，复用 `composition-protocol`
 - 启动：`composition-mcp --project <project-dir>`（缺省当前目录）
@@ -34,7 +35,7 @@
 
 ## 2. Tools
 
-`tools/list` 返回 6 个工具：
+`tools/list` 返回 8 个工具：
 
 | Tool | 参数 | 语义 |
 |---|---|---|
@@ -42,6 +43,8 @@
 | `composition_resolve` | `{}` | 规范化 CompositionModel |
 | `composition_validate` | `{}` | valid + L1–L7 诊断 |
 | `composition_source` | `{}` | 只读 composition TOML |
+| `composition_context` | `{}` | 紧凑 Agent 上下文（project/counts/modules/instances/diagnostics/revision） |
+| `composition_impact` | `{module}` 或 `{instance}` 或 `{transaction}` | 模块/实例/事务影响分析（只读） |
 | `composition_prepare_transaction` | `{transaction}` | 校验并返回 Diff，不写 |
 | `composition_apply_transaction` | `{transaction}` | 原子应用并返回 Diff |
 
@@ -75,6 +78,7 @@
 | `composition://project/model` | resolve protocol response |
 | `composition://project/diagnostics` | validate protocol response |
 | `composition://project/source` | source protocol response |
+| `composition://project/context` | context protocol response |
 
 `resources/read` 返回 `contents:[{uri,mimeType:"application/json",text:"<protocol response>"}]`。
 未知 URI 为 JSON-RPC `-32602`。
@@ -100,7 +104,7 @@
 ## 6. 范围与限制
 
 - 单进程单项目；不做多项目切换。
-- 不实现 subscriptions、progress、cancellation、分页与认证。
+- 不实现 subscriptions、progress、cancellation、分页与认证（M8 037 评估后仍未启用）。
 - `initialize` 回显客户端 protocolVersion；服务端只实现当前 MCP 基础消息集。
 - 017 不包含 MCP 客户端配置/Agent Skill；018 负责端到端。
 

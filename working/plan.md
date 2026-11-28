@@ -6,9 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：199 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
-> 当前阶段：M7 完成；**S1 032–035 完成（v2.0 语义、Core、入口、验收）**；
-> 下一步 **M8 Agent Authoring（036–038）**。
+> 测试基线：210 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
+> 当前阶段：S1 完成；**M8 036 完成（context/impact）**；下一步 **037 batch**。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -65,7 +64,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 | R1 | M7 Source 设计决议（028） | done | [ADR-0005](../docs/adr/0005-source-editing-transaction.md) Accepted | Modify（研究） |
 | M7 | Source Authoring（029–031） | done | Source 事务、UI、Review、Glide 验收 | Extend + Rearchitect（029） |
 | S1 | Schema v2.0（032–035） | done | 语义冻结、Core、命令/UI/入口、v2 数据集与 Glide 验收 | Rearchitect + Extend |
-| M8 | Agent Authoring（036–038） | later | 基于 v2 的上下文/影响、批处理、Skill 评测 | Extend / Modify |
+| M8 | Agent Authoring（036–038） | in_progress | 上下文/影响查询、批处理、Skill 评测 | Extend / Modify |
 | S2 | Schema v2.1（039–041） | pending_decision | G3 Profile + 多 Composition 入口 | Rearchitect + Extend |
 | H1 | 选择性可靠性（042–046） | conditional | Undo、Revision 持久化、fsync、外部合并、WebView2 smoke | Modify / Extend |
 | M9 | Composition Ecosystem（047+） | deferred | 模块库/版本、模板、Adapter | Rearchitect / Extend |
@@ -133,13 +132,30 @@ Services 视图与 service 创建（仅 primitive）；Inspector scope/interface
 （4 structure + 3 service、3 接口依赖、6 Connection）与 CLI 编辑验收；
 UW-002/UW-003 关闭。S1 收口。
 
-### M8 — Agent Authoring（036–038）
+### M8 — Agent Authoring（036–038，in_progress）
 
-| 卡 | 方向 | 授权 |
-|---|---|---|
-| 036 | 上下文/影响分析查询（模块、引用、Diff 影响） | Extend |
-| 037 | 多命令批处理与流式/长任务；MCP 进度/取消按需 | Extend |
-| 038 | Agent Skill 评测与跨平台配置 | Modify / Extend |
+目标：让 Agent 用结构化上下文/影响查询规划编辑，支持批量读取与可重复评测的 Skill；
+不改变 Core 写事务语义。
+
+| 卡 | 交付 | 授权 | 状态 |
+|---|---|---|---|
+| 036 | protocol/CLI/MCP `context` + `impact`（module / instance / transaction dry-run） | Extend + Rearchitect（协议文档） | done |
+| 037 | protocol/CLI/MCP `batch`（只读、限流、逐项结果）；progress/cancel 不在本阶段 | Extend | todo |
+| 038 | Agent eval harness（Node，跨平台）、`configure.sh`、Skill 文档与评测记录 | Modify + Extend | todo |
+
+M8 验收：
+
+- `context` 输出项目/模块索引/实例索引/诊断/Revision，不复制完整 Config；
+- `impact` 覆盖 module、instance、transaction(dry-run)，与 Diff/诊断一致；
+- `batch` 只接受只读 op（context/impact/inspect/resolve/validate/source），有上限与逐项错误；
+- eval harness 在 `examples/minimal-project` 与 Glide v2 试点上可重复通过；
+- CLI/MCP 复用 protocol，不维护第二套模型；不新增写命令。
+
+非目标：
+
+- 不实现 MCP progress/cancel/subscription/auth（UW-020 仍 deferred）；
+- 不改变事务、Diff、Revision 或 TOML 写回语义；
+- 不做远程/多项目 Agent 调度。
 
 ### S2 — Schema v2.1（039–041，pending_decision）
 
@@ -246,17 +262,15 @@ npm run desktop
 | 2026-11-28 | 033 | Domain/Loader/Validation：接口声明/解析、service scope、8 个诊断、版本矩阵；189 tests；v1 输出不变 |
 | 2026-11-28 | 034 | create_instance.scope、Services 视图/service 创建、接口展示；CLI/MCP v2；196 workspace / 34 UI / 17 Tauri |
 | 2026-11-28 | 035 | 11 个 v2 数据集（37 总数）、迁移拒绝、Glide v2 试点与 CLI 验收；UW-002/003 关闭；S1 完成 |
+| 2026-11-28 | M8 | Agent Authoring 开始：036 context/impact 查询；037 batch；038 eval/跨平台配置 |
+| 2026-11-28 | 036 | context/impact：protocol/CLI/MCP、协议与 Skill；210 tests；只读 |
 
 ## 11. 下一步
 
-M7 与 S1 完成。下一步：
+M7 与 S1 完成，M8 进行中。下一步：
 
-1. **M8 — Agent Authoring（036–038）**：上下文/影响分析查询、批处理与长任务、
-   Skill 评测；036 需 Extend 授权；
-2. **S2 — Schema v2.1（039–041）**：Profile + 多 Composition 入口，需 Rearchitect 授权与
-   UW-018 决策；
-3. **H1 可靠性（042–046，conditional）**：undo、Revision 持久化、fsync、外部合并、
-   WebView2 smoke；
-4. 030/031 已关闭；模块文件编辑仍为 UW-031 deferred。
+1. **037 — Agent batch**：只读批量请求与限流；progress/cancel 仍 deferred（UW-020）；
+2. **038 — Agent Skill 评测**：跨平台 eval harness 与配置脚本；
+3. M8 后 S2 Profile/multi-entry；H1 可靠性；模块文件编辑仍为 UW-031 deferred。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

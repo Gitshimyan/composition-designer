@@ -30,3 +30,4 @@
 | D-023 | 2026-11-28 | 完成 033 Domain/Loader/Validation | 用户明确授权开始 033；Rearchitect + Modify | 接口/接口依赖/scope 类型、解码、版本矩阵、8 个诊断；v1 输出不变；workspace 189 测试；无命令/UI/示例改动 |
 | D-024 | 2026-11-28 | 完成 034 Commands/UI/CLI/MCP | 用户明确授权进行 034；Extend + Modify | `create_instance.scope` 与写回、Services 视图/创建、接口展示；CLI/MCP v2；196 workspace / 34 UI / 17 Tauri；无 Schema/基线改动 |
 | D-025 | 2026-11-28 | 完成 035 v2 验收，S1 收口 | 用户要求开始 035；Modify + Compose | 11 个 v2 数据集、迁移拒绝、Glide v2 试点 CLI 验收；UW-002/UW-003 关闭；S1 完成 |
+| D-026 | 2026-11-28 | 完成 036 Agent context/impact | 用户明确授权 M8（036–038）；Extend + Rearchitect（协议文档） | protocol/CLI/MCP context/impact；只读；协议/MCP/Skill 更新；210 workspace 测试 |

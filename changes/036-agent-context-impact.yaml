@@ -1,0 +1,60 @@
+change:
+  id: change.036-agent-context-impact
+  intent: 新增只读 context/impact 查询并贯通 protocol、CLI、MCP，更新协议文档与 Agent Skill；不改写事务语义。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - extend
+      - rearchitect
+    approved:
+      - modify
+      - extend
+      - rearchitect
+    evidence: "用户 2026-11-28 明确授权开始 M8（036–038）；036 新增只读协议查询并更新冻结协议文档"
+  targets:
+    - README.md
+    - crates/composition-protocol
+    - crates/composition-cli
+    - crates/composition-mcp
+    - docs/spec/protocol-v1.md
+    - docs/spec/mcp-adapter-v1.md
+    - docs/ai/architecture-entry.md
+    - agent/SKILL.md
+    - agent/README.md
+    - working/plan.md
+    - working/decisions/decision-history.md
+    - working/tasks/036-agent-context-impact.md
+    - changes/036-agent-context-impact.yaml
+  operations:
+    - modify
+    - extend
+    - rearchitect
+  scope:
+    allowed:
+      - context_query
+      - impact_query
+      - cli_context_impact
+      - mcp_tools_resources
+      - protocol_docs
+      - agent_skill_docs
+      - tests
+      - plan_update
+    forbidden:
+      - transaction_semantics
+      - toml_schema
+      - design_baseline
+      - designer_ui
+      - progress_cancel
+      - write_commands
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 036 只新增只读查询与文档；transaction impact 仅 prepare，不写文件。
