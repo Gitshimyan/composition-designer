@@ -12,7 +12,8 @@ use toml_edit::{Array, ArrayOfTables, DocumentMut, Item, Table, Value};
 
 use crate::command::{Command, Transaction};
 use crate::diff::{ModelDiff, SourceDiff};
-use crate::workspace::{EditorWorkspace, TransactionOutcome};
+use crate::state::{self, CommitState, SessionState};
+use crate::workspace::{EditorWorkspace, RestoredCommit, TransactionOutcome};
 
 #[derive(Debug, Clone)]
 struct SourceCommitted {
@@ -35,6 +36,7 @@ pub struct ProjectSession {
     source_requests: BTreeMap<String, SourceCommitted>,
     undo_stack: Vec<String>,
     redo_stack: Vec<String>,
+    text_history: Vec<String>,
 }
 
 impl ProjectSession {
@@ -70,7 +72,7 @@ impl ProjectSession {
                 "cannot parse {composition_entry} for editing: {error}"
             ))]
         })?;
-        Ok(Self {
+        let mut session = Self {
             root,
             profile: profile.map(str::to_owned),
             composition_entry,
@@ -80,7 +82,11 @@ impl ProjectSession {
             source_requests: BTreeMap::new(),
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
-        })
+            text_history: Vec::new(),
+        };
+        session.text_history.push(session.current_text.clone());
+        session.restore_state();
+        Ok(session)
     }
 
     pub fn workspace(&self) -> &EditorWorkspace {
@@ -162,6 +168,8 @@ impl ProjectSession {
         );
         let outcome = self.apply_source(&transaction);
         if outcome.is_accepted() {
+            self.text_history.push(self.current_text.clone());
+            self.persist_state();
             if undo {
                 self.redo_stack.push(before);
             } else {
@@ -175,6 +183,114 @@ impl ProjectSession {
         outcome
     }
 
+    /// 从 `.designer/state/<profile>.json` 恢复 Revision/request；状态过期或损坏时静默丢弃。
+    fn restore_state(&mut self) {
+        let Some(state) = state::load(&self.root, self.profile.as_deref()) else {
+            return;
+        };
+        let Some(last) = state.commits.last() else {
+            return;
+        };
+        if last.revision.source_digest != self.workspace.revision().source_digest {
+            return;
+        }
+        if last.source_text != self.current_text {
+            return;
+        }
+
+        let mut restored = Vec::with_capacity(state.commits.len());
+        let mut source_requests = BTreeMap::new();
+        let mut texts = Vec::with_capacity(state.commits.len());
+        let mut previous_text = state.base_source_text.clone();
+        for commit in &state.commits {
+            let loaded = load_project_with_profile_and_composition_text(
+                &self.root,
+                self.profile.as_deref(),
+                &commit.source_text,
+            );
+            let validation = validate_loaded(&loaded);
+            if !validation.is_valid() {
+                return;
+            }
+            let Some(mut model) = validation.model else {
+                return;
+            };
+            model.revision = Some(commit.revision.clone());
+            model.diagnostics = validation.diagnostics.clone();
+            if let [Command::ReplaceSource { .. }] = commit.transaction.commands.as_slice() {
+                source_requests.insert(
+                    commit.request_id.clone(),
+                    SourceCommitted {
+                        transaction: commit.transaction.clone(),
+                        model: model.clone(),
+                        diagnostics: validation.diagnostics.clone(),
+                        diff: commit.diff.clone(),
+                        source_diff: SourceDiff {
+                            before: previous_text.clone(),
+                            after: commit.source_text.clone(),
+                        },
+                    },
+                );
+            }
+            restored.push(RestoredCommit {
+                request_id: commit.request_id.clone(),
+                revision: commit.revision.clone(),
+                transaction: commit.transaction.clone(),
+                model,
+                diagnostics: validation.diagnostics,
+                diff: commit.diff.clone(),
+            });
+            texts.push(commit.source_text.clone());
+            previous_text = commit.source_text.clone();
+        }
+        if !self
+            .workspace
+            .restore_commits(state.base_revision.clone(), &restored)
+        {
+            return;
+        }
+        self.text_history.clear();
+        self.text_history.push(state.base_source_text);
+        self.text_history.extend(texts);
+        self.source_requests = source_requests;
+    }
+
+    fn persist_state(&self) {
+        let history = self.workspace.history();
+        if history.len() <= 1 || history.len() != self.text_history.len() {
+            return;
+        }
+        let mut commits = Vec::with_capacity(history.len() - 1);
+        for (index, record) in history.iter().enumerate().skip(1) {
+            let parts = self
+                .workspace
+                .request_parts(&record.request_id)
+                .or_else(|| {
+                    self.source_requests
+                        .get(&record.request_id)
+                        .map(|record| (&record.transaction, &record.diff))
+                });
+            let Some((transaction, diff)) = parts else {
+                return;
+            };
+            commits.push(CommitState {
+                request_id: record.request_id.clone(),
+                transaction: transaction.clone(),
+                revision: record.revision.clone(),
+                source_text: self.text_history[index].clone(),
+                diff: diff.clone(),
+            });
+        }
+        let state = SessionState {
+            version: 1,
+            profile: self.profile.clone(),
+            base_revision: history[0].revision.clone(),
+            base_source_text: self.text_history[0].clone(),
+            commits,
+        };
+        let _ = state::save(&self.root, self.profile.as_deref(), &state);
+    }
+
     /// 先在模型上原子提交，再写回保留格式的 TOML；写回或重新校验失败时回滚文件与工作区。
     pub fn apply(&mut self, transaction: &Transaction) -> TransactionOutcome {
         let before = self.current_text.clone();
@@ -186,6 +302,8 @@ impl ProjectSession {
         if outcome.is_accepted() && !outcome.is_replayed() {
             self.undo_stack.push(before);
             self.redo_stack.clear();
+            self.text_history.push(self.current_text.clone());
+            self.persist_state();
         }
         outcome
     }

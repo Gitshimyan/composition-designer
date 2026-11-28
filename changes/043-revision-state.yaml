@@ -1,0 +1,56 @@
+change:
+  id: change.043-revision-state
+  intent: 持久化 Editor 的 Revision 历史与 request 幂等记录到 `.designer/state/`，重启后恢复 seq 与 replay；过期/损坏状态丢弃。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - extend
+    approved:
+      - modify
+      - extend
+    evidence: "用户 2026-11-28 明确授权开始 043 Revision/request 跨进程持久化"
+  targets:
+    - README.md
+    - crates/composition-domain
+    - crates/composition-editor
+    - crates/composition-cli
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/043-revision-state.md
+    - changes/043-revision-state.yaml
+  operations:
+    - modify
+    - extend
+  scope:
+    allowed:
+      - session_state_file
+      - revision_history_restore
+      - request_replay_restore
+      - stale_corrupt_discard
+      - profile_state_isolation
+      - serde_diff_deserialize
+      - tests
+      - docs_update
+    forbidden:
+      - toml_schema
+      - command_schema
+      - protocol_semantics
+      - design_baseline
+      - fsync
+      - undo_persistence
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - npm run test:ui (apps/designer)
+  notes: 043 只增加本地状态缓存；状态过期/损坏时丢弃，不阻塞打开；不含 undo 文本栈。

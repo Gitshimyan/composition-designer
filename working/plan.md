@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：241 Core/Protocol/MCP/CLI + 36 UI + 17 Tauri。
-> 当前阶段：S1、M8、S2 完成；**H1 042 undo/redo 完成**；下一步 043（需单独授权）。
+> 测试基线：247 Core/Protocol/MCP/CLI + 36 UI + 17 Tauri。
+> 当前阶段：S1、M8、S2 完成；**H1 042–043 完成**；下一步 044（需单独授权）。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -60,7 +60,9 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
   UW-004/UW-018 关闭；238 workspace + 35 UI + 17 Tauri。
 - H1 042 完成：Editor undo/redo（文本快照 + 新 Revision）、Tauri IPC、Designer 按钮/快捷键；
   UW-014 关闭；241 workspace + 36 UI + 17 Tauri。
-- 未决登记：32 项；16 已关闭、5 等待决策、0 已接受待排期、0 进行中、11 延期、0 等待授权。
+- H1 043 完成：`.designer/state/<profile>.json` 持久化 Revision/request；重启后 seq/request
+  幂等恢复；过期/损坏状态丢弃；UW-015 关闭；247 workspace。
+- 未决登记：32 项；17 已关闭、5 等待决策、0 已接受待排期、0 进行中、10 延期、0 等待授权。
 - 关键缺口：H1 043–046（Revision 持久化、fsync、外部合并、WebView2 smoke）、
   ConfigValue float wire、模块文件编辑（UW-031）。
 
@@ -215,8 +217,8 @@ S2 验收（全部满足）：
 ### H1 — 选择性可靠性（042–046，in_progress）
 
 - 042 撤销/重做（UW-014）— **done**：会话文本快照、新 Revision、按钮/快捷键；
-- 043 Revision/request 跨进程持久化（UW-015）— 下一步，需单独授权；
-- 044 fsync/崩溃恢复（UW-019）；
+- 043 Revision/request 跨进程持久化（UW-015）— **done**：`.designer/state/`、重启恢复；
+- 044 fsync/崩溃恢复（UW-019）— 下一步，需单独授权；
 - 045 外部 watcher/三向合并/草稿保留（UW-017）；
 - 046 真实 WebView2 smoke（UW-012）。
 
@@ -266,12 +268,12 @@ S2 验收（全部满足）：
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 32 |
-| 已实现 / 已关闭 | 16 |
+| 已实现 / 已关闭 | 17 |
 | 等待用户决策 | 5 |
 | 等待授权 | 0 |
 | 已接受待排期 | 0 |
 | 进行中 | 0 |
-| 明确延期 | 11 |
+| 明确延期 | 10 |
 
 ## 9. 常用命令
 
@@ -316,15 +318,17 @@ npm run desktop
 | 2026-11-28 | 040 | Domain v3、Loader/Core profile 选择、Revision/Digest、Session/Source 作用域；233 tests |
 | 2026-11-28 | 041 | CLI/MCP/Designer profile 入口、v3 数据集、S2 验收；238 tests + 35 UI + 17 Tauri；UW-004/018 关闭 |
 | 2026-11-28 | 042 | Editor/Designer undo/redo、Tauri IPC、快捷键；241 tests + 36 UI + 17 Tauri；UW-014 关闭 |
+| 2026-11-28 | 043 | Revision/request 跨进程状态（`.designer/state/`）、过期/损坏丢弃；247 tests；UW-015 关闭 |
 
 ## 11. 下一步
 
 M7/S1/M8/S2 完成，H1 进行中。下一步：
 
-1. **043 — Revision/request 跨进程持久化**（UW-015）：需单独授权（Modify + Extend）；
-2. 044/045/046 按真实反馈排序；每张卡单独授权；
+1. **044 — fsync/崩溃恢复**（UW-019）：需单独授权（Modify）；先确认写入策略
+   （文件 fsync、目录 fsync、备份清理）；
+2. 045/046 按真实反馈排序；每张卡单独授权；
 3. M9 生态按需；UW-020（progress/cancel）、UW-031（模块文件编辑）、
    UW-032（接口形状）仍 deferred；
-4. 建议 043 之前先确认持久化位置与格式（仓库内 `.designer/` 或外部状态目录）。
+4. 043 的状态目录已加入 `.gitignore`；生产使用前仍需 044 的断电窗口评估。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

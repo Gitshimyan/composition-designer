@@ -22,6 +22,8 @@ S1 034 增加 Services 视图、service 创建、scope 与接口目标展示。*
 ## 当前外壳
 
 - 顶栏：打开项目、路径输入、项目标识；v3 项目显示 Profile 选择器；Undo/Redo（Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y）；
+- 会话状态：`.designer/state/<profile>.json`（已忽略）保存 Revision 历史与 request 幂等记录；
+  重启后恢复 seq，过期/损坏状态丢弃；不含 undo 文本栈；
 - Explorer：项目、模块、结构 Tree（层级/slot/选择/聚焦）；
 - Composition：`@xyflow/react` 实例节点 + Binding 边、Fit/Reset、拖动节点；
 - Inspector：

@@ -8,6 +8,7 @@
 mod command;
 mod diff;
 mod session;
+mod state;
 mod workspace;
 
 pub use command::{Command, Transaction, COMMAND_KINDS};

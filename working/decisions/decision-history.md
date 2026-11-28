@@ -37,3 +37,4 @@
 | D-030 | 2026-11-28 | 完成 040 Core/Session profile 实现 | 用户授权 S2；Rearchitect + Modify | v3、Loader/Core 选择、Revision/Digest、Session/Source；233 workspace；v1/v2.0 不变 |
 | D-031 | 2026-11-28 | 完成 041 入口验收与 S2 收口 | 用户授权 S2；Extend + Modify + Rearchitect（协议文档） | CLI/MCP/Designer profile、v3 数据集、40 expected；238 workspace + 35 UI + 17 Tauri；UW-004/018 关闭 |
 | D-032 | 2026-11-28 | 完成 042 undo/redo | 用户明确授权 042 undo；Extend + Modify | Editor 文本快照 undo/redo、新 Revision；Tauri IPC；Designer 按钮/快捷键；241 workspace + 36 UI + 17 Tauri；UW-014 关闭 |
+| D-033 | 2026-11-28 | 完成 043 Revision/request 持久化 | 用户明确授权 043；Modify + Extend | `.designer/state/<profile>.json`；重启恢复 seq/request；过期/损坏丢弃；247 workspace；UW-015 关闭 |
