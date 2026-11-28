@@ -7,7 +7,7 @@
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
 > 测试基线：220 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
-> 当前阶段：S1 与 **M8 Agent Authoring 完成**；下一步 **S2 / H1 决策**。
+> 当前阶段：S1、M8 完成；**S2 039 完成（v2.1 Profile/多入口语义冻结）**；下一步 040–041。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -51,8 +51,11 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
   UI 34 / Tauri 17。
 - S1 035 完成：11 个 v2 数据集（37 个 expected.json）、迁移拒绝路径、Glide v2 试点
   （7 实例 / 3 Binding / 6 Connection / 3 接口依赖）与 CLI 编辑验收；UW-002/003 关闭。
-- 未决登记：32 项；13 已关闭、5 等待决策、1 已接受待排期、0 进行中、13 延期、0 等待授权。
-- 关键缺口：G3 Profile（S2）、撤销/历史持久化、fsync、三向合并/草稿保留、
+- M8 036–038 完成：context/impact、只读 batch、Skill 评测与 configure.mjs；220 workspace。
+- S2 039 完成：v2.1（format 3）Profile/多入口语义冻结（ADR-0007、v3 规范与 3 个诊断）；
+  UW-004/UW-018 转 in_progress；无代码变更。
+- 未决登记：32 项；13 已关闭、5 等待决策、0 已接受待排期、2 进行中、12 延期、0 等待授权。
+- 关键缺口：S2 实现（040–041）、撤销/历史持久化、fsync、三向合并/草稿保留、
   ConfigValue float wire、模块文件编辑（UW-031）。
 
 ## 3. 路线图
@@ -65,7 +68,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 | M7 | Source Authoring（029–031） | done | Source 事务、UI、Review、Glide 验收 | Extend + Rearchitect（029） |
 | S1 | Schema v2.0（032–035） | done | 语义冻结、Core、命令/UI/入口、v2 数据集与 Glide 验收 | Rearchitect + Extend |
 | M8 | Agent Authoring（036–038） | done | 上下文/影响查询、只读 batch、Skill 评测与跨平台配置 | Extend / Modify |
-| S2 | Schema v2.1（039–041） | pending_decision | G3 Profile + 多 Composition 入口 | Rearchitect + Extend |
+| S2 | Schema v2.1（039–041） | in_progress | Profile + 多 Composition 入口；按 profile 的 Revision/Digest | Rearchitect + Extend |
 | H1 | 选择性可靠性（042–046） | conditional | Undo、Revision 持久化、fsync、外部合并、WebView2 smoke | Modify / Extend |
 | M9 | Composition Ecosystem（047+） | deferred | 模块库/版本、模板、Adapter | Rearchitect / Extend |
 
@@ -165,15 +168,37 @@ M8 验收：
 - 不改变事务、Diff、Revision 或 TOML 写回语义；
 - 不做远程/多项目 Agent 调度。
 
-### S2 — Schema v2.1（039–041，pending_decision）
+### S2 — Schema v2.1（039–041，in_progress）
 
-| 卡 | 方向 | 授权 |
-|---|---|---|
-| 039 | Profile/多入口语义冻结与 ADR | Rearchitect |
-| 040 | Project/Loader/Revision/Digest 按 profile 选择 | Rearchitect + Extend |
-| 041 | CLI/MCP/Designer profile 选择与验收 | Extend + Modify |
+目标：用项目级 Profile 表达 desktop/headless/环境差异，每个 profile 是完整 Composition；
+共享模块，不做 overlay/继承。格式版本与选择语义由 039 冻结。
 
-S2 前置：S1 完成 + UW-018 多入口决策。
+| 卡 | 交付 | 授权 | 状态 |
+|---|---|---|---|
+| 039 | ADR + 规范：Profile 表、`schema_version` 矩阵、选择/Revision/Digest、错误码、CLI/MCP/Designer 语义 | Rearchitect + Extend | done |
+| 040 | Domain/Loader/Core/Session：Project profiles、按 profile 加载/校验/Revision/Digest | Rearchitect + Modify | todo |
+| 041 | CLI/MCP/Designer profile 选择、Source/Review 按 profile；fixtures 与验收 | Extend + Modify | todo |
+
+交付：
+
+- 039：[ADR-0007](../docs/adr/0007-schema-v21-profiles.md)、
+  [composition-schema-v3.md](../docs/spec/composition-schema-v3.md)、
+  [error-codes-v3.md](../docs/spec/error-codes-v3.md)；format 3、`[profiles]`、
+  默认/显式选择、Revision/Digest 作用域、3 个新代码；无代码变更。
+
+S2 验收：
+
+- 默认 profile 保持 `workspace.composition`；显式选择缺失 profile 报稳定错误；
+- 每个 profile 独立 validate；模块集合共享；
+- Revision/Digest 只覆盖所选 Composition + 共享模块，切换 profile 不静默沿用旧 Revision；
+- 事务/Source 只写所选 profile 入口；不做 overlay、继承或自动迁移；
+- v1/v2.0 文件保持可读，v3 显式启用。
+
+非目标：
+
+- Profile overlay/继承、per-profile module roots、运行时选择；
+- 自动迁移 v1/v2.0 → v3；
+- 远程/多项目调度。
 
 ### H1 — 选择性可靠性（042–046，conditional）
 
@@ -198,7 +223,8 @@ S2 前置：S1 完成 + UW-018 多入口决策。
 |---|---|---|---|
 | Interface/Contract 独立身份 | UW-002 | Rearchitect | implemented（032–035；Glide v2 验收） |
 | 非结构 runtime/service 容器 | UW-003 | Rearchitect | implemented（实例 scope + primitive；Glide v2 验收） |
-| 项目级 Profile / 条件组合 | UW-004 | Rearchitect | ADR-0004 已确认 Profile 入口；S2（039–041） |
+| 项目级 Profile / 条件组合 | UW-004 | Rearchitect | 039 冻结 format 3；040–041 实现 |
+| 多 Composition 入口 | UW-018 | Rearchitect | 039 冻结 `[profiles]`；040–041 实现 |
 | 接口方法与 service 内部组合 | UW-032 | Rearchitect | v2.0 明确排除；出现真实需求时评估 |
 | ConfigValue 整数值 float wire | UW-005 | Extend/协议 | M8 或独立小卡；不阻塞 Source 文本编辑 |
 | Inspector array 编辑 | UW-016 | Modify | M7 UI 的 quick win 或独立小卡 |
@@ -219,7 +245,7 @@ S2 前置：S1 完成 + UW-018 多入口决策。
 2. **草稿/外部冲突**：整项目 digest 只能保守检测，三向合并可能超出首版；
 3. **G3 Profile**：G7 已完成研究，S2 实施；G1/G2 已由 S1 交付；
 4. **可靠性缺口**：undo/历史/fsync 未实现，生产使用前需 H1；
-5. **单入口/单文件**：S2 前限制仍存在，M9 不再重复多入口。
+5. **单入口/单文件**：039 已冻结多入口；040–041 落地前限制仍存在。
 
 ## 8. 当前未决总览
 
@@ -228,12 +254,12 @@ S2 前置：S1 完成 + UW-018 多入口决策。
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 32 |
-| 已实现 / 已关闭 | 11 |
+| 已实现 / 已关闭 | 13 |
 | 等待用户决策 | 5 |
 | 等待授权 | 0 |
-| 已接受待排期 | 1 |
-| 进行中 | 0 |
-| 明确延期 | 13 |
+| 已接受待排期 | 0 |
+| 进行中 | 2 |
+| 明确延期 | 12 |
 
 ## 9. 常用命令
 
@@ -274,15 +300,15 @@ npm run desktop
 | 2026-11-28 | 036 | context/impact：protocol/CLI/MCP、协议与 Skill；210 tests；只读 |
 | 2026-11-28 | 037 | 只读 batch：protocol/CLI/MCP、限流与逐项结果；218 tests；无 progress/cancel |
 | 2026-11-28 | 038 | Skill 评测（minimal + Glide v2）、configure.mjs；220 tests；M8 完成 |
+| 2026-11-28 | 039 | v2.1 语义冻结：format 3、Profile/多入口、选择/Revision/Digest、3 个新代码；无代码变更 |
 
 ## 11. 下一步
 
-M7/S1/M8 完成。下一步：
+M7/S1/M8 完成，S2 进行中。下一步：
 
-1. **S2 — Schema v2.1（039–041）**：Profile + 多入口；需 Rearchitect 授权 + UW-018 决策；
-2. **H1 — 选择性可靠性（042–046，conditional）**：undo、Revision 持久化、fsync、
-   外部合并、WebView2 smoke；按真实反馈排序；
-3. **M9 生态（047+）**：S1/S2 完成后按需评估；UW-031 模块文件编辑仍 deferred；
-4. UW-020（MCP progress/cancel）在 037 评估后继续 deferred。
+1. **040 — Domain/Loader/Core/Session**：Project profiles、按 profile 加载/校验、
+   Revision/Digest；需 Rearchitect + Modify 授权（已在 S2 授权内）；
+2. **041 — 入口与验收**：CLI/MCP/Designer profile 选择、Source/Review、fixtures；
+3. S2 后 H1 可靠性；M9 生态按需；UW-020/UW-031 仍 deferred。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

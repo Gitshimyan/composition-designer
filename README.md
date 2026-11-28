@@ -2,7 +2,7 @@
 
 > v0.2 M6 与 G01–G08 完成；ADR-0004/0005 Accepted。
 > M7 Source Authoring 完成（029–031：编辑 Source、文本+对象 Review、Glide 验收）。
-> S1 032–035 完成：v2.0 语义、Core、命令/UI/入口与 v2 验收；下一步 M8 Agent。
+> S1 与 M8 完成；S2 039 完成：Schema v2.1（format 3）Profile/多入口语义冻结；下一步 040–041。
 > 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
@@ -57,6 +57,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | M7 Source Authoring（029–031） | 完成：`replace_source` 独占事务、可编辑 Source、文本+对象 Diff、Glide 验收；G06–G08 完成 |
 | S1 Schema v2.0（032–035） | 完成：语义冻结、Core 校验、命令/UI/入口、11 个 v2 数据集与 Glide v2 试点验收；UW-002/003 关闭 |
 | M8 Agent Authoring（036–038） | 完成：`context`/`impact`、只读 `batch`、Skill 评测与跨平台配置；220 workspace 测试 |
+| S2 Schema v2.1（039） | 039 完成：format 3、`[profiles]`、选择/Revision/Digest/3 个诊断冻结；ADR-0007；040–041 实现 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
@@ -163,6 +164,7 @@ composition-designer/
 - [领域模型 v1](./docs/spec/domain-model-v1.md)
 - [Composition Schema v1](./docs/spec/composition-schema-v1.md)
 - [Composition Schema v2.0](./docs/spec/composition-schema-v2.md)
+- [Composition Schema v3（v2.1）](./docs/spec/composition-schema-v3.md)
 - [命令 Schema v1](./docs/spec/command-schema-v1.md)
 - [Designer Layout v1](./docs/spec/designer-layout-v1.md)
 - [Composition Protocol v1](./docs/spec/protocol-v1.md)
@@ -170,12 +172,14 @@ composition-designer/
 - [v0.1 验收报告](./docs/acceptance-v0.1.md)
 - [错误代码 v1](./docs/spec/error-codes-v1.md)
 - [错误代码 v2.0](./docs/spec/error-codes-v2.md)
+- [错误代码 v3（v2.1）](./docs/spec/error-codes-v3.md)
 - [ADR-0001 领域模型与 Schema 冻结](./docs/adr/0001-domain-and-schema-freeze.md)
 - [ADR-0002 v0.1 显式不支持项](./docs/adr/0002-v01-unsupported.md)
 - [ADR-0003 Dependency Provider 命令](./docs/adr/0003-dependency-provider-command.md)
 - [ADR-0004 Schema v2 方向](./docs/adr/0004-schema-v2-direction.md)
 - [ADR-0005 Source 编辑事务](./docs/adr/0005-source-editing-transaction.md)
 - [ADR-0006 Schema v2.0 冻结](./docs/adr/0006-schema-v2-freeze.md)
+- [ADR-0007 Schema v2.1 Profile 冻结](./docs/adr/0007-schema-v21-profiles.md)
 - [crates 职责与依赖方向](./crates/README.md)
 - [Designer UI 区域](./apps/designer/README.md)
 - [Agent Skill / MCP 配置](./agent/README.md)

@@ -8,6 +8,9 @@
 - 新增错误代码：[`error-codes-v2.md`](./error-codes-v2.md)
 - 实现卡：033（Domain/Loader/Validation）、034（Commands/UI/CLI/MCP）、035（fixtures/迁移拒绝/试点）
 
+> v2.1（`schema_version = 3`，项目级 Profile / 多 Composition 入口）见
+> [`composition-schema-v3.md`](./composition-schema-v3.md)；v2.0 语义与输出不变。
+
 > v2.0 只增加**接口身份**与**实例 scope**。项目 Profile、多 Composition 入口属于 v2.1（S2），
 > 不在本文件范围；在 v2.0 项目中出现 `[profiles]` 仍是 `schema-unknown-field`。
 

@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
-| 当前阶段 | S1 完成；**M8 Agent Authoring 完成（036–038）**；下一步 S2 / H1 决策 |
+| 当前阶段 | S1、M8 完成；**S2 039 完成（v2.1 Profile/多入口语义冻结）**；下一步 040–041 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
@@ -116,7 +116,7 @@
 | 设计基线（Rearchitect） | `docs/design/v0.1-design.md` |
 | 评审与路线图 | `docs/reviews/2026-11-27-project-review-and-roadmap.md` |
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
-| TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（v1 已冻结）；v2.0 增量见 `docs/spec/composition-schema-v2.md`、`docs/spec/error-codes-v2.md`（032 冻结，033–035 实现） |
+| TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（v1 已冻结）；v2.0 增量见 `composition-schema-v2.md`、`error-codes-v2.md`（032 冻结，033–035 实现）；v2.1（format 3）见 `composition-schema-v3.md`、`error-codes-v3.md`（039 冻结，040–041 实现） |
 | 编辑命令 Schema | `docs/spec/command-schema-v1.md`（M2 009） |
 | Layout 格式 | `docs/spec/designer-layout-v1.md`（M3 013） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
@@ -188,5 +188,7 @@
   协议/MCP/Skill 文档更新；218 workspace 测试；
 - 038 完成：`skill_eval`（minimal + Glide v2）、`agent/configure.mjs`、
   `agent/EVALUATION.md`；220 workspace 测试；M8 完成；
+- 039 完成：Schema v2.1（format 3）Profile/多入口语义冻结（ADR-0007、
+  `composition-schema-v3.md`、`error-codes-v3.md`）；3 个新代码；无代码变更；040–041 实现；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。
