@@ -13,7 +13,8 @@
     "start-topmost": ".\\src-tauri\\target\\debug\\composition-designer.exe --project ..\\..\\examples\\minimal-project --topmost",
     "desktop": "npm run build && cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol",
     "tauri": "tauri",
-    "test:ui": "npm run build && playwright test"
+    "test:ui": "npm run build && playwright test",
+    "smoke:webview2": "npm run desktop && node tests/webview2/smoke.mjs"
   },
   "dependencies": {
     "@codemirror/language": "^6.0.0",

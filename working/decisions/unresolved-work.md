@@ -2,7 +2,7 @@
 
 > 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010；G05 关闭 UW-030；
 > 032 冻结 v2.0 语义，UW-002/UW-003 转 in_progress，新增 UW-032；034 完成入口，035 完成 Glide v2 验收并关闭 UW-002/003；
-> 039 冻结 v2.1（format 3），UW-004/UW-018 转 in_progress；041 完成 CLI/MCP/Designer 入口与验收，关闭 UW-004/UW-018；042 完成 undo/redo，关闭 UW-014；043 持久化 Revision/request，关闭 UW-015；044 完成 fsync/崩溃恢复，关闭 UW-019；045 实现草稿保留/Review 重基，UW-017 剩余项继续 deferred。
+> 039 冻结 v2.1（format 3），UW-004/UW-018 转 in_progress；041 完成 CLI/MCP/Designer 入口与验收，关闭 UW-004/UW-018；042 完成 undo/redo，关闭 UW-014；043 持久化 Revision/request，关闭 UW-015；044 完成 fsync/崩溃恢复，关闭 UW-019；045 实现草稿保留/Review 重基，UW-017 剩余项继续 deferred；046 真实 WebView2 smoke，关闭 UW-012。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -11,12 +11,12 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 32 |
-| 已实现 / 已关闭 | 18 |
+| 已实现 / 已关闭 | 19 |
 | 等待用户决策（pending_decision） | 5 |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 0 |
 | 进行中（in_progress） | 0 |
-| 明确延期（deferred） | 9 |
+| 明确延期（deferred） | 8 |
 
 ## 2. 登记表
 
@@ -34,7 +34,7 @@
 | UW-009 | 披露评审 | 001–025 历史未实现工作回溯与登记 | Modify | implemented | Modify | 历史遗留线索有去向 | G03 已关闭 |
 | UW-010 | 授权审计 | 机器授权/覆盖门禁 | Extend + Rearchitect | implemented | Extend + Rearchitect | `composition-change-gate` report 模式已接入 CI | G04 已关闭；block 模式转 UW-030 |
 | UW-011 | 014 / 015 / 路线图 | Source 编辑与草稿冲突处理（Composition 入口） | 产品能力 | implemented | Modify + Extend/Rearchitect（029） | Composition Source 已可编辑；外部冲突阻止 | 029–031 已关闭；模块文件编辑转 UW-031 |
-| UW-012 | 020 | 真实 WebView2 / Tauri GUI 自动化 | 工程能力 | deferred | 待评估 | Playwright 使用 IPC fixture | M6 后评估 tauri-driver/smoke |
+| UW-012 | 020 → 046 | 真实 WebView2 / Tauri GUI 自动化 | 工程能力 | implemented | 待评估 | Playwright 使用 IPC fixture | 046 真实窗口 + Playwright CDP smoke（Windows）；UW-012 关闭 |
 | UW-013 | 021 | Glide G4–G8：kind、技术元数据、Port wire、Profile-scoped task、模板 | Rearchitect / 后续 | deferred | Rearchitect | 拓扑够用，运行细节不足 | 出现真实需求时再评估 |
 | UW-014 | 009 / 010 / 011 → 042 | 撤销 / 重做 | 产品能力 | implemented | Modify | 误操作只能手工回退 | 042 会话内文本快照 undo/redo、新 Revision、Designer 按钮/快捷键 |
 | UW-015 | 009 / 010 / 011 / 016 / 019 → 043 | Revision 历史与 request 幂等跨进程持久化 | 可靠性 | implemented | Modify / Extend（存储方案） | 重启后历史/幂等丢失 | 043 `.designer/state/<profile>.json`；重启恢复、过期/损坏丢弃 |

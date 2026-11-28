@@ -28,6 +28,8 @@ S1 034 增加 Services 视图、service 创建、scope 与接口目标展示。*
   `.bak-*` 恢复；Windows 无目录 fsync，采用 best-effort；
 - 外部修改：2s 轮询；外部 dirty 时阻止写入；Source 草稿保留，Review 在 Reload 后按新
   Revision 重新准备（`ADR-0008`）；不自动三向合并；
+- 真实宿主 smoke：`npm run smoke:webview2`（Windows WebView2 + Playwright CDP；
+  启动/打开/编辑/Apply/截图，见 `ADR-0009`）；
 - Explorer：项目、模块、结构 Tree（层级/slot/选择/聚焦）；
 - Composition：`@xyflow/react` 实例节点 + Binding 边、Fit/Reset、拖动节点；
 - Inspector：

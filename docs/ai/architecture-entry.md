@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
-| 当前阶段 | S1、M8、S2 完成；**H1 042–045 完成**；下一步 046 WebView2 smoke（需授权） |
+| 当前阶段 | **S1、M8、S2、H1 完成**；下一步 M9 生态/维护（按需） |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
@@ -202,5 +202,7 @@
   崩溃窗口恢复测试；UW-019 关闭；251 workspace；
 - 045 完成：Source 草稿跨外部修改保留、Review 语义重基、冲突 UX；保留 2s 轮询；
   原生 watcher/自动三向合并/layout 合并仍 deferred（UW-017）；38 UI；
+- 046 完成：真实 WebView2 窗口 + Playwright CDP smoke（启动/打开/编辑/Apply/截图）；
+  UW-012 关闭；H1 完成；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。
