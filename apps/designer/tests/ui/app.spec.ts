@@ -19,6 +19,20 @@ test("opens a valid project and shows the structure", async ({ page }) => {
   await expect(page.locator(".stage-counts")).toContainText("5 structural bindings");
 });
 
+test("switches the composition profile", async ({ page }) => {
+  await installMock(page, "v3");
+  await page.goto("/");
+  const select = page.getByLabel("Composition profile");
+  await expect(select).toHaveValue("default");
+  await expect(select.locator("option")).toHaveCount(3);
+  await select.selectOption("headless");
+  await expect(select).toHaveValue("headless");
+  const stored = await page.evaluate(() =>
+    window.localStorage.getItem("composition-designer.last-profile"),
+  );
+  expect(stored).toBe("headless");
+});
+
 test("shows an invalid project with diagnostics", async ({ page }) => {
   await installMock(page, "invalid");
   await page.goto("/");

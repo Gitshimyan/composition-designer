@@ -2,7 +2,7 @@
 
 > 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010；G05 关闭 UW-030；
 > 032 冻结 v2.0 语义，UW-002/UW-003 转 in_progress，新增 UW-032；034 完成入口，035 完成 Glide v2 验收并关闭 UW-002/003；
-> 039 冻结 v2.1（format 3），UW-004/UW-018 转 in_progress。
+> 039 冻结 v2.1（format 3），UW-004/UW-018 转 in_progress；041 完成 CLI/MCP/Designer 入口与验收，关闭 UW-004/UW-018。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -11,11 +11,11 @@
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 32 |
-| 已实现 / 已关闭 | 13 |
+| 已实现 / 已关闭 | 15 |
 | 等待用户决策（pending_decision） | 5 |
 | 等待授权（pending_authorization） | 0 |
 | 已接受待排期（accepted） | 0 |
-| 进行中（in_progress） | 2 |
+| 进行中（in_progress） | 0 |
 | 明确延期（deferred） | 12 |
 
 ## 2. 登记表
@@ -25,8 +25,8 @@
 | UW-001 | 024 → 025 | Dependency Provider 的设置/清空编辑 | Extend | implemented | Extend + Modify | 已解除；Dependency 视图可编辑 | 025 已关闭，保留证据 |
 | UW-002 | 021 → 032 | Interface / Contract 的独立身份 | Rearchitect | implemented | Rearchitect | 依赖无法与实现解耦 | 032 冻结、033 实现、034 入口、035 验收；已关闭 |
 | UW-003 | 021 → 032 | 非结构 runtime / service 容器 | Rearchitect | implemented | Rearchitect | 运行时服务只能近似映射为结构节点 | 032 冻结、033 实现、034 入口、035 验收；已关闭 |
-| UW-004 | 021 → 039 | 项目级 Profile / 条件组合选择 | Rearchitect | in_progress | Rearchitect | 无法完整表达 profile/环境/task 变体 | 039 冻结 format 3；040–041 实现 |
-| UW-018 | 011 / 016 / 019 → 039 | 多 composition 入口 / 多文件项目 | Rearchitect | in_progress | Rearchitect | 仅单入口；项目拆分受限 | 039 冻结 `[profiles]`；040–041 实现 |
+| UW-004 | 021 → 039 | 项目级 Profile / 条件组合选择 | 领域能力 | implemented | Rearchitect | 无法完整表达 profile/环境/task 变体 | 039 冻结、040 Core、041 CLI/MCP/Designer 与验收；v3 数据集 |
+| UW-018 | 011 / 016 / 019 → 039 | 多 composition 入口 / 多文件项目 | 领域能力 | implemented | Rearchitect | 仅单入口；项目拆分受限 | 039 冻结 `[profiles]`、040 Loader/Core、041 入口；v3 数据集 |
 | UW-005 | 022 / 025 | ConfigValue 整数值 float 的 JSON wire | Extend（协议方案） | pending_decision | Extend；协议基线变更再评估 Rearchitect | Agent/UI 传输可能无法保留数值类型 | 单独设计 wire 语义 |
 | UW-006 | 授权审计 | 权限集合、工程/文档/Compose/副作用边界 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |
 | UW-007 | 披露评审 | 任务卡/Manifest 模板、coverage/open_items、汇报规范 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |

@@ -4,6 +4,7 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import {
   applyTransaction,
   checkExternalChanges,
+  initialProfile,
   initialProject,
   isTauri,
   loadLayout,
@@ -49,6 +50,7 @@ import type {
 } from "./types";
 
 const LAST_PATH_KEY = "composition-designer.last-project";
+const LAST_PROFILE_KEY = "composition-designer.last-profile";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
@@ -102,10 +104,13 @@ export default function App() {
       if (!isTauri()) return;
       try {
         const initial = await initialProject();
+        const initialProfileName = await initialProfile();
         const stored = window.localStorage.getItem(LAST_PATH_KEY);
+        const storedProfile = window.localStorage.getItem(LAST_PROFILE_KEY);
         const path = initial ?? stored;
+        const profile = initialProfileName ?? storedProfile;
         if (path && !cancelled) {
-          await loadProject(path);
+          await loadProject(path, profile);
         }
       } catch {
         // A missing startup argument is not an application error.
@@ -117,7 +122,7 @@ export default function App() {
     };
   }, []);
 
-  async function loadProject(rawPath: string) {
+  async function loadProject(rawPath: string, profile: string | null = null) {
     const path = rawPath.trim();
     if (!path) {
       setShowPath(true);
@@ -126,15 +131,25 @@ export default function App() {
     setLoadState("loading");
     setError(null);
     try {
-      const next = await openProject(path);
+      const next = await openProject(path, profile);
       setSnapshot(next);
       setPathInput(path);
       setLoadState("ready");
       window.localStorage.setItem(LAST_PATH_KEY, path);
+      if (profile) {
+        window.localStorage.setItem(LAST_PROFILE_KEY, profile);
+      } else {
+        window.localStorage.removeItem(LAST_PROFILE_KEY);
+      }
     } catch (reason) {
       setLoadState("error");
       setError(reason instanceof Error ? reason.message : String(reason));
     }
+  }
+
+  function switchProfile(profile: string) {
+    if (!snapshot) return;
+    void loadProject(snapshot.root, profile);
   }
 
   async function handleChooseProject() {
@@ -149,7 +164,7 @@ export default function App() {
         title: "Open Composition Project",
       });
       if (typeof selected === "string") {
-        await loadProject(selected);
+        await loadProject(selected, null);
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
@@ -158,7 +173,7 @@ export default function App() {
 
   function handlePathSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void loadProject(pathInput);
+    void loadProject(pathInput, null);
   }
 
   const model = snapshot?.model ?? null;
@@ -562,6 +577,25 @@ export default function App() {
             <>
               <span className="project-name">{project.name}</span>
               <code>{project.id}</code>
+              {project.schema_version === 3 &&
+                (project.profiles?.length ?? 0) > 0 && (
+                  <label className="profile-picker">
+                    <span>Profile</span>
+                    <select
+                      aria-label="Composition profile"
+                      value={project.active_profile ?? "default"}
+                      disabled={loadState === "loading"}
+                      onChange={(event) => switchProfile(event.target.value)}
+                    >
+                      <option value="default">default</option>
+                      {project.profiles?.map((profile) => (
+                        <option key={profile.name} value={profile.name}>
+                          {profile.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
             </>
           ) : (
             <span className="muted">No project open</span>

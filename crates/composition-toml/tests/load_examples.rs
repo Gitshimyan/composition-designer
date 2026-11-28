@@ -204,7 +204,7 @@ fn all_complete_projects_emit_only_expected_l1_codes() {
     let mut projects = Vec::new();
     collect_projects(&examples_root(), &mut projects);
     projects.sort();
-    assert_eq!(projects.len(), 36);
+    assert_eq!(projects.len(), 39);
 
     for project in projects {
         let relative = project
@@ -218,6 +218,7 @@ fn all_complete_projects_emit_only_expected_l1_codes() {
             "invalid-projects/files/path-outside" => &[ErrorCode::FilePathEscape],
             "invalid-projects/files/toml-syntax" => &[ErrorCode::TomlSyntaxError],
             "invalid-projects/structure/multiple-roots" => &[ErrorCode::TomlDuplicateKey],
+            "v3/invalid-reserved-profile" => &[ErrorCode::ProfileReservedName],
             _ => &[],
         };
         assert_eq!(actual, expected, "{relative}");

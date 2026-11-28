@@ -14,14 +14,19 @@ function fail(message) {
 const args = process.argv.slice(2);
 let project = "";
 let destination = join(here, "mcp.local.json");
+let profile = "";
 for (let index = 0; index < args.length; index += 1) {
   const arg = args[index];
   if (arg === "--project") {
     project = args[++index] ?? "";
+  } else if (arg === "--profile") {
+    profile = args[++index] ?? "";
   } else if (arg === "--dest") {
     destination = args[++index] ?? "";
   } else if (arg === "-h" || arg === "--help") {
-    console.log("Usage: node agent/configure.mjs --project <dir> [--dest <file>]");
+    console.log(
+      "Usage: node agent/configure.mjs --project <dir> [--profile <name>] [--dest <file>]",
+    );
     process.exit(0);
   } else {
     fail(`unknown argument ${arg}`);
@@ -49,7 +54,9 @@ const config = {
   mcpServers: {
     "composition-designer": {
       command: executable,
-      args: ["--project", resolve(project)],
+      args: profile
+        ? ["--project", resolve(project), "--profile", profile]
+        : ["--project", resolve(project)],
     },
   },
 };

@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use composition_core::validate_project;
+use composition_core::validate_project_with_profile;
 use composition_domain::{
     CompositionModel, Diagnostic, ErrorCode, ModuleDefinition, ObjectId, Project, Severity,
 };
@@ -108,14 +108,23 @@ struct ImpactParams {
 
 pub struct ProtocolSession {
     root: PathBuf,
+    profile: Option<String>,
     session: Option<ProjectSession>,
 }
 
 impl ProtocolSession {
     pub fn new(root: impl AsRef<Path>) -> Self {
+        Self::new_with_profile(root, None)
+    }
+
+    pub fn new_with_profile(root: impl AsRef<Path>, profile: Option<&str>) -> Self {
         let root = root.as_ref().to_path_buf();
-        let session = ProjectSession::open(&root).ok();
-        Self { root, session }
+        let session = ProjectSession::open_with_profile(&root, profile).ok();
+        Self {
+            root,
+            profile: profile.map(str::to_owned),
+            session,
+        }
     }
 
     pub fn root(&self) -> &Path {
@@ -163,7 +172,7 @@ impl ProtocolSession {
                 .map(|digest| digest.to_string());
             return (Some(model.clone()), diagnostics, digest, true);
         }
-        let validation = validate_project(&self.root);
+        let validation = validate_project_with_profile(&self.root, self.profile.as_deref());
         let digest = validation
             .source_digest
             .as_ref()
@@ -456,7 +465,8 @@ impl ProtocolSession {
 }
 
 fn external_dirty(session: &ProjectSession) -> bool {
-    session.workspace().revision().source_digest != validate_project(session.root()).source_digest
+    session.workspace().revision().source_digest
+        != validate_project_with_profile(session.root(), session.profile()).source_digest
 }
 
 fn success(id: String, result: Value, diagnostics: Vec<Diagnostic>) -> Response {

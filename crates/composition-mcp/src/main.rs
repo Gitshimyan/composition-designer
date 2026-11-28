@@ -1,10 +1,11 @@
 use std::io::{self, BufRead, Write};
 
-use composition_mcp::{project_root_from_args, McpServer};
+use composition_mcp::{profile_from_args, project_root_from_args, McpServer};
 
 fn main() {
     let root = project_root_from_args();
-    let mut server = McpServer::new(&root);
+    let profile = profile_from_args();
+    let mut server = McpServer::new_with_profile(&root, profile.as_deref());
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     for line in stdin.lock().lines() {

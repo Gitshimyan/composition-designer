@@ -17,11 +17,11 @@ S1 034 增加 Services 视图、service 创建、scope 与接口目标展示。*
 | TOML Source | `src/source/` | CodeMirror 6 可编辑 Source、草稿/Review/冲突只读与诊断定位（014、030） |
 | Diagnostics | `src/diagnostics/` | 错误/警告、源码位置、修正提示 |
 | Agent Status | `src/agent-status/` | Agent 会话、Revision 与操作记录 |
-| Tauri Host | `src-tauri/` | `open_project` / 编辑事务 / layout / source IPC |
+| Tauri Host | `src-tauri/` | `open_project(path, profile?)` / 编辑事务 / layout / source IPC |
 
 ## 当前外壳
 
-- 顶栏：打开项目、路径输入、项目标识；
+- 顶栏：打开项目、路径输入、项目标识；v3 项目显示 Profile 选择器；
 - Explorer：项目、模块、结构 Tree（层级/slot/选择/聚焦）；
 - Composition：`@xyflow/react` 实例节点 + Binding 边、Fit/Reset、拖动节点；
 - Inspector：

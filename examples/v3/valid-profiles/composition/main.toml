@@ -1,0 +1,12 @@
+[composition]
+schema_version = 3
+id = "example.v3"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "example.app"
+version = "1.0.0"
+
+[instances.config]
+title = "V3 Main"

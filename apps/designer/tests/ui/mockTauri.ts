@@ -1,13 +1,14 @@
 import type { Page } from "@playwright/test";
-import { invalidSnapshot, sourceText, v2Snapshot, v2SourceText, validSnapshot } from "./fixtures";
+import { invalidSnapshot, sourceText, v2Snapshot, v2SourceText, v3Snapshot, validSnapshot } from "./fixtures";
 
-export type MockMode = "valid" | "invalid" | "edit-failure" | "v2";
+export type MockMode = "valid" | "invalid" | "edit-failure" | "v2" | "v3";
 
 interface MockPayload {
   mode: MockMode;
   valid: ReturnType<typeof validSnapshot>;
   invalid: ReturnType<typeof invalidSnapshot>;
   v2: ReturnType<typeof v2Snapshot>;
+  v3: ReturnType<typeof v3Snapshot>;
   sourceText: string;
   v2SourceText: string;
 }
@@ -33,13 +34,18 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
     valid: validSnapshot(),
     invalid: invalidSnapshot(),
     v2: v2Snapshot(),
+    v3: v3Snapshot(),
     sourceText,
     v2SourceText,
   };
 
   await page.addInitScript((data: MockPayload) => {
     let current = structuredClone(
-      data.mode === "v2" ? data.v2 : data.valid,
+      data.mode === "v3"
+        ? data.v3
+        : data.mode === "v2"
+          ? data.v2
+          : data.valid,
     );
     let currentSource =
       data.mode === "v2" ? data.v2SourceText : data.sourceText;
@@ -572,10 +578,27 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
       switch (cmd) {
         case "initial_project":
           return "valid-project";
-        case "open_project":
-          return data.mode === "invalid"
-            ? structuredClone(data.invalid)
-            : structuredClone(current);
+        case "initial_profile":
+          return null;
+        case "open_project": {
+          if (data.mode === "invalid") {
+            return structuredClone(data.invalid);
+          }
+          if (data.mode === "v3") {
+            const selected = (args.profile as string | null) ?? "default";
+            const next = structuredClone(data.v3);
+            if (next.model) {
+              next.model.project.active_profile = selected;
+              next.model.project.composition_entry =
+                selected === "default"
+                  ? "composition/main.toml"
+                  : `composition/${selected}.toml`;
+            }
+            current = next;
+            return structuredClone(next);
+          }
+          return structuredClone(current);
+        }
         case "read_source":
           return { entry: "composition/main.toml", text: currentSource };
         case "load_layout":

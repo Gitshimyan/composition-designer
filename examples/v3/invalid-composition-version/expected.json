@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "schema-version-mismatch"
+  ],
+  "notes": "A v3 project requires schema_version 3 on every composition entry."
+}

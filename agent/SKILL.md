@@ -17,7 +17,7 @@ Revision and TOML formatting stay consistent.
 | `composition_resolve` | Normalized model, including `revision.seq` and contract IDs |
 | `composition_validate` | Validity plus L1–L7 diagnostics |
 | `composition_source` | Read-only composition TOML |
-| `composition_context` | Compact project/module/instance/diagnostic context for planning |
+| `composition_context` | Compact project/module/instance/diagnostic context; v3 includes `activeProfile` |
 | `composition_impact` | References for a module or instance, or dry-run impact of a transaction |
 | `composition_batch` | Up to 16 read-only queries in one call; each returns its own result |
 | `composition_prepare_transaction` | Validate a transaction and inspect its Diff; no write |
@@ -83,6 +83,10 @@ Resources: `composition://project/inspect`, `composition://project/model`,
   them in one call.
 - `composition_batch` is read-only (inspect/resolve/validate/source/context/impact), max 16 items;
   a failing item does not abort the others. Writes stay in prepare/apply transaction calls.
+- A v3 project can have profiles (`activeProfile="default"` or a name). The MCP process is bound
+  to one profile at startup (`--profile <name>`); all tools, Source and transactions use only
+  that profile's Composition. Restart the server to switch; never assume another profile's file
+  was written.
 - Layout (`.designer/layout.toml`) and Canvas positions are not project semantics and are not
   exposed by MCP.
 - Prefer one command per transaction for clear review; multiple commands are allowed and atomic.

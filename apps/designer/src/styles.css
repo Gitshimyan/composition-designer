@@ -184,6 +184,28 @@ code,
   gap: 8px;
 }
 
+.profile-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 6px;
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.profile-picker select {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 11px;
+}
+
 .button {
   display: inline-flex;
   align-items: center;

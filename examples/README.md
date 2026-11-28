@@ -57,6 +57,18 @@ v0.1 的项目样例，同时是 M0 的契约测试数据集。每个样例是�
 | `v2/invalid-provider-mismatch/` | provider 未实现接口 | `dependency-interface-mismatch` |
 | `v2/invalid-v1-project-v2-module/` | v1 项目加载 v2 模块 | `schema-unsupported-version` |
 
+### v2.1 数据集（041）
+
+`v3/**` 使用 `schema_version = 3`，覆盖默认/具名 Profile 与 v3 版本矩阵。
+每个目录带 `README.md` 与 `expected.json`；默认 profile 是
+`workspace.composition`。
+
+| 目录 | 内容 | 预期 |
+|---|---|---|
+| `v3/valid-profiles/` | 默认 + desktop/headless 两个具名 profile | valid |
+| `v3/invalid-reserved-profile/` | 声明 `[profiles.default]` | `profile-reserved-name` |
+| `v3/invalid-composition-version/` | v3 项目的 Composition 仍为 v2 | `schema-version-mismatch` |
+
 ## 3. 设计基线 §12.1 覆盖矩阵
 
 | §12.1 类别 | 样例 |

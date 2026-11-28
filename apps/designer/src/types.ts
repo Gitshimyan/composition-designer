@@ -26,6 +26,11 @@ export interface Diagnostic {
   hint?: string | null;
 }
 
+export interface ProfileDefinition {
+  name: string;
+  composition: string;
+}
+
 export interface Project {
   schema_version: number;
   id: string;
@@ -33,6 +38,9 @@ export interface Project {
   composition_entry: string;
   module_roots: string[];
   source?: SourceRef | null;
+  default_composition?: string | null;
+  active_profile?: string | null;
+  profiles?: ProfileDefinition[];
 }
 
 export interface ModuleRef {

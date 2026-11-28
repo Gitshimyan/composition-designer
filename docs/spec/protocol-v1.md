@@ -1,7 +1,8 @@
-# Composition Protocol v1（M4 016；M8 036 Extend）
+# Composition Protocol v1（M4 016；M8 036 Extend；S2 041 Profile）
 
 - 状态：M4 016 冻结（2026-11-26）；M8 036 经用户授权新增只读
-  `context` / `impact` 查询（协议语义未变）
+  `context` / `impact` 查询（协议语义未变）；S2 041 增加 profile 选择入口
+  （会话绑定，不改变请求结构）
 - 传输：单行 JSON（JSONL）或 CLI 单次请求
 - 实现：`composition-protocol` + `composition-cli`
 
@@ -39,7 +40,11 @@
 
 ```json
 {
-  "project": { "id": "...", "name": "...", "schemaVersion": 2, "root": "app" },
+  "project": {
+    "id": "...", "name": "...", "schemaVersion": 3, "root": "app",
+    "activeProfile": "desktop",
+    "profiles": [{ "name": "desktop", "composition": "composition/desktop.toml" }]
+  },
   "counts": {
     "modules": 2, "instances": 3, "structureInstances": 2, "services": 1,
     "bindings": 1, "connections": 0, "dependencies": 1, "errors": 0, "warnings": 0
@@ -64,7 +69,9 @@
 ```
 
 - 项目不可读时 `project=null`、计数为 0，`diagnostics` 仍返回。
-- `scope` 仅 v2 实例出现；v1 省略（等价 structure）。
+- v3 增加 `activeProfile`（`"default"` 或具名）与 `profiles`（具名、按 name 升序）；
+  v1/v2 省略。选择在会话/进程边界固定。
+- `scope` 仅 v2/v3 实例出现；v1 省略（等价 structure）。
 
 ### 1.2 `impact`
 
@@ -141,7 +148,7 @@
 
 ## 3. JSONL
 
-`composition-cli jsonl <project-dir>`：
+`composition-cli jsonl <project-dir> [--profile <name>]`：
 
 - stdin 每行一个 `Request`；空行忽略。
 - stdout 每行一个 `Response`，发送后 flush。
@@ -153,22 +160,25 @@
 
 ```powershell
 composition-cli query examples/minimal-project validate
-composition-cli context examples/minimal-project
+composition-cli context examples/v3/valid-profiles --profile desktop
 composition-cli impact examples/minimal-project --instance app
 composition-cli impact examples/minimal-project --module leaf.widget@1.0.0
 composition-cli impact examples/minimal-project --transaction transaction.json
 composition-cli batch examples/minimal-project requests.json
 composition-cli apply examples/minimal-project transaction.json --dry-run
-composition-cli apply examples/minimal-project transaction.json
-composition-cli jsonl examples/minimal-project
+composition-cli apply examples/v3/valid-profiles transaction.json --profile headless
+composition-cli jsonl examples/minimal-project --profile default
 ```
 
+- 所有命令接受 `--profile <name>`；省略 / `default` 使用 `workspace.composition`。
+  v1/v2.0 上显式选择返回 `profile-unsupported`；未知名称返回 `profile-not-found`。
 - `query` / `context` / `impact` / `batch` 输出 pretty JSON；`ok=false` 退出 1。
 - `batch` 文件可以是请求数组，或 `{ "requests": [...] }` 对象；格式错误退出 2。
 - `impact` 只接受一个目标；同时给多个或都不给退出 2。
 - `apply` 读取 transaction JSON；`--dry-run` 调 `prepare_transaction`，否则 `apply_transaction`；
   `ok=false` 退出 1，IO/JSON 错误退出 2。
-- 既有 `inspect` / `resolve` / `validate` 保持 M1 输出与退出码。
+- `inspect` / `resolve` / `validate` 通过 `validate_project_with_profile` 选择；
+  输出与 M1 一致，v3 项目额外带 `active_profile` / `profiles` / `default_composition`。
 
 ## 5. 一致性规则
 
@@ -178,4 +188,5 @@ composition-cli jsonl examples/minimal-project
   `edit-revision-conflict`，不覆盖。
 - `source` 只读；直接 Source 编辑尚未进入协议。
 - JSONL 会话与 CLI 单次命令不持久化 Revision 历史；跨进程幂等未实现。
+- Revision、Digest、Source 与事务只针对会话所选 profile；切换 profile 必须重开会话。
 - 协议不包含 GUI 布局、Canvas 坐标或 `.designer/**`。

@@ -87,6 +87,10 @@ impl ProjectSession {
         &self.root
     }
 
+    pub fn profile(&self) -> Option<&str> {
+        self.profile.as_deref()
+    }
+
     pub fn composition_entry(&self) -> &str {
         &self.composition_entry
     }

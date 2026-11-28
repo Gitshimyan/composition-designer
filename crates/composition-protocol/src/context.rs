@@ -1,7 +1,7 @@
 use composition_domain::{
     CompositionModel, DependencyRequirement, DependencyTarget, DependencyTargetInfo,
     DependencyTargetKind, Diagnostic, InstanceScope, InterfaceDeclaration, LocalId, ModuleId,
-    ModuleKind, ModuleRef, Revision, SchemaVersion, Version,
+    ModuleKind, ModuleRef, ProfileDefinition, Revision, SchemaVersion, Version,
 };
 use serde::Serialize;
 
@@ -25,6 +25,10 @@ pub(crate) struct ContextProject {
     pub name: String,
     pub schema_version: SchemaVersion,
     pub root: LocalId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_profile: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub profiles: Vec<ProfileDefinition>,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -159,6 +163,8 @@ impl ContextView {
                 name: model.project.name.clone(),
                 schema_version: model.project.schema_version,
                 root: composition.root.clone(),
+                active_profile: model.project.active_profile.clone(),
+                profiles: model.project.profiles.clone(),
             }),
             counts,
             modules,

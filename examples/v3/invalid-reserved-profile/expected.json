@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "profile-reserved-name"
+  ],
+  "notes": "default is reserved; the default profile is workspace.composition."
+}

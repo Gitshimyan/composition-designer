@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Project,
+    [string]$Profile = "",
     [string]$Destination = (Join-Path $PSScriptRoot "mcp.local.json")
 )
 
@@ -13,11 +14,13 @@ if (-not (Test-Path $Project)) {
     throw "Project directory not found: $Project"
 }
 
+$argsList = @("--project", (Resolve-Path $Project).Path)
+if ($Profile) { $argsList += @("--profile", $Profile) }
 $config = @{
     mcpServers = @{
         "composition-designer" = @{
             command = $exe
-            args = @("--project", (Resolve-Path $Project).Path)
+            args = $argsList
         }
     }
 } | ConvertTo-Json -Depth 6

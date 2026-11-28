@@ -22,12 +22,14 @@ cargo build -p composition-mcp
 
 ```powershell
 node agent/configure.mjs --project "E:\path\to\project"
+node agent/configure.mjs --project "E:\path\to\v3" --profile desktop
 ```
 
 PowerShell：
 
 ```powershell
 powershell -NoProfile -File agent\configure.ps1 -Project "E:\path\to\project"
+powershell -NoProfile -File agent\configure.ps1 -Project "E:\path\to\v3" -Profile desktop
 ```
 
 生成 `agent\mcp.local.json`（已忽略，不提交）。把它加入支持 MCP 的 Agent/客户端配置。

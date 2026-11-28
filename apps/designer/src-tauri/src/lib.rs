@@ -3,7 +3,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use composition_core::{validate_project, ValidationResult};
+use composition_core::{validate_project_with_profile, ValidationResult};
+#[cfg(test)]
+use composition_core::validate_project;
 use composition_domain::{CompositionModel, Diagnostic, ErrorCode, LocalId, ObjectId, Severity};
 use composition_editor::{ModelDiff, ProjectSession, SourceDiff, Transaction};
 use serde::{Deserialize, Serialize};
@@ -131,7 +133,7 @@ fn snapshot_from_session(session: &ProjectSession) -> ProjectSnapshot {
 }
 
 fn external_change_state(session: &ProjectSession) -> ExternalChangeState {
-    let disk = validate_project(session.root());
+    let disk = validate_project_with_profile(session.root(), session.profile());
     let session_digest = session.workspace().revision().source_digest;
     let disk_digest = disk.source_digest.clone();
     let dirty = session_digest != disk_digest;
@@ -146,7 +148,8 @@ fn external_change_state(session: &ProjectSession) -> ExternalChangeState {
 }
 
 fn external_dirty(session: &ProjectSession) -> bool {
-    session.workspace().revision().source_digest != validate_project(session.root()).source_digest
+    session.workspace().revision().source_digest
+        != validate_project_with_profile(session.root(), session.profile()).source_digest
 }
 
 fn conflict_response(session: &ProjectSession) -> EditResponse {
@@ -184,9 +187,13 @@ fn edit_response(
 }
 
 #[tauri::command]
-fn open_project(path: String, state: State<'_, SessionState>) -> Result<ProjectSnapshot, String> {
-    let validation = validate_project(&path);
-    let session = ProjectSession::open(&path).ok();
+fn open_project(
+    path: String,
+    profile: Option<String>,
+    state: State<'_, SessionState>,
+) -> Result<ProjectSnapshot, String> {
+    let validation = validate_project_with_profile(&path, profile.as_deref());
+    let session = ProjectSession::open_with_profile(&path, profile.as_deref()).ok();
     let can_edit = session.is_some();
     let response = match &session {
         Some(session) => snapshot_from_session(session),
@@ -276,8 +283,9 @@ fn reload_project(state: State<'_, SessionState>) -> Result<ProjectSnapshot, Str
         return Err("no open project to reload".to_owned());
     };
     let root = session.root().to_path_buf();
-    let validation = validate_project(&root);
-    let new_session = ProjectSession::open(&root).ok();
+    let profile = session.profile().map(str::to_owned);
+    let validation = validate_project_with_profile(&root, profile.as_deref());
+    let new_session = ProjectSession::open_with_profile(&root, profile.as_deref()).ok();
     let can_edit = new_session.is_some();
     let response = match &new_session {
         Some(session) => snapshot_from_session(session),
@@ -285,6 +293,22 @@ fn reload_project(state: State<'_, SessionState>) -> Result<ProjectSnapshot, Str
     };
     *guard = new_session;
     Ok(response)
+}
+
+/// Optional startup profile for automation:
+/// `composition-designer --profile <name>` or `--profile=<name>`.
+#[tauri::command]
+fn initial_profile() -> Option<String> {
+    let mut args = std::env::args().skip(1);
+    while let Some(arg) = args.next() {
+        if arg == "--profile" {
+            return args.next();
+        }
+        if let Some(profile) = arg.strip_prefix("--profile=") {
+            return Some(profile.to_owned());
+        }
+    }
+    None
 }
 
 /// Optional startup project for automation:
@@ -396,6 +420,7 @@ pub fn run() {
             read_source,
             check_external_changes,
             reload_project,
+            initial_profile,
             load_layout,
             save_layout
         ])

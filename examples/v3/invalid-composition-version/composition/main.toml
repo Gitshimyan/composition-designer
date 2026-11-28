@@ -1,0 +1,9 @@
+[composition]
+schema_version = 2
+id = "example.v3mismatch"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "example.app"
+version = "1.0.0"

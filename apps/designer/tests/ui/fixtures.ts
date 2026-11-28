@@ -505,5 +505,24 @@ export function v2Snapshot(
   };
 }
 
+export function v3Snapshot(): ProjectSnapshot {
+  const snapshot = v2Snapshot(0, "sha256:v3fixture");
+  if (snapshot.model) {
+    snapshot.root = "C:\\projects\\v3";
+    snapshot.model.project = {
+      ...snapshot.model.project,
+      schema_version: 3,
+      default_composition: "composition/main.toml",
+      active_profile: "default",
+      profiles: [
+        { name: "desktop", composition: "composition/desktop.toml" },
+        { name: "headless", composition: "composition/headless.toml" },
+      ],
+    };
+    snapshot.model.composition.schema_version = 3;
+  }
+  return snapshot;
+}
+
 export const sourceText = compositionText;
 export const v2SourceText = v2CompositionText;

@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：233 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
-> 当前阶段：S2 039–040 完成（语义冻结 + Core/Session）；下一步 **041 入口与验收**。
+> 测试基线：238 Core/Protocol/MCP/CLI + 35 UI + 17 Tauri。
+> 当前阶段：S1、M8、**S2 全部完成（039–041）**；下一步 **H1 可靠性决策**。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -56,7 +56,9 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
   UW-004/UW-018 转 in_progress；无代码变更。
 - S2 040 完成：Domain v3、Loader 按 profile 选择、Core 校验/Revision/Digest、
   Session/Source 作用域；核心 11 + editor 2 测试；v1/v2.0 不变。
-- 未决登记：32 项；13 已关闭、5 等待决策、0 已接受待排期、2 进行中、12 延期、0 等待授权。
+- S2 041 完成：CLI/MCP/Designer profile 入口、v3 数据集（40 总数）、S2 验收；
+  UW-004/UW-018 关闭；238 workspace + 35 UI + 17 Tauri。
+- 未决登记：32 项；15 已关闭、5 等待决策、0 已接受待排期、0 进行中、12 延期、0 等待授权。
 - 关键缺口：S2 实现（040–041）、撤销/历史持久化、fsync、三向合并/草稿保留、
   ConfigValue float wire、模块文件编辑（UW-031）。
 
@@ -70,7 +72,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 | M7 | Source Authoring（029–031） | done | Source 事务、UI、Review、Glide 验收 | Extend + Rearchitect（029） |
 | S1 | Schema v2.0（032–035） | done | 语义冻结、Core、命令/UI/入口、v2 数据集与 Glide 验收 | Rearchitect + Extend |
 | M8 | Agent Authoring（036–038） | done | 上下文/影响查询、只读 batch、Skill 评测与跨平台配置 | Extend / Modify |
-| S2 | Schema v2.1（039–041） | in_progress | Profile + 多 Composition 入口；按 profile 的 Revision/Digest | Rearchitect + Extend |
+| S2 | Schema v2.1（039–041） | done | Profile + 多 Composition 入口；按 profile 的 Revision/Digest | Rearchitect + Extend |
 | H1 | 选择性可靠性（042–046） | conditional | Undo、Revision 持久化、fsync、外部合并、WebView2 smoke | Modify / Extend |
 | M9 | Composition Ecosystem（047+） | deferred | 模块库/版本、模板、Adapter | Rearchitect / Extend |
 
@@ -170,7 +172,7 @@ M8 验收：
 - 不改变事务、Diff、Revision 或 TOML 写回语义；
 - 不做远程/多项目 Agent 调度。
 
-### S2 — Schema v2.1（039–041，in_progress）
+### S2 — Schema v2.1（039–041，done）
 
 目标：用项目级 Profile 表达 desktop/headless/环境差异，每个 profile 是完整 Composition；
 共享模块，不做 overlay/继承。格式版本与选择语义由 039 冻结。
@@ -179,7 +181,7 @@ M8 验收：
 |---|---|---|---|
 | 039 | ADR + 规范：Profile 表、`schema_version` 矩阵、选择/Revision/Digest、错误码、CLI/MCP/Designer 语义 | Rearchitect + Extend | done |
 | 040 | Domain/Loader/Core/Session：Project profiles、按 profile 加载/校验/Revision/Digest | Rearchitect + Modify | done |
-| 041 | CLI/MCP/Designer profile 选择、Source/Review 按 profile；fixtures 与验收 | Extend + Modify | todo |
+| 041 | CLI/MCP/Designer profile 选择、Source/Review 按 profile；fixtures 与验收 | Extend + Modify + Rearchitect（协议文档） | done |
 
 交付：
 
@@ -190,14 +192,17 @@ M8 验收：
 - 040：`SchemaVersion` v3、`Project.profiles/default/active`、`load_project_with_profile`、
   `validate_project_with_profile`、`ProjectSession::open_with_profile`；
   3 个诊断；按 profile 的 Digest/Source；v1/v2.0 输出不变。
+- 041：CLI `--profile`（全命令）、MCP `--profile`、Tauri `open_project(path, profile?)`、
+  Designer 顶栏选择器、v3 数据集 3 组；CLI 4 + MCP 1 + Playwright 1 测试。
 
-S2 验收：
+S2 验收（全部满足）：
 
 - 默认 profile 保持 `workspace.composition`；显式选择缺失 profile 报稳定错误；
 - 每个 profile 独立 validate；模块集合共享；
 - Revision/Digest 只覆盖所选 Composition + 共享模块，切换 profile 不静默沿用旧 Revision；
 - 事务/Source 只写所选 profile 入口；不做 overlay、继承或自动迁移；
-- v1/v2.0 文件保持可读，v3 显式启用。
+- v1/v2.0 文件保持可读，v3 显式启用；
+- CLI/MCP/Designer 均可选择 profile；3 组 v3 数据集与 UI 选择器验收通过。
 
 非目标：
 
@@ -250,7 +255,7 @@ S2 验收：
 2. **草稿/外部冲突**：整项目 digest 只能保守检测，三向合并可能超出首版；
 3. **G3 Profile**：G7 已完成研究，S2 实施；G1/G2 已由 S1 交付；
 4. **可靠性缺口**：undo/历史/fsync 未实现，生产使用前需 H1；
-5. **单入口/单文件**：039 已冻结多入口；040–041 落地前限制仍存在。
+5. **单入口/单文件**：S2 已支持多入口；模块文件仍单文件（UW-031 deferred）。
 
 ## 8. 当前未决总览
 
@@ -259,11 +264,11 @@ S2 验收：
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 32 |
-| 已实现 / 已关闭 | 13 |
+| 已实现 / 已关闭 | 15 |
 | 等待用户决策 | 5 |
 | 等待授权 | 0 |
 | 已接受待排期 | 0 |
-| 进行中 | 2 |
+| 进行中 | 0 |
 | 明确延期 | 12 |
 
 ## 9. 常用命令
@@ -307,14 +312,16 @@ npm run desktop
 | 2026-11-28 | 038 | Skill 评测（minimal + Glide v2）、configure.mjs；220 tests；M8 完成 |
 | 2026-11-28 | 039 | v2.1 语义冻结：format 3、Profile/多入口、选择/Revision/Digest、3 个新代码；无代码变更 |
 | 2026-11-28 | 040 | Domain v3、Loader/Core profile 选择、Revision/Digest、Session/Source 作用域；233 tests |
+| 2026-11-28 | 041 | CLI/MCP/Designer profile 入口、v3 数据集、S2 验收；238 tests + 35 UI + 17 Tauri；UW-004/018 关闭 |
 
 ## 11. 下一步
 
-M7/S1/M8 完成，S2 进行中。下一步：
+M7/S1/M8/S2 完成。下一步：
 
-1. **041 — 入口与验收**：CLI/MCP/Designer profile 选择、Source/Review、v3 fixtures；
-   需 Extend + Modify 授权（已在 S2 授权内）；
-2. S2 后 H1 可靠性；M9 生态按需；UW-020/UW-031 仍 deferred；
-3. 041 验收后关闭 UW-004/UW-018。
+1. **H1 — 选择性可靠性（042–046，conditional）**：undo、Revision 跨进程持久化、
+   fsync/崩溃恢复、外部合并/草稿、WebView2 smoke；按真实使用反馈排序，逐卡授权；
+2. **M9 生态（047+）**：模块库/模板，S2 后按需评估；
+3. UW-020（progress/cancel）、UW-031（模块文件编辑）、UW-032（接口形状）仍 deferred；
+4. H1 每张卡需单独授权；建议先做 042 undo 或 043 Revision 持久化，需你选择。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。
