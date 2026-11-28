@@ -1,9 +1,10 @@
-# MCP Adapter v1（M4 017）
+# MCP Adapter v1（M4 017；M8 036 Extend；S2 041 Profile）
 
-- 状态：M4 017 冻结（2026-11-26）
+- 状态：M4 017 冻结（2026-11-26）；M8 036 新增 `composition_context` /
+  `composition_impact` 工具与 context 资源；S2 041 增加 `--profile` 启动参数
 - 传输：MCP stdio（每行一个 JSON-RPC 2.0 消息）
 - 实现：`composition-mcp`，复用 `composition-protocol`
-- 启动：`composition-mcp --project <project-dir>`（缺省当前目录）
+- 启动：`composition-mcp --project <project-dir> [--profile <name>]`（缺省当前目录 / 默认入口）
 
 ## 1. 生命周期
 
@@ -34,7 +35,7 @@
 
 ## 2. Tools
 
-`tools/list` 返回 6 个工具：
+`tools/list` 返回 9 个工具：
 
 | Tool | 参数 | 语义 |
 |---|---|---|
@@ -42,6 +43,9 @@
 | `composition_resolve` | `{}` | 规范化 CompositionModel |
 | `composition_validate` | `{}` | valid + L1–L7 诊断 |
 | `composition_source` | `{}` | 只读 composition TOML |
+| `composition_context` | `{}` | 紧凑 Agent 上下文（project/counts/modules/instances/diagnostics/revision；v3 含 activeProfile） |
+| `composition_impact` | `{module}` 或 `{instance}` 或 `{transaction}` | 模块/实例/事务影响分析（只读） |
+| `composition_batch` | `{requests:[Request,...]}` | 最多 16 条只读 protocol 请求，逐项返回结果 |
 | `composition_prepare_transaction` | `{transaction}` | 校验并返回 Diff，不写 |
 | `composition_apply_transaction` | `{transaction}` | 原子应用并返回 Diff |
 
@@ -75,6 +79,7 @@
 | `composition://project/model` | resolve protocol response |
 | `composition://project/diagnostics` | validate protocol response |
 | `composition://project/source` | source protocol response |
+| `composition://project/context` | context protocol response |
 
 `resources/read` 返回 `contents:[{uri,mimeType:"application/json",text:"<protocol response>"}]`。
 未知 URI 为 JSON-RPC `-32602`。
@@ -100,7 +105,10 @@
 ## 6. 范围与限制
 
 - 单进程单项目；不做多项目切换。
-- 不实现 subscriptions、progress、cancellation、分页与认证。
+- `--profile <name>` 在启动时绑定 v3 profile；工具参数中没有 profile 字段，切换必须重启进程。
+  未知 profile 通过工具结果的 `diagnostics` 返回 `profile-not-found`。
+- 不实现 subscriptions、progress、cancellation、分页与认证（M8 037 评估后仍未启用）。
+- `composition_batch` 只接受只读 op；写操作在 batch 中被拒绝（`protocol-operation-not-allowed`）。
 - `initialize` 回显客户端 protocolVersion；服务端只实现当前 MCP 基础消息集。
 - 017 不包含 MCP 客户端配置/Agent Skill；018 负责端到端。
 

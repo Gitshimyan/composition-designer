@@ -1,0 +1,69 @@
+change:
+  id: change.041-profile-entry
+  intent: 将 v3 profile 选择暴露到 CLI/MCP/Designer，补 v3 fixtures 与端到端验收，关闭 UW-004/UW-018 并完成 S2。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - extend
+      - rearchitect
+    approved:
+      - modify
+      - extend
+      - rearchitect
+    evidence: "用户 2026-11-28 明确授权开始 S2（039–041）"
+  targets:
+    - README.md
+    - crates/composition-protocol
+    - crates/composition-editor
+    - crates/composition-cli
+    - crates/composition-mcp
+    - apps/designer/src-tauri
+    - apps/designer/src
+    - apps/designer/tests
+    - examples/v3
+    - examples/README.md
+    - docs/spec/protocol-v1.md
+    - docs/spec/mcp-adapter-v1.md
+    - docs/ai/architecture-entry.md
+    - agent
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/041-profile-entry.md
+    - changes/041-profile-entry.yaml
+  operations:
+    - modify
+    - extend
+    - rearchitect
+  scope:
+    allowed:
+      - cli_profile_selection
+      - mcp_profile_selection
+      - designer_profile_selector
+      - source_review_profile_scope
+      - v3_fixtures
+      - protocol_docs_profile
+      - agent_config_profile
+      - tests
+      - plan_and_uw_closeout
+    forbidden:
+      - command_schema_change
+      - transaction_semantics_change
+      - toml_schema_change
+      - design_baseline
+      - profile_overlay
+      - all_profiles
+      - auto_migration
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - npm run test:ui (apps/designer)
+  notes: 041 只增加 profile 入口与验收；协议请求结构、事务/Schema 语义不变。

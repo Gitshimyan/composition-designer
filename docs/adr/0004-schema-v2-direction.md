@@ -78,3 +78,13 @@ Glide Task + Terminal 试点证明 v0.1 能表达拓扑，但不能表达：
 - S1 放在 M7 之后、M8 之前。
 
 实施仍需逐卡授权；在 S1/S2 实现前，不修改 Schema、领域模型或设计基线。
+
+## 冻结记录（032 / 039）
+
+- 2026-11-28：032 冻结 v2.0 的具体字段、版本矩阵、校验层、诊断代码与
+  `create_instance.scope`，见 [ADR-0006](./0006-schema-v2-freeze.md) 与
+  [`composition-schema-v2.md`](../spec/composition-schema-v2.md)；
+- 2026-11-28：039 冻结 v2.1（format 3）的 Profile / 多入口语义，见
+  [ADR-0007](./0007-schema-v21-profiles.md) 与
+  [`composition-schema-v3.md`](../spec/composition-schema-v3.md)；
+- v2.1 的实际代码在 040–041 实施；本 ADR 的方向性决策不变，具体语义以 ADR-0006/0007 为准。

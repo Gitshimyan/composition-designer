@@ -114,8 +114,36 @@ export interface DependencyDetail {
   requirement?: DependencyContract;
   /** 实例 Config 中显式写了 provider 映射。 */
   explicit: boolean;
-  /** 目标 module/version 的其他实例，仅用于解释自动/歧义解析。 */
+  /** 满足模块/接口目标的实例，仅用于解释自动/歧义解析。 */
   candidates: string[];
+}
+
+/** 依赖目标的展示文本：模块或接口（v2.0）。 */
+export function requirementTarget(
+  requirement: DependencyContract | undefined,
+): string {
+  if (!requirement) return "unknown target";
+  const target = requirement.interface ?? requirement.module;
+  if (!target) return "unknown target";
+  const label = `${target}${requirement.version ? `@${requirement.version}` : ""}`;
+  return requirement.interface ? `interface ${label}` : label;
+}
+
+/** 模块是否满足依赖要求：优先接口身份，回退模块 ID + 精确版本。 */
+export function moduleImplements(
+  module: ModuleDefinition | undefined,
+  requirement: DependencyContract,
+): boolean {
+  if (!module) return false;
+  if (requirement.interface) {
+    return (module.contract.interfaces ?? []).some(
+      (declaration) =>
+        declaration.id === requirement.interface &&
+        (!requirement.version || declaration.version === requirement.version),
+    );
+  }
+  if (!requirement.module || module.id !== requirement.module) return false;
+  return !requirement.version || module.version === requirement.version;
 }
 
 export function dependencyDetails(
@@ -141,12 +169,12 @@ export function dependencyDetails(
       ? instances
           .filter((candidate) => {
             if (candidate.id === instance.id) return false;
-            if (candidate.module.id !== requirement.module) return false;
-            return (
-              requirement.version === undefined ||
-              requirement.version === null ||
-              candidate.module.version === requirement.version
+            const candidateModule = findModule(
+              modules,
+              candidate.module.id,
+              candidate.module.version,
             );
+            return moduleImplements(candidateModule, requirement);
           })
           .map((candidate) => candidate.id)
           .sort()

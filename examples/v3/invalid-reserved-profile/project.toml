@@ -1,0 +1,11 @@
+[project]
+schema_version = 3
+id = "example.v3reserved"
+name = "V3 invalid reserved profile"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]
+
+[profiles.default]
+composition = "composition/main.toml"

@@ -5,7 +5,7 @@ import type {
   ModuleDefinition,
 } from "../types";
 import { moduleKey } from "../inspector/instanceEditing";
-import { dependencyDetails, type DependencyDetail } from "./relationModel";
+import { dependencyDetails, requirementTarget, type DependencyDetail } from "./relationModel";
 
 interface DependencyViewProps {
   instances: Instance[];
@@ -111,13 +111,7 @@ export default function DependencyView({
                       <div className="dependency-row-main">
                         <code>{detail.resolution.requirement_id}</code>
                         <span className="dependency-target">
-                          {requirement
-                            ? `${requirement.module}${
-                                requirement.version
-                                  ? `@${requirement.version}`
-                                  : ""
-                              }`
-                            : "unknown target"}
+                          {requirementTarget(requirement)}
                         </span>
                         <span
                           className={`dependency-required ${

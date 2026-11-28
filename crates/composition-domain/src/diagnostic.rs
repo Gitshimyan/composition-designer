@@ -1,14 +1,14 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::error_code::{ErrorCode, Severity};
-use crate::ids::{LocalId, ModuleId, Version};
+use crate::ids::{InterfaceId, LocalId, ModuleId, Version};
 use crate::source::SourceRange;
 
 /// 诊断关联对象的稳定标识，格式见 domain-model-v1 §7.2。
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ObjectId(String);
 
@@ -51,6 +51,17 @@ impl ObjectId {
 
     pub fn dependency(module: &ModuleId, version: &Version, id: &LocalId) -> Self {
         Self(format!("dependency:{module}@{version}#{id}"))
+    }
+
+    pub fn interface(
+        module: &ModuleId,
+        module_version: &Version,
+        interface: &InterfaceId,
+        interface_version: &Version,
+    ) -> Self {
+        Self(format!(
+            "interface:{module}@{module_version}#{interface}@{interface_version}"
+        ))
     }
 
     pub fn file(path: &str) -> Self {

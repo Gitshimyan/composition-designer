@@ -1,0 +1,9 @@
+[module]
+schema_version = 3
+id = "example.app"
+version = "1.0.0"
+kind = "composite"
+
+[contract.properties.title]
+type = "string"
+required = false

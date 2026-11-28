@@ -1,0 +1,53 @@
+change:
+  id: change.033-v2-domain-validation
+  intent: 按 032 冻结的 v2.0 语义实现 Domain 类型、TOML 解码与 L2–L7 校验（接口、scope、诊断、版本矩阵），不改命令/UI/示例。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+      - rearchitect
+    approved:
+      - modify
+      - rearchitect
+    evidence: "用户 2026-11-28 授权开始 033（Rearchitect + Modify）"
+  targets:
+    - README.md
+    - crates/composition-domain
+    - crates/composition-core
+    - crates/composition-toml
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/033-v2-domain-validation.md
+    - changes/033-v2-domain-validation.yaml
+  operations:
+    - modify
+    - rearchitect
+  scope:
+    allowed:
+      - v2_domain_types
+      - v2_decode
+      - v2_validation
+      - v2_error_codes
+      - v1_regression_tests
+      - plan_and_docs_update
+    forbidden:
+      - new_command
+      - command_schema
+      - designer_ui
+      - examples_changes
+      - design_baseline
+      - v2_1_profiles
+  unresolved_items:
+    - UW-002
+    - UW-003
+  impact:
+    expected_schema_changes: true
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 033 只实现 Domain/Loader/Validation；create_instance.scope 与 Services 视图属 034，v2 fixtures/试点属 035。

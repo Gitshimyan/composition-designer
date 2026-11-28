@@ -6,6 +6,10 @@
 - 语义定义：[`domain-model-v1.md`](./domain-model-v1.md)
 - 错误代码：[`error-codes-v1.md`](./error-codes-v1.md)
 
+> `project.schema_version = 2` 的增量（接口标记、接口依赖、实例 scope、版本矩阵）见
+> [`composition-schema-v2.md`](./composition-schema-v2.md)。本文件继续定义 v1 项目，
+> v1 语义、诊断与规范化输出不变。
+
 本文件冻结项目声明文件的字段、类型、默认值、约束与校验顺序。Core、CLI、Designer 与 Agent
 Adapter 都必须按本文件实现，不得各写一套字段规则。
 
@@ -623,3 +627,8 @@ L1 文件与语法
 | 运行时、构建、部署、代码生成 | 不属于本项目 |
 
 任何新增能力必须先改本文件与错误码，再实现；顺序不能反。
+
+> v2.0 项目（`project.schema_version = 2`）的能力边界由
+> [`composition-schema-v2.md`](./composition-schema-v2.md) §12 定义；上表仍适用于 v1 项目。
+> v2.0 只放开“接口身份/接口依赖”与“实例 scope”；多入口、Profile、object 属性等仍不支持。
+> v1 项目继续按本表拒绝 v2 字段。

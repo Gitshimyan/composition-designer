@@ -1,13 +1,16 @@
 import type { Page } from "@playwright/test";
-import { invalidSnapshot, sourceText, validSnapshot } from "./fixtures";
+import { invalidSnapshot, sourceText, v2Snapshot, v2SourceText, v3Snapshot, validSnapshot } from "./fixtures";
 
-export type MockMode = "valid" | "invalid" | "edit-failure";
+export type MockMode = "valid" | "invalid" | "edit-failure" | "v2" | "v3";
 
 interface MockPayload {
   mode: MockMode;
   valid: ReturnType<typeof validSnapshot>;
   invalid: ReturnType<typeof invalidSnapshot>;
+  v2: ReturnType<typeof v2Snapshot>;
+  v3: ReturnType<typeof v3Snapshot>;
   sourceText: string;
+  v2SourceText: string;
 }
 
 type MockSnapshot = ReturnType<typeof validSnapshot>;
@@ -30,12 +33,24 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
     mode,
     valid: validSnapshot(),
     invalid: invalidSnapshot(),
+    v2: v2Snapshot(),
+    v3: v3Snapshot(),
     sourceText,
+    v2SourceText,
   };
 
   await page.addInitScript((data: MockPayload) => {
-    let current = structuredClone(data.valid);
-    let currentSource = data.sourceText;
+    let current = structuredClone(
+      data.mode === "v3"
+        ? data.v3
+        : data.mode === "v2"
+          ? data.v2
+          : data.valid,
+    );
+    let currentSource =
+      data.mode === "v2" ? data.v2SourceText : data.sourceText;
+    const undoStack: MockSnapshot[] = [];
+    const redoStack: MockSnapshot[] = [];
     const testState = {
       mode: data.mode,
       dirty: false,
@@ -86,13 +101,27 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           continue;
         }
         const candidates = requirement
-          ? composition.instances.filter(
-              (candidate) =>
-                candidate.id !== instance.id &&
+          ? composition.instances.filter((candidate) => {
+              if (candidate.id === instance.id) return false;
+              const candidateModule = model.modules.find(
+                (module) =>
+                  module.id === candidate.module.id &&
+                  module.version === candidate.module.version,
+              );
+              if (requirement.interface) {
+                return (candidateModule?.contract.interfaces ?? []).some(
+                  (declaration) =>
+                    declaration.id === requirement.interface &&
+                    (!requirement.version ||
+                      declaration.version === requirement.version),
+                );
+              }
+              return (
                 candidate.module.id === requirement.module &&
                 (!requirement.version ||
-                  candidate.module.version === requirement.version),
-            )
+                  candidate.module.version === requirement.version)
+              );
+            })
           : [];
         resolution.provider_instance =
           candidates.length === 1 ? candidates[0].id : null;
@@ -120,12 +149,21 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           case "create_instance": {
             const id = String(command.id);
             const config = (command.config ?? {}) as Record<string, unknown>;
+            const scope = command.scope as "structure" | "service" | undefined;
             const instance = {
               id,
               module: {
                 id: String(command.module),
                 version: String(command.version),
               },
+              ...(scope ||
+              model.project.schema_version >= 2
+                ? {
+                    scope:
+                      scope ??
+                      ("structure" as "structure" | "service"),
+                  }
+                : {}),
               config: structuredClone(config),
               effective_config: structuredClone(config),
               dependency_providers: {},
@@ -517,6 +555,39 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
       };
     }
 
+    function undoResponse(isRedo: boolean) {
+      const source = isRedo ? redoStack : undoStack;
+      const target = source.pop();
+      if (!target) {
+        return {
+          accepted: false,
+          replayed: false,
+          diff: null,
+          diagnostics: [
+            {
+              code: "edit-invalid-command",
+              severity: "error",
+              message: isRedo ? "nothing to redo" : "nothing to undo",
+            },
+          ],
+          snapshot: current,
+        };
+      }
+      const destination = isRedo ? undoStack : redoStack;
+      destination.push(current);
+      current = target;
+      current.canUndo = undoStack.length > 0;
+      current.canRedo = redoStack.length > 0;
+      return {
+        accepted: true,
+        replayed: false,
+        diff: null,
+        sourceDiff: null,
+        diagnostics: [],
+        snapshot: structuredClone(current),
+      };
+    }
+
     function rejectedResponse() {
       return {
         accepted: false,
@@ -542,10 +613,27 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
       switch (cmd) {
         case "initial_project":
           return "valid-project";
-        case "open_project":
-          return data.mode === "invalid"
-            ? structuredClone(data.invalid)
-            : structuredClone(current);
+        case "initial_profile":
+          return null;
+        case "open_project": {
+          if (data.mode === "invalid") {
+            return structuredClone(data.invalid);
+          }
+          if (data.mode === "v3") {
+            const selected = (args.profile as string | null) ?? "default";
+            const next = structuredClone(data.v3);
+            if (next.model) {
+              next.model.project.active_profile = selected;
+              next.model.project.composition_entry =
+                selected === "default"
+                  ? "composition/main.toml"
+                  : `composition/${selected}.toml`;
+            }
+            current = next;
+            return structuredClone(next);
+          }
+          return structuredClone(current);
+        }
         case "read_source":
           return { entry: "composition/main.toml", text: currentSource };
         case "load_layout":
@@ -565,6 +653,9 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           };
         case "reload_project":
           testState.dirty = false;
+          if (data.mode === "valid" && !currentSource.endsWith("# external change\n")) {
+            currentSource = `${currentSource}\n# external change\n`;
+          }
           return structuredClone(current);
         case "prepare_transaction": {
           testState.prepareCalls += 1;
@@ -579,9 +670,19 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           testState.lastCommands = transaction.commands;
           if (data.mode === "edit-failure") return rejectedResponse();
           const response = transactionResponse(transaction);
-          current = response.snapshot;
+          if (response.accepted) {
+            undoStack.push(current);
+            redoStack.length = 0;
+            response.snapshot.canUndo = true;
+            response.snapshot.canRedo = false;
+            current = response.snapshot;
+          }
           return response;
         }
+        case "undo":
+          return undoResponse(false);
+        case "redo":
+          return undoResponse(true);
         case "plugin:dialog|open":
           return null;
         default:

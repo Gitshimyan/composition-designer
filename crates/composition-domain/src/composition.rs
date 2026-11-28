@@ -1,7 +1,10 @@
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::{DomainError, DomainResult};
+use crate::error_code::ErrorCode;
 use crate::ids::{LocalId, ModuleId, Version};
 use crate::schema::SchemaVersion;
 use crate::source::SourceRef;
@@ -19,10 +22,48 @@ impl ModuleRef {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InstanceScope {
+    Structure,
+    Service,
+}
+
+impl InstanceScope {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Structure => "structure",
+            Self::Service => "service",
+        }
+    }
+
+    pub fn parse(value: &str) -> DomainResult<Self> {
+        match value {
+            "structure" => Ok(Self::Structure),
+            "service" => Ok(Self::Service),
+            other => Err(DomainError::new(
+                ErrorCode::SchemaInvalidValue,
+                format!("unknown instance scope {other:?}"),
+            )),
+        }
+    }
+}
+
+impl FromStr for InstanceScope {
+    type Err = DomainError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Instance {
     pub id: LocalId,
     pub module: ModuleRef,
+    /// v2.0 实例 scope；v1 项目为 `None`，不进入 JSON 输出。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<InstanceScope>,
     pub config: BTreeMap<LocalId, ConfigValue>,
     pub effective_config: BTreeMap<LocalId, ConfigValue>,
     pub dependency_providers: BTreeMap<LocalId, LocalId>,
@@ -34,6 +75,7 @@ impl Instance {
         Self {
             id,
             module,
+            scope: None,
             config: BTreeMap::new(),
             effective_config: BTreeMap::new(),
             dependency_providers: BTreeMap::new(),
@@ -142,6 +184,24 @@ mod tests {
         assert!(instance.effective_config.is_empty());
         assert!(instance.dependency_providers.is_empty());
         assert!(instance.source.is_none());
+        assert!(instance.scope.is_none());
+    }
+
+    #[test]
+    fn instance_scope_parses_and_round_trips() {
+        assert_eq!(
+            InstanceScope::parse("structure").unwrap(),
+            InstanceScope::Structure
+        );
+        assert_eq!(
+            InstanceScope::parse("service").unwrap(),
+            InstanceScope::Service
+        );
+        assert_eq!(InstanceScope::Service.as_str(), "service");
+        assert_eq!(
+            InstanceScope::parse("runtime").unwrap_err().code(),
+            ErrorCode::SchemaInvalidValue
+        );
     }
 
     #[test]

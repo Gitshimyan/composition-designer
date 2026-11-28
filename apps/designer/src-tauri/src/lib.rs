@@ -3,7 +3,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use composition_core::{validate_project, ValidationResult};
+use composition_core::{validate_project_with_profile, ValidationResult};
+#[cfg(test)]
+use composition_core::validate_project;
 use composition_domain::{CompositionModel, Diagnostic, ErrorCode, LocalId, ObjectId, Severity};
 use composition_editor::{ModelDiff, ProjectSession, SourceDiff, Transaction};
 use serde::{Deserialize, Serialize};
@@ -26,6 +28,8 @@ pub struct ProjectSnapshot {
     pub model: Option<CompositionModel>,
     pub diagnostics: Vec<Diagnostic>,
     pub can_edit: bool,
+    pub can_undo: bool,
+    pub can_redo: bool,
 }
 
 /// Presentation-only canvas position. `.designer/**` is never read by Core.
@@ -93,6 +97,8 @@ fn snapshot_from_model(root: String, model: &CompositionModel, can_edit: bool) -
         model: Some(model.clone()),
         diagnostics,
         can_edit,
+        can_undo: false,
+        can_redo: false,
     }
 }
 
@@ -114,6 +120,8 @@ fn snapshot_from_validation(
         model: validation.model.clone(),
         diagnostics: validation.diagnostics.clone(),
         can_edit,
+        can_undo: false,
+        can_redo: false,
     }
 }
 
@@ -123,15 +131,18 @@ fn snapshot(path: &str) -> ProjectSnapshot {
 }
 
 fn snapshot_from_session(session: &ProjectSession) -> ProjectSnapshot {
-    snapshot_from_model(
+    let mut snapshot = snapshot_from_model(
         session.root().to_string_lossy().into_owned(),
         session.workspace().model(),
         true,
-    )
+    );
+    snapshot.can_undo = session.can_undo();
+    snapshot.can_redo = session.can_redo();
+    snapshot
 }
 
 fn external_change_state(session: &ProjectSession) -> ExternalChangeState {
-    let disk = validate_project(session.root());
+    let disk = validate_project_with_profile(session.root(), session.profile());
     let session_digest = session.workspace().revision().source_digest;
     let disk_digest = disk.source_digest.clone();
     let dirty = session_digest != disk_digest;
@@ -146,7 +157,8 @@ fn external_change_state(session: &ProjectSession) -> ExternalChangeState {
 }
 
 fn external_dirty(session: &ProjectSession) -> bool {
-    session.workspace().revision().source_digest != validate_project(session.root()).source_digest
+    session.workspace().revision().source_digest
+        != validate_project_with_profile(session.root(), session.profile()).source_digest
 }
 
 fn conflict_response(session: &ProjectSession) -> EditResponse {
@@ -184,9 +196,13 @@ fn edit_response(
 }
 
 #[tauri::command]
-fn open_project(path: String, state: State<'_, SessionState>) -> Result<ProjectSnapshot, String> {
-    let validation = validate_project(&path);
-    let session = ProjectSession::open(&path).ok();
+fn open_project(
+    path: String,
+    profile: Option<String>,
+    state: State<'_, SessionState>,
+) -> Result<ProjectSnapshot, String> {
+    let validation = validate_project_with_profile(&path, profile.as_deref());
+    let session = ProjectSession::open_with_profile(&path, profile.as_deref()).ok();
     let can_edit = session.is_some();
     let response = match &session {
         Some(session) => snapshot_from_session(session),
@@ -236,6 +252,36 @@ fn prepare_transaction(
 }
 
 #[tauri::command]
+fn undo(state: State<'_, SessionState>) -> Result<EditResponse, String> {
+    let mut guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_mut() else {
+        return Err("project is not editable".to_owned());
+    };
+    if external_dirty(session) {
+        return Ok(conflict_response(session));
+    }
+    let outcome = session.undo();
+    Ok(edit_response(session, outcome))
+}
+
+#[tauri::command]
+fn redo(state: State<'_, SessionState>) -> Result<EditResponse, String> {
+    let mut guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_mut() else {
+        return Err("project is not editable".to_owned());
+    };
+    if external_dirty(session) {
+        return Ok(conflict_response(session));
+    }
+    let outcome = session.redo();
+    Ok(edit_response(session, outcome))
+}
+
+#[tauri::command]
 fn read_source(state: State<'_, SessionState>) -> Result<SourcePayload, String> {
     let guard = state
         .lock()
@@ -276,8 +322,9 @@ fn reload_project(state: State<'_, SessionState>) -> Result<ProjectSnapshot, Str
         return Err("no open project to reload".to_owned());
     };
     let root = session.root().to_path_buf();
-    let validation = validate_project(&root);
-    let new_session = ProjectSession::open(&root).ok();
+    let profile = session.profile().map(str::to_owned);
+    let validation = validate_project_with_profile(&root, profile.as_deref());
+    let new_session = ProjectSession::open_with_profile(&root, profile.as_deref()).ok();
     let can_edit = new_session.is_some();
     let response = match &new_session {
         Some(session) => snapshot_from_session(session),
@@ -285,6 +332,22 @@ fn reload_project(state: State<'_, SessionState>) -> Result<ProjectSnapshot, Str
     };
     *guard = new_session;
     Ok(response)
+}
+
+/// Optional startup profile for automation:
+/// `composition-designer --profile <name>` or `--profile=<name>`.
+#[tauri::command]
+fn initial_profile() -> Option<String> {
+    let mut args = std::env::args().skip(1);
+    while let Some(arg) = args.next() {
+        if arg == "--profile" {
+            return args.next();
+        }
+        if let Some(profile) = arg.strip_prefix("--profile=") {
+            return Some(profile.to_owned());
+        }
+    }
+    None
 }
 
 /// Optional startup project for automation:
@@ -393,9 +456,12 @@ pub fn run() {
             initial_project,
             apply_transaction,
             prepare_transaction,
+            undo,
+            redo,
             read_source,
             check_external_changes,
             reload_project,
+            initial_profile,
             load_layout,
             save_layout
         ])
@@ -579,6 +645,7 @@ mod tests {
                     module: module("leaf.widget"),
                     version: version("1.0.0"),
                     config,
+                    scope: None,
                 },
                 Command::CreateBinding {
                     id: local("panel-1-status-2"),
@@ -761,18 +828,21 @@ mod tests {
                     module: module("ui.page"),
                     version: version("1.0.0"),
                     config: page_config,
+                    scope: None,
                 },
                 Command::CreateInstance {
                     id: local("panel-3"),
                     module: module("ui.panel"),
                     version: version("1.0.0"),
                     config: panel_config,
+                    scope: None,
                 },
                 Command::CreateInstance {
                     id: local("leaf-3"),
                     module: module("leaf.widget"),
                     version: version("1.0.0"),
                     config: leaf_config,
+                    scope: None,
                 },
                 Command::CreateBinding {
                     id: local("app-content-page-3"),
@@ -1011,6 +1081,57 @@ mod tests {
             .iter()
             .any(|diagnostic| diagnostic.code.as_str() == "dependency-provider-invalid"));
         assert_eq!(fs::read_to_string(&path).unwrap(), before);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn service_scope_transaction_writes_scope() {
+        let root = std::env::temp_dir().join(format!(
+            "composition-service-scope-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        let write = |relative: &str, text: &str| {
+            let path = root.join(relative);
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent).unwrap();
+            }
+            fs::write(path, text).unwrap();
+        };
+        write(
+            "project.toml",
+            "[project]\nschema_version = 2\nid = \"example.v2\"\nname = \"V2\"\n\n[workspace]\ncomposition = \"composition/main.toml\"\nmodule_roots = [\"modules\"]\n",
+        );
+        write(
+            "composition/main.toml",
+            "[composition]\nschema_version = 2\nid = \"example.v2\"\nroot = \"app\"\n\n[[instances]]\nid = \"app\"\nmodule = \"example.app\"\nversion = \"1.0.0\"\n",
+        );
+        write(
+            "modules/app/module.toml",
+            "[module]\nschema_version = 2\nid = \"example.app\"\nversion = \"1.0.0\"\nkind = \"composite\"\n",
+        );
+        write(
+            "modules/session/module.toml",
+            "[module]\nschema_version = 2\nid = \"example.session\"\nversion = \"1.0.0\"\nkind = \"primitive\"\n",
+        );
+
+        let mut session = ProjectSession::open(&root).unwrap();
+        let outcome = session.apply(&Transaction::new(
+            "create-service",
+            session.workspace().revision(),
+            vec![Command::CreateInstance {
+                id: local("session"),
+                module: module("example.session"),
+                version: version("1.0.0"),
+                config: Default::default(),
+                scope: Some(composition_domain::InstanceScope::Service),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+        let text = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        assert!(text.contains("scope = \"service\""), "{text}");
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
         let _ = fs::remove_dir_all(&root);
     }
 }

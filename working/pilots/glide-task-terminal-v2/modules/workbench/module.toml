@@ -1,0 +1,24 @@
+[module]
+schema_version = 2
+id = "glide.presentation.workbench"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Glide workbench shell"
+
+[contract.properties.title]
+type = "string"
+required = true
+
+[[contract.slots]]
+id = "tasks"
+cardinality = "one"
+required = true
+accepts = ["glide.presentation.task-panel"]
+
+[[contract.slots]]
+id = "terminal"
+cardinality = "one"
+required = true
+accepts = ["glide.presentation.terminal-panel"]

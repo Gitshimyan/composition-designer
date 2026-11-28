@@ -42,8 +42,12 @@ pub struct McpServer {
 
 impl McpServer {
     pub fn new(root: impl AsRef<Path>) -> Self {
+        Self::new_with_profile(root, None)
+    }
+
+    pub fn new_with_profile(root: impl AsRef<Path>, profile: Option<&str>) -> Self {
         Self {
-            session: ProtocolSession::new(root),
+            session: ProtocolSession::new_with_profile(root, profile),
         }
     }
 
@@ -139,6 +143,12 @@ impl McpServer {
             "composition_resolve" => ("resolve", json!({})),
             "composition_validate" => ("validate", json!({})),
             "composition_source" => ("source", json!({})),
+            "composition_context" => ("context", json!({})),
+            "composition_impact" => ("impact", arguments.clone()),
+            "composition_batch" => (
+                "batch",
+                json!({ "requests": arguments.get("requests").cloned().unwrap_or(Value::Null) }),
+            ),
             "composition_prepare_transaction" => (
                 "prepare_transaction",
                 json!({ "transaction": arguments.get("transaction").cloned().unwrap_or(Value::Null) }),
@@ -181,6 +191,7 @@ impl McpServer {
             "composition://project/model" => "resolve",
             "composition://project/diagnostics" => "validate",
             "composition://project/source" => "source",
+            "composition://project/context" => "context",
             other => {
                 return Err(JsonRpcError {
                     code: -32602,
@@ -222,6 +233,51 @@ fn tools() -> Value {
         "required": ["transaction"],
         "additionalProperties": false
     });
+    let impact = json!({
+        "type": "object",
+        "properties": {
+            "module": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string" },
+                    "version": { "type": "string" }
+                },
+                "required": ["id", "version"],
+                "additionalProperties": false
+            },
+            "instance": { "type": "string" },
+            "transaction": {
+                "type": "object",
+                "description": "Transaction envelope; evaluated with prepare (no write)"
+            }
+        },
+        "additionalProperties": false
+    });
+    let batch = json!({
+        "type": "object",
+        "properties": {
+            "requests": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 16,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string" },
+                        "op": {
+                            "type": "string",
+                            "enum": ["inspect", "resolve", "validate", "source", "context", "impact"]
+                        },
+                        "params": { "type": "object" }
+                    },
+                    "required": ["op"],
+                    "additionalProperties": false
+                }
+            }
+        },
+        "required": ["requests"],
+        "additionalProperties": false
+    });
     json!([
         {
             "name": "composition_inspect",
@@ -242,6 +298,21 @@ fn tools() -> Value {
             "name": "composition_source",
             "description": "Read-only composition TOML source for the current session.",
             "inputSchema": no_args
+        },
+        {
+            "name": "composition_context",
+            "description": "Compact agent context: project, module/instance indexes, diagnostics and revision.",
+            "inputSchema": no_args
+        },
+        {
+            "name": "composition_impact",
+            "description": "Impact analysis for a module, an instance, or a transaction evaluated with prepare only.",
+            "inputSchema": impact
+        },
+        {
+            "name": "composition_batch",
+            "description": "Run up to 16 read-only protocol requests in one call; each gets its own result.",
+            "inputSchema": batch
         },
         {
             "name": "composition_prepare_transaction",
@@ -280,6 +351,12 @@ fn resources() -> Value {
             "uri": "composition://project/source",
             "name": "Composition TOML",
             "description": "Read-only composition entry source",
+            "mimeType": "application/json"
+        },
+        {
+            "uri": "composition://project/context",
+            "name": "Agent context",
+            "description": "Compact project, module/instance indexes, diagnostics and revision",
             "mimeType": "application/json"
         }
     ])
@@ -330,6 +407,20 @@ pub fn project_root_from_args() -> PathBuf {
     PathBuf::from(".")
 }
 
+/// Optional profile selection from `--profile <name>` / `--profile=<name>`.
+pub fn profile_from_args() -> Option<String> {
+    let mut args = std::env::args().skip(1);
+    while let Some(arg) = args.next() {
+        if arg == "--profile" {
+            return args.next();
+        }
+        if let Some(profile) = arg.strip_prefix("--profile=") {
+            return Some(profile.to_owned());
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -339,6 +430,13 @@ mod tests {
             .join("../..")
             .join("examples")
             .join(name)
+    }
+
+    fn tool_payload(response: &Value) -> Value {
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("tool text");
+        serde_json::from_str(text).expect("protocol JSON")
     }
 
     fn call(server: &mut McpServer, id: u64, method: &str, params: Value) -> Value {
@@ -369,7 +467,7 @@ mod tests {
         );
 
         let tools = call(&mut server, 2, "tools/list", json!({}));
-        assert_eq!(tools["result"]["tools"].as_array().unwrap().len(), 6);
+        assert_eq!(tools["result"]["tools"].as_array().unwrap().len(), 9);
     }
 
     #[test]
@@ -402,6 +500,150 @@ mod tests {
             payload["result"]["model"]["project"]["id"],
             "example.minimal"
         );
+    }
+
+    #[test]
+    fn context_and_impact_tools_work() {
+        let mut server = McpServer::new(example("minimal-project"));
+        let context = call(
+            &mut server,
+            1,
+            "tools/call",
+            json!({ "name": "composition_context", "arguments": {} }),
+        );
+        assert_eq!(context["result"]["isError"], false);
+        let text = context["result"]["content"][0]["text"].as_str().unwrap();
+        let payload: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(payload["result"]["project"]["id"], "example.minimal");
+        assert_eq!(payload["result"]["counts"]["instances"], 2);
+
+        let instance = call(
+            &mut server,
+            2,
+            "tools/call",
+            json!({
+                "name": "composition_impact",
+                "arguments": { "instance": "app" }
+            }),
+        );
+        let text = instance["result"]["content"][0]["text"].as_str().unwrap();
+        let payload: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(payload["result"]["kind"], "instance");
+        assert_eq!(payload["result"]["instance"]["instance"]["id"], "app");
+
+        let module = call(
+            &mut server,
+            3,
+            "tools/call",
+            json!({
+                "name": "composition_impact",
+                "arguments": {
+                    "module": { "id": "leaf.widget", "version": "1.0.0" }
+                }
+            }),
+        );
+        let text = module["result"]["content"][0]["text"].as_str().unwrap();
+        let payload: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(payload["result"]["kind"], "module");
+        assert_eq!(payload["result"]["module"]["instances"], json!(["hello"]));
+
+        let resource = call(
+            &mut server,
+            4,
+            "resources/read",
+            json!({ "uri": "composition://project/context" }),
+        );
+        let text = resource["result"]["contents"][0]["text"].as_str().unwrap();
+        let payload: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(payload["result"]["counts"]["modules"], 2);
+    }
+
+    #[test]
+    fn batch_tool_runs_read_only_requests() {
+        let mut server = McpServer::new(example("minimal-project"));
+        let response = call(
+            &mut server,
+            1,
+            "tools/call",
+            json!({
+                "name": "composition_batch",
+                "arguments": {
+                    "requests": [
+                        { "id": "a", "op": "inspect" },
+                        { "id": "b", "op": "context" }
+                    ]
+                }
+            }),
+        );
+        assert_eq!(response["result"]["isError"], false, "{response}");
+        let text = response["result"]["content"][0]["text"].as_str().unwrap();
+        let payload: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(payload["result"]["count"], 2);
+        assert_eq!(payload["result"]["results"][0]["id"], "a");
+        assert_eq!(
+            payload["result"]["results"][1]["result"]["counts"]["instances"],
+            2
+        );
+
+        let rejected = call(
+            &mut server,
+            2,
+            "tools/call",
+            json!({
+                "name": "composition_batch",
+                "arguments": {
+                    "requests": [{ "op": "prepare_transaction" }]
+                }
+            }),
+        );
+        assert_eq!(rejected["result"]["isError"], true);
+        let text = rejected["result"]["content"][0]["text"].as_str().unwrap();
+        let payload: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(payload["error"]["code"], "protocol-operation-not-allowed");
+    }
+
+    #[test]
+    fn profile_session_tools_work() {
+        let mut server = McpServer::new_with_profile(example("v3/valid-profiles"), Some("desktop"));
+        let response = call(
+            &mut server,
+            1,
+            "tools/call",
+            json!({ "name": "composition_context", "arguments": {} }),
+        );
+        let payload = tool_payload(&response);
+        assert_eq!(payload["result"]["project"]["activeProfile"], "desktop");
+        assert_eq!(
+            payload["result"]["project"]["profiles"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+
+        let validated = call(
+            &mut server,
+            2,
+            "tools/call",
+            json!({ "name": "composition_validate", "arguments": {} }),
+        );
+        assert_eq!(tool_payload(&validated)["result"]["valid"], true);
+
+        let missing = McpServer::new_with_profile(example("v3/valid-profiles"), Some("missing"));
+        let mut missing = missing;
+        let response = call(
+            &mut missing,
+            3,
+            "tools/call",
+            json!({ "name": "composition_validate", "arguments": {} }),
+        );
+        let payload = tool_payload(&response);
+        assert_eq!(payload["ok"], true);
+        assert!(payload["diagnostics"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|diagnostic| diagnostic["code"] == "profile-not-found"));
     }
 
     #[test]

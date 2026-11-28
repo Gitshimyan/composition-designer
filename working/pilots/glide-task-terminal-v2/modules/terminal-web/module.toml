@@ -1,0 +1,41 @@
+[module]
+schema_version = 2
+id = "glide.terminal.web"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "WebView2 terminal bridge and xterm.js host"
+
+[[contract.interfaces]]
+id = "glide.terminal.web"
+version = "1.0.0"
+
+[contract.properties.protocol-version]
+type = "string"
+required = false
+default = "1"
+
+[[contract.ports]]
+id = "from-panel"
+direction = "input"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"
+
+[[contract.ports]]
+id = "to-panel"
+direction = "output"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"
+
+[[contract.ports]]
+id = "to-pty"
+direction = "output"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"
+
+[[contract.ports]]
+id = "from-pty"
+direction = "input"
+type = "glide.terminal.frame.v1"
+protocol = "glide.terminal.bridge.v1"

@@ -1,0 +1,10 @@
+[composition]
+schema_version = 2
+id = "example.v2"
+root = "session"
+
+[[instances]]
+id = "session"
+module = "example.session"
+version = "1.0.0"
+scope = "service"

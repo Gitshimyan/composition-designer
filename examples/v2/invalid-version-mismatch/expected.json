@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "schema-version-mismatch"
+  ],
+  "notes": "A v2 project declares a v1 Composition entry."
+}

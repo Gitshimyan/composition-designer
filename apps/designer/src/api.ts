@@ -13,13 +13,24 @@ export function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-export async function openProject(path: string): Promise<ProjectSnapshot> {
-  return invoke<ProjectSnapshot>("open_project", { path });
+export async function openProject(
+  path: string,
+  profile?: string | null,
+): Promise<ProjectSnapshot> {
+  return invoke<ProjectSnapshot>("open_project", {
+    path,
+    profile: profile ?? null,
+  });
 }
 
 export async function initialProject(): Promise<string | null> {
   if (!isTauri()) return null;
   return invoke<string | null>("initial_project");
+}
+
+export async function initialProfile(): Promise<string | null> {
+  if (!isTauri()) return null;
+  return invoke<string | null>("initial_profile");
 }
 
 export async function loadLayout(root: string): Promise<LayoutNodes> {
@@ -40,6 +51,14 @@ export async function applyTransaction(
   transaction: Transaction,
 ): Promise<EditResponse> {
   return invoke<EditResponse>("apply_transaction", { transaction });
+}
+
+export async function undo(): Promise<EditResponse> {
+  return invoke<EditResponse>("undo");
+}
+
+export async function redo(): Promise<EditResponse> {
+  return invoke<EditResponse>("redo");
 }
 
 export async function readSource(): Promise<SourcePayload> {

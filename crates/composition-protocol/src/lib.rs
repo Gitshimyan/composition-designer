@@ -1,12 +1,18 @@
 use std::path::{Path, PathBuf};
 
-use composition_core::validate_project;
+use composition_core::validate_project_with_profile;
 use composition_domain::{
     CompositionModel, Diagnostic, ErrorCode, ModuleDefinition, ObjectId, Project, Severity,
 };
 use composition_editor::{ModelDiff, ProjectSession, SourceDiff, Transaction};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+
+mod context;
+mod impact;
+
+use context::ContextView;
+use impact::ImpactView;
 
 /// One protocol request. `op` selects a query/command; `params` is op-specific.
 #[derive(Debug, Clone, Deserialize)]
@@ -69,16 +75,56 @@ struct TransactionParams {
     transaction: Transaction,
 }
 
+#[derive(Debug, Deserialize)]
+struct BatchParams {
+    requests: Vec<Request>,
+}
+
+const BATCH_LIMIT: usize = 16;
+
+const READ_ONLY_OPS: &[&str] = &[
+    "inspect", "resolve", "validate", "source", "context", "impact",
+];
+
+fn is_read_only(op: &str) -> bool {
+    READ_ONLY_OPS.contains(&op)
+}
+
+#[derive(Debug, Deserialize)]
+struct ModuleSelector {
+    id: composition_domain::ModuleId,
+    version: composition_domain::Version,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImpactParams {
+    #[serde(default)]
+    module: Option<ModuleSelector>,
+    #[serde(default)]
+    instance: Option<composition_domain::LocalId>,
+    #[serde(default)]
+    transaction: Option<Transaction>,
+}
+
 pub struct ProtocolSession {
     root: PathBuf,
+    profile: Option<String>,
     session: Option<ProjectSession>,
 }
 
 impl ProtocolSession {
     pub fn new(root: impl AsRef<Path>) -> Self {
+        Self::new_with_profile(root, None)
+    }
+
+    pub fn new_with_profile(root: impl AsRef<Path>, profile: Option<&str>) -> Self {
         let root = root.as_ref().to_path_buf();
-        let session = ProjectSession::open(&root).ok();
-        Self { root, session }
+        let session = ProjectSession::open_with_profile(&root, profile).ok();
+        Self {
+            root,
+            profile: profile.map(str::to_owned),
+            session,
+        }
     }
 
     pub fn root(&self) -> &Path {
@@ -95,6 +141,9 @@ impl ProtocolSession {
             "resolve" => self.resolve(request.id),
             "validate" => self.validate(request.id),
             "source" => self.source(request.id),
+            "context" => self.context(request.id),
+            "impact" => self.impact(request.id, request.params),
+            "batch" => self.batch(request.id, request.params),
             "prepare_transaction" => self.transaction(request.id, request.params, false),
             "apply_transaction" => self.transaction(request.id, request.params, true),
             other => error(
@@ -123,7 +172,7 @@ impl ProtocolSession {
                 .map(|digest| digest.to_string());
             return (Some(model.clone()), diagnostics, digest, true);
         }
-        let validation = validate_project(&self.root);
+        let validation = validate_project_with_profile(&self.root, self.profile.as_deref());
         let digest = validation
             .source_digest
             .as_ref()
@@ -193,6 +242,166 @@ impl ProtocolSession {
         )
     }
 
+    fn context(&self, id: String) -> Response {
+        let (model, diagnostics, _, _) = self.current();
+        let view = ContextView::build(model.as_ref(), &diagnostics);
+        success(id, serde_json::to_value(view).unwrap(), diagnostics)
+    }
+
+    fn impact(&mut self, id: String, params: Value) -> Response {
+        let params: ImpactParams = match serde_json::from_value(params) {
+            Ok(params) => params,
+            Err(parse_error) => {
+                return error(
+                    id,
+                    "protocol-invalid-params",
+                    format!("invalid impact params: {parse_error}"),
+                )
+            }
+        };
+        let selected = usize::from(params.module.is_some())
+            + usize::from(params.instance.is_some())
+            + usize::from(params.transaction.is_some());
+        if selected != 1 {
+            return error(
+                id,
+                "protocol-invalid-params",
+                "impact requires exactly one of module, instance or transaction",
+            );
+        }
+
+        if let Some(transaction) = params.transaction {
+            return self.transaction_impact(id, transaction);
+        }
+
+        let (model, diagnostics, _, _) = self.current();
+        let Some(model) = model else {
+            return Response {
+                id,
+                ok: false,
+                result: None,
+                diagnostics,
+                error: Some(ProtocolError {
+                    code: "project-not-readable".to_owned(),
+                    message: "impact requires a readable composition model".to_owned(),
+                }),
+            };
+        };
+
+        if let Some(selector) = params.module {
+            let Some(view) = ImpactView::for_module(&model, &selector.id, &selector.version) else {
+                return error(
+                    id,
+                    "protocol-unknown-target",
+                    format!("module {}@{} is not defined", selector.id, selector.version),
+                );
+            };
+            return success(id, serde_json::to_value(view).unwrap(), diagnostics);
+        }
+
+        let instance = params.instance.expect("exactly one target was selected");
+        let Some(view) = ImpactView::for_instance(&model, &instance) else {
+            return error(
+                id,
+                "protocol-unknown-target",
+                format!("instance {instance} does not exist"),
+            );
+        };
+        success(id, serde_json::to_value(view).unwrap(), diagnostics)
+    }
+
+    fn transaction_impact(&mut self, id: String, transaction: Transaction) -> Response {
+        let Some(session) = self.session.as_mut() else {
+            return error(
+                id,
+                "project-not-editable",
+                "project could not be opened as an editable session",
+            );
+        };
+        if external_dirty(session) {
+            let diagnostic = Diagnostic::new(
+                ErrorCode::EditRevisionConflict,
+                "project changed on disk; reload the session before evaluating impact",
+            )
+            .with_object_id(ObjectId::composition());
+            return Response {
+                id,
+                ok: false,
+                result: None,
+                diagnostics: vec![diagnostic],
+                error: None,
+            };
+        }
+        let outcome = session.prepare(&transaction);
+        let diagnostics = outcome.diagnostics().to_vec();
+        let accepted = outcome.is_accepted();
+        let view = ImpactView::for_transaction(
+            accepted,
+            outcome.is_replayed(),
+            outcome.diff().cloned(),
+            diagnostics.clone(),
+        );
+        let result = serde_json::to_value(view).unwrap();
+        if accepted {
+            success(id, result, diagnostics)
+        } else {
+            Response {
+                id,
+                ok: false,
+                result: Some(result),
+                diagnostics,
+                error: None,
+            }
+        }
+    }
+
+    fn batch(&mut self, id: String, params: Value) -> Response {
+        let params: BatchParams = match serde_json::from_value(params) {
+            Ok(params) => params,
+            Err(parse_error) => {
+                return error(
+                    id,
+                    "protocol-invalid-params",
+                    format!("invalid batch params: {parse_error}"),
+                )
+            }
+        };
+        if params.requests.is_empty() || params.requests.len() > BATCH_LIMIT {
+            return error(
+                id,
+                "protocol-invalid-params",
+                format!(
+                    "batch requires 1..={BATCH_LIMIT} requests, got {}",
+                    params.requests.len()
+                ),
+            );
+        }
+        if let Some(request) = params
+            .requests
+            .iter()
+            .find(|request| !is_read_only(&request.op))
+        {
+            return error(
+                id,
+                "protocol-operation-not-allowed",
+                format!(
+                    "operation {:?} is not allowed in a read-only batch",
+                    request.op
+                ),
+            );
+        }
+
+        let mut results = Vec::with_capacity(params.requests.len());
+        for request in params.requests {
+            results.push(self.dispatch(request));
+        }
+        success(
+            id,
+            json!({ "count": results.len(), "results": results }),
+            Vec::new(),
+        )
+    }
+
     fn transaction(&mut self, id: String, params: Value, apply: bool) -> Response {
         let Some(session) = self.session.as_mut() else {
             return error(
@@ -256,7 +465,8 @@ impl ProtocolSession {
 }
 
 fn external_dirty(session: &ProjectSession) -> bool {
-    session.workspace().revision().source_digest != validate_project(session.root()).source_digest
+    session.workspace().revision().source_digest
+        != validate_project_with_profile(session.root(), session.profile()).source_digest
 }
 
 fn success(id: String, result: Value, diagnostics: Vec<Diagnostic>) -> Response {

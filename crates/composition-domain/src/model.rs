@@ -4,11 +4,17 @@ use serde::Serialize;
 
 use crate::composition::Composition;
 use crate::diagnostic::Diagnostic;
-use crate::ids::{LocalId, ModuleId};
+use crate::ids::{LocalId, ModuleId, Version};
 use crate::module::ModuleDefinition;
 use crate::revision::Revision;
 use crate::schema::SchemaVersion;
 use crate::source::SourceRef;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ProfileDefinition {
+    pub name: String,
+    pub composition: String,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Project {
@@ -18,6 +24,15 @@ pub struct Project {
     pub composition_entry: String,
     pub module_roots: Vec<String>,
     pub source: Option<SourceRef>,
+    /// v2.1：`workspace.composition`（默认 profile 的入口）。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_composition: Option<String>,
+    /// v2.1：`"default"` 或具名 profile。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active_profile: Option<String>,
+    /// v2.1：具名 profile（不含默认），按 name 升序。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub profiles: Vec<ProfileDefinition>,
 }
 
 impl Project {
@@ -35,6 +50,9 @@ impl Project {
             composition_entry: composition_entry.into(),
             module_roots,
             source: None,
+            default_composition: None,
+            active_profile: None,
+            profiles: Vec::new(),
         }
     }
 }
@@ -65,10 +83,36 @@ impl fmt::Display for DependencyStatus {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DependencyTargetKind {
+    Module,
+    Interface,
+}
+
+impl DependencyTargetKind {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Module => "module",
+            Self::Interface => "interface",
+        }
+    }
+}
+
+/// v2.0 规范化输出中的依赖目标；v1 项目不输出该字段。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct DependencyTargetInfo {
+    pub kind: DependencyTargetKind,
+    pub id: String,
+    pub version: Option<Version>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DependencyResolution {
     pub requirement_id: LocalId,
     pub from_instance: LocalId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target: Option<DependencyTargetInfo>,
     pub provider_instance: Option<LocalId>,
     pub optional: bool,
     pub status: DependencyStatus,

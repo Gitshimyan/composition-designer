@@ -1,0 +1,56 @@
+change:
+  id: change.045-external-drafts
+  intent: 保留 Source 草稿与打开中的 Review，外部 Reload 后按新 Revision 语义重基；保留 2s 轮询，不做自动三向合并。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+      - extend
+    approved:
+      - modify
+      - extend
+    evidence: "用户 2026-11-28 明确授权 045，并要求不确定点研究后自行决策"
+  targets:
+    - README.md
+    - apps/designer/src
+    - apps/designer/tests
+    - apps/designer/README.md
+    - docs/adr/0008-external-change-drafts.md
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/045-external-drafts.md
+    - changes/045-external-drafts.yaml
+  operations:
+    - modify
+    - extend
+  scope:
+    allowed:
+      - source_draft_retention
+      - review_rebase
+      - external_conflict_ux
+      - polling_decision
+      - adr_record
+      - ui_tests
+      - docs_update
+    forbidden:
+      - toml_schema
+      - protocol_semantics
+      - design_baseline
+      - native_watcher
+      - automatic_three_way_merge
+      - layout_merge
+      - force_overwrite
+  unresolved_items:
+    - UW-017
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - npm run test:ui (apps/designer)
+    - npm run build (apps/designer)
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+  notes: 045 只改 Designer 交互与文档；保留 2s 轮询；不引入 watcher/自动合并。

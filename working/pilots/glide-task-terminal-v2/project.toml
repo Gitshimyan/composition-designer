@@ -1,0 +1,8 @@
+[project]
+schema_version = 2
+id = "glide.task-terminal"
+name = "Glide Task + Terminal Pilot (v2)"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]

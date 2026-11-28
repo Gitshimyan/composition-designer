@@ -1,6 +1,8 @@
 # 未决工作登记册
 
-> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010；G05 关闭 UW-030。
+> 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010；G05 关闭 UW-030；
+> 032 冻结 v2.0 语义，UW-002/UW-003 转 in_progress，新增 UW-032；034 完成入口，035 完成 Glide v2 验收并关闭 UW-002/003；
+> 039 冻结 v2.1（format 3），UW-004/UW-018 转 in_progress；041 完成 CLI/MCP/Designer 入口与验收，关闭 UW-004/UW-018；042 完成 undo/redo，关闭 UW-014；043 持久化 Revision/request，关闭 UW-015；044 完成 fsync/崩溃恢复，关闭 UW-019；045 实现草稿保留/Review 重基，UW-017 剩余项继续 deferred；046 真实 WebView2 smoke，关闭 UW-012。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -8,21 +10,23 @@
 
 | 指标 | 数量 |
 |---|---:|
-| 登记事项 | 31 |
-| 已实现 / 已关闭 | 11 |
+| 登记事项 | 32 |
+| 已实现 / 已关闭 | 19 |
 | 等待用户决策（pending_decision） | 5 |
 | 等待授权（pending_authorization） | 0 |
-| 已接受待排期（accepted） | 3 |
-| 明确延期（deferred） | 12 |
+| 已接受待排期（accepted） | 0 |
+| 进行中（in_progress） | 0 |
+| 明确延期（deferred） | 8 |
 
 ## 2. 登记表
 
 | ID | 来源 | 功能缺口 | 类型 | 状态 | 所需授权 | 影响 | 后续处理 |
 |---|---|---|---|---|---|---|---|
 | UW-001 | 024 → 025 | Dependency Provider 的设置/清空编辑 | Extend | implemented | Extend + Modify | 已解除；Dependency 视图可编辑 | 025 已关闭，保留证据 |
-| UW-002 | 021 | Interface / Contract 的独立身份 | Rearchitect | accepted | Rearchitect | 依赖无法与实现解耦 | ADR-0004 确认接口标记；S1（032–035）实施 |
-| UW-003 | 021 | 非结构 runtime / service 容器 | Rearchitect | accepted | Rearchitect | 运行时服务只能近似映射为结构节点 | ADR-0004 确认实例 scope；S1 实施 |
-| UW-004 | 021 | 项目级 Profile / 条件组合选择 | Rearchitect | accepted | Rearchitect | 无法完整表达 profile/环境/task 变体 | ADR-0004 确认 Profile 入口；S2（039–041）实施 |
+| UW-002 | 021 → 032 | Interface / Contract 的独立身份 | Rearchitect | implemented | Rearchitect | 依赖无法与实现解耦 | 032 冻结、033 实现、034 入口、035 验收；已关闭 |
+| UW-003 | 021 → 032 | 非结构 runtime / service 容器 | Rearchitect | implemented | Rearchitect | 运行时服务只能近似映射为结构节点 | 032 冻结、033 实现、034 入口、035 验收；已关闭 |
+| UW-004 | 021 → 039 | 项目级 Profile / 条件组合选择 | 领域能力 | implemented | Rearchitect | 无法完整表达 profile/环境/task 变体 | 039 冻结、040 Core、041 CLI/MCP/Designer 与验收；v3 数据集 |
+| UW-018 | 011 / 016 / 019 → 039 | 多 composition 入口 / 多文件项目 | 领域能力 | implemented | Rearchitect | 仅单入口；项目拆分受限 | 039 冻结 `[profiles]`、040 Loader/Core、041 入口；v3 数据集 |
 | UW-005 | 022 / 025 | ConfigValue 整数值 float 的 JSON wire | Extend（协议方案） | pending_decision | Extend；协议基线变更再评估 Rearchitect | Agent/UI 传输可能无法保留数值类型 | 单独设计 wire 语义 |
 | UW-006 | 授权审计 | 权限集合、工程/文档/Compose/副作用边界 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |
 | UW-007 | 披露评审 | 任务卡/Manifest 模板、coverage/open_items、汇报规范 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |
@@ -30,16 +34,15 @@
 | UW-009 | 披露评审 | 001–025 历史未实现工作回溯与登记 | Modify | implemented | Modify | 历史遗留线索有去向 | G03 已关闭 |
 | UW-010 | 授权审计 | 机器授权/覆盖门禁 | Extend + Rearchitect | implemented | Extend + Rearchitect | `composition-change-gate` report 模式已接入 CI | G04 已关闭；block 模式转 UW-030 |
 | UW-011 | 014 / 015 / 路线图 | Source 编辑与草稿冲突处理（Composition 入口） | 产品能力 | implemented | Modify + Extend/Rearchitect（029） | Composition Source 已可编辑；外部冲突阻止 | 029–031 已关闭；模块文件编辑转 UW-031 |
-| UW-012 | 020 | 真实 WebView2 / Tauri GUI 自动化 | 工程能力 | deferred | 待评估 | Playwright 使用 IPC fixture | M6 后评估 tauri-driver/smoke |
+| UW-012 | 020 → 046 | 真实 WebView2 / Tauri GUI 自动化 | 工程能力 | implemented | 待评估 | Playwright 使用 IPC fixture | 046 真实窗口 + Playwright CDP smoke（Windows）；UW-012 关闭 |
 | UW-013 | 021 | Glide G4–G8：kind、技术元数据、Port wire、Profile-scoped task、模板 | Rearchitect / 后续 | deferred | Rearchitect | 拓扑够用，运行细节不足 | 出现真实需求时再评估 |
-| UW-014 | 009 / 010 / 011 | 撤销 / 重做 | 产品能力 | deferred | Modify（事务协议变更再评估 Rearchitect） | 误操作只能手工回退 | 后续独立评估 |
-| UW-015 | 009 / 010 / 011 / 016 / 019 | Revision 历史与 request 幂等跨进程持久化 | 可靠性 | deferred | Modify / Extend（存储方案） | 重启后历史/幂等丢失 | 后续独立评估 |
+| UW-014 | 009 / 010 / 011 → 042 | 撤销 / 重做 | 产品能力 | implemented | Modify | 误操作只能手工回退 | 042 会话内文本快照 undo/redo、新 Revision、Designer 按钮/快捷键 |
+| UW-015 | 009 / 010 / 011 / 016 / 019 → 043 | Revision 历史与 request 幂等跨进程持久化 | 可靠性 | implemented | Modify / Extend（存储方案） | 重启后历史/幂等丢失 | 043 `.designer/state/<profile>.json`；重启恢复、过期/损坏丢弃 |
 | UW-016 | 014 | Inspector array 属性编辑 | UI 能力 | pending_decision | Modify | array 配置只能读/手改 TOML | 可在后续小卡补齐 |
-| UW-017 | 015 | 外部修改 watcher、三向合并、Review 草稿保留、layout 合并 | 产品能力 | deferred | Modify / Extend | 2s 轮询；Reload 丢弃 Review/布局 | M7 或独立评估 |
-| UW-018 | 011 / 016 / 019 | 多 composition 入口 / 多文件项目 | Rearchitect | deferred | Rearchitect | 仅单入口；项目拆分受限 | M9 方向 |
-| UW-019 | 011 / 013 / 019 | fsync 级崩溃恢复 | 可靠性 | deferred | Modify | 断电窗口仍存在 | 后续独立评估 |
-| UW-020 | 017 / 018 / 019 | MCP subscriptions/progress/cancel/auth/多项目 | 协议能力 | deferred | Extend | Agent 长任务/多项目能力不足 | M8 方向 |
-| UW-021 | 018 | Agent Skill LLM 评测、跨平台配置生成 | 工程能力 | deferred | Extend | 仅工具链 e2e，仅 Windows 脚本 | M8 方向 |
+| UW-017 | 015 → 045 | 外部修改 watcher、三向合并、Review 草稿保留、layout 合并 | 产品能力 | deferred | Modify / Extend | 2s 轮询；Reload 丢弃 Review/布局 | 045 已实现草稿保留 + Review 重基；原生 watcher/自动三向合并/layout 合并仍 deferred |
+| UW-019 | 011 / 013 / 019 → 044 | fsync 级崩溃恢复 | 可靠性 | implemented | Modify | 断电窗口仍存在 | 044 文件 fsync + 目录 fsync（Unix）+ 备份恢复；Windows 目录 fsync best-effort |
+| UW-020 | 017 / 018 / 019 | MCP subscriptions/progress/cancel/auth/多项目 | 协议能力 | deferred | Extend | Agent 长任务/多项目能力不足 | 037 以只读 batch 覆盖批量读取；progress/cancel 仍无长任务证据，继续 deferred |
+| UW-021 | 018 | Agent Skill LLM 评测、跨平台配置生成 | 工程能力 | deferred | Extend | 仅工具链 e2e，仅 Windows 脚本 | 038 完成确定性 skill_eval + configure.mjs；LLM 质量评测仍 deferred |
 | UW-022 | 022 | 模块库/版本发现与下载 | 产品能力 | deferred | Extend / Rearchitect | 只能选已加载模块 | M9 方向 |
 | UW-023 | 023 | Binding 向导/Move 的 UX 限制（child 固定、required many 只建一个、MAX_DEPTH） | UX 能力 | pending_decision | Modify | 复杂结构需多次操作/改写 child | 026 后按反馈评估 |
 | UW-024 | 012 / 013 / 014 | 窗口自适应、bundle/installer、大 bundle 拆分 | 工程/UI | deferred | Modify / Extend | 仅固定 DPI/示例路径；无安装包 | 后续评估 |
@@ -50,6 +53,7 @@
 | UW-029 | 020 / M6 总验收 | CI PR 触发与分支保护/失败合并阻止的验证 | 工程流程 | implemented | Modify；仓库设置需管理员 | `main` 已启用分支保护；失败探针 PR #1 被 BLOCKED | 027/G04 已关闭 |
 | UW-030 | G04 | CI 切换到 change-gate block 模式 | 治理流程 | implemented | Modify + Rearchitect | CI 声明违规会阻止合并 | G05 已关闭 |
 | UW-031 | 029 / 031 | 模块文件 Source 编辑（module.toml） | 产品能力 | deferred | Rearchitect + Extend | 首版只编辑 Composition 入口，模块仍只读 | 出现模块编辑需求时评估 |
+| UW-032 | 032 | 接口方法/Port 形状、service 内部组合 | Rearchitect | deferred | Rearchitect | v2.0 接口只是身份标记；service 必须是 primitive | 出现真实实现替换/服务组合需求时评估 |
 
 ## 3. 已关闭事项证据
 
@@ -125,6 +129,22 @@
 - 实现：029 `replace_source` 事务；030 CodeMirror 编辑/Review；031 Glide 验收；
 - 外部冲突阻止、Reload 丢弃草稿；无三向合并（UW-017）；
 - 关闭日期：2026-11-27（M7）。
+
+### UW-002 — 接口身份（Interface 标记）
+
+- 设计：ADR-0004 方向、ADR-0006 冻结（`[[contract.interfaces]]`、依赖 `interface`、解析规则）；
+- 实现：033 Domain/Loader/Validation；034 `create_instance.scope`/Services/接口展示；
+- 验收：`examples/v2/**` 11 个数据集（37 总数）；Glide v2 试点 3 条接口依赖解析；
+- 证据：`crates/composition-core/tests/v2.rs`、`crates/composition-cli/tests/v2_closeout.rs`；
+- 关闭日期：2026-11-28（035）。
+
+### UW-003 — service scope（非结构容器）
+
+- 实现：033 `InstanceScope`/BND 规则/`service-unused`；034 Services 视图与创建；
+- 验收：Glide v2 试点 `task-runner`/`terminal-web`/`conpty-session` 为 service，结构树只保留
+  app → workbench → panels；试点副本新增 service + 显式 provider 后重开 valid；
+- 证据：`working/pilots/glide-task-terminal-v2/`、`crates/composition-cli/tests/v2_closeout.rs`；
+- 关闭日期：2026-11-28（035）。
 
 ### UW-031 — 模块文件 Source 编辑
 

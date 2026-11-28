@@ -70,7 +70,7 @@ fn every_dataset_matches_expected_codes() {
     let mut datasets = Vec::new();
     collect_datasets(&examples_root(), &mut datasets);
     datasets.sort();
-    assert_eq!(datasets.len(), 26);
+    assert_eq!(datasets.len(), 40);
 
     for directory in datasets {
         let relative = directory
@@ -101,6 +101,7 @@ fn every_dataset_matches_expected_codes() {
                 | "invalid-projects/files/path-outside"
                 | "invalid-projects/files/toml-syntax"
                 | "invalid-projects/structure/multiple-roots"
+                | "v3/invalid-reserved-profile"
         );
         assert_eq!(result.model.is_some(), model_expected, "{relative}");
     }

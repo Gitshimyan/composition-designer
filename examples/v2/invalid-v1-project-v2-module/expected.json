@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "schema-unsupported-version"
+  ],
+  "notes": "A v1 project cannot load a v2 module definition."
+}

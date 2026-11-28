@@ -1,0 +1,62 @@
+change:
+  id: change.034-scope-ui
+  intent: 把 v2 scope 接入 create_instance 命令与 TOML 写回，并新增 Services 视图、service 创建与接口目标展示；验证 CLI/MCP v2 事务。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+      - extend
+    approved:
+      - modify
+      - extend
+    evidence: "用户 2026-11-28 明确授权进行 034（Extend + Modify）"
+  targets:
+    - README.md
+    - crates/composition-domain
+    - crates/composition-editor
+    - crates/composition-cli
+    - crates/composition-mcp
+    - apps/designer/src
+    - apps/designer/tests
+    - apps/designer/src-tauri
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/034-scope-ui.md
+    - changes/034-scope-ui.yaml
+  operations:
+    - modify
+    - extend
+  scope:
+    allowed:
+      - create_instance_scope
+      - scope_writeback
+      - services_view
+      - service_creation_ui
+      - interface_display
+      - cli_mcp_scope_tests
+      - playwright_tests
+      - docs_plan_update
+    forbidden:
+      - toml_schema
+      - design_baseline
+      - new_command
+      - examples_changes
+      - v2_1_profiles
+  unresolved_items:
+    - UW-002
+    - UW-003
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cd apps/designer && npm run build
+    - cd apps/designer && npm run test:ui
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 034 只扩展既有 create_instance 字段并新增 UI；v2 fixtures/Glide 验收属 035。

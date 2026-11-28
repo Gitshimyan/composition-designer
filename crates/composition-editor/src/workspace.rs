@@ -1,9 +1,11 @@
 use std::collections::BTreeMap;
 
-use composition_core::{validate_model, validate_project, SourceMap, ValidationResult};
+use composition_core::{
+    validate_model, validate_project, validate_project_with_profile, SourceMap, ValidationResult,
+};
 use composition_domain::{
-    Binding, CompositionModel, Diagnostic, ErrorCode, Instance, ModuleRef, ObjectId, PortRef,
-    Revision,
+    Binding, CompositionModel, Diagnostic, ErrorCode, Instance, InstanceScope, ModuleRef, ObjectId,
+    PortRef, Revision, SchemaVersion,
 };
 use serde::Serialize;
 
@@ -24,6 +26,15 @@ struct CommittedRequest {
     model: CompositionModel,
     diagnostics: Vec<Diagnostic>,
     diff: ModelDiff,
+}
+
+pub(crate) struct RestoredCommit {
+    pub request_id: String,
+    pub revision: Revision,
+    pub transaction: Transaction,
+    pub model: CompositionModel,
+    pub diagnostics: Vec<Diagnostic>,
+    pub diff: ModelDiff,
 }
 
 /// 编辑器工作区：已验证模型 + 来源映射 + Revision 历史/request 记录。
@@ -62,6 +73,13 @@ impl EditorWorkspace {
         Self::from_validation(validate_project(root))
     }
 
+    pub fn open_with_profile(
+        root: impl AsRef<std::path::Path>,
+        profile: Option<&str>,
+    ) -> Result<Self, Vec<Diagnostic>> {
+        Self::from_validation(validate_project_with_profile(root, profile))
+    }
+
     pub fn model(&self) -> &CompositionModel {
         &self.model
     }
@@ -79,6 +97,55 @@ impl EditorWorkspace {
 
     pub fn has_request(&self, request_id: &str) -> bool {
         self.requests.contains_key(request_id)
+    }
+
+    pub(crate) fn request_parts(&self, request_id: &str) -> Option<(&Transaction, &ModelDiff)> {
+        self.requests
+            .get(request_id)
+            .map(|record| (&record.transaction, &record.diff))
+    }
+
+    /// 从持久化状态恢复历史与 request；当前模型由磁盘 validation 提供。
+    /// 状态必须与当前 digest/seq 连续，否则返回 false（调用方丢弃状态）。
+    pub(crate) fn restore_commits(&mut self, base: Revision, commits: &[RestoredCommit]) -> bool {
+        let Some(last) = commits.last() else {
+            return false;
+        };
+        if self.revision().source_digest != last.revision.source_digest {
+            return false;
+        }
+        for (index, commit) in commits.iter().enumerate() {
+            if commit.revision.seq != base.seq + index as u64 + 1 {
+                return false;
+            }
+        }
+
+        self.history = Vec::with_capacity(commits.len() + 1);
+        self.history.push(RevisionRecord {
+            revision: base,
+            request_id: "initial".to_owned(),
+            diff: ModelDiff::empty(),
+        });
+        self.requests.clear();
+        for commit in commits {
+            self.history.push(RevisionRecord {
+                revision: commit.revision.clone(),
+                request_id: commit.request_id.clone(),
+                diff: commit.diff.clone(),
+            });
+            self.requests.insert(
+                commit.request_id.clone(),
+                CommittedRequest {
+                    transaction: commit.transaction.clone(),
+                    model: commit.model.clone(),
+                    diagnostics: commit.diagnostics.clone(),
+                    diff: commit.diff.clone(),
+                },
+            );
+        }
+        self.model = last.model.clone();
+        self.model.revision = Some(last.revision.clone());
+        true
     }
 
     /// Source 文本提交后更新模型、digest、历史与 Revision；不经过对象命令。
@@ -327,7 +394,14 @@ fn apply_command(model: &mut CompositionModel, command: &Command) -> Result<(), 
             module,
             version,
             config,
+            scope,
         } => {
+            if scope.is_some() && model.project.schema_version != SchemaVersion::V2 {
+                return Err(invalid_command(
+                    "create_instance.scope is only available in v2 projects",
+                    ObjectId::instance(id),
+                ));
+            }
             if model
                 .composition
                 .instances
@@ -340,6 +414,11 @@ fn apply_command(model: &mut CompositionModel, command: &Command) -> Result<(), 
                 ));
             }
             let mut instance = Instance::new(id.clone(), ModuleRef::new(module.clone(), *version));
+            instance.scope = if model.project.schema_version == SchemaVersion::V2 {
+                Some(scope.unwrap_or(InstanceScope::Structure))
+            } else {
+                None
+            };
             instance.config = config.clone();
             model.composition.instances.push(instance);
         }

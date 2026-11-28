@@ -1,0 +1,46 @@
+change:
+  id: change.044-fsync-recovery
+  intent: 为 Composition 写回增加文件 fsync、目录 fsync（Unix）、备份恢复与崩溃窗口测试；不改变事务/TOML 语义。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+    approved:
+      - modify
+    evidence: "用户 2026-11-28 明确授权开始 044 fsync/崩溃恢复"
+  targets:
+    - README.md
+    - crates/composition-editor
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/044-fsync-recovery.md
+    - changes/044-fsync-recovery.yaml
+  operations:
+    - modify
+  scope:
+    allowed:
+      - file_fsync
+      - directory_fsync_unix
+      - backup_recovery
+      - crash_window_tests
+      - docs_update
+    forbidden:
+      - toml_schema
+      - command_schema
+      - protocol_semantics
+      - design_baseline
+      - windows_directory_fsync_guarantee
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: Windows 没有 portable 目录 fsync；以文件 fsync + rename + 备份恢复为主，文档标注。

@@ -4,19 +4,23 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import {
   applyTransaction,
   checkExternalChanges,
+  initialProfile,
   initialProject,
   isTauri,
   loadLayout,
   openProject,
   prepareTransaction,
   readSource,
+  redo as performRedo,
   reloadProject,
   saveLayout,
+  undo as performUndo,
 } from "./api";
 import CompositionCanvas from "./canvas/CompositionCanvas";
 import StructureTree from "./explorer/StructureTree";
 import BindingEditorDialog from "./inspector/BindingEditorDialog";
 import CreateInstanceDialog from "./inspector/CreateInstanceDialog";
+import CreateServiceDialog from "./inspector/CreateServiceDialog";
 import InstanceActions from "./inspector/InstanceActions";
 import { parseDraft, toDraftValue } from "./inspector/configDraft";
 import { autoLayout, buildStructure } from "./layout";
@@ -24,6 +28,7 @@ import ConnectionDialog from "./relations/ConnectionDialog";
 import ConnectionView from "./relations/ConnectionView";
 import DependencyProviderDialog from "./relations/DependencyProviderDialog";
 import DependencyView from "./relations/DependencyView";
+import ServicesView from "./relations/ServicesView";
 import type { DependencyDetail } from "./relations/relationModel";
 import ChangeReview from "./review/ChangeReview";
 import SourceView from "./source/SourceView";
@@ -35,6 +40,8 @@ import type {
   EditResponse,
   ExternalChangeState,
   Instance,
+  InstanceScope,
+  InterfaceDeclaration,
   LayoutNodes,
   NodePosition,
   ProjectSnapshot,
@@ -45,6 +52,7 @@ import type {
 } from "./types";
 
 const LAST_PATH_KEY = "composition-designer.last-project";
+const LAST_PROFILE_KEY = "composition-designer.last-profile";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
@@ -79,12 +87,13 @@ export default function App() {
     parentId: string;
     slotId: string;
   } | null>(null);
+  const [serviceDraft, setServiceDraft] = useState(false);
   const [bindingDraft, setBindingDraft] = useState<string | null>(null);
   const [connectionDraft, setConnectionDraft] = useState<
     { mode: "create" } | { mode: "edit"; id: string } | null
   >(null);
   const [stageView, setStageView] = useState<
-    "structure" | "connections" | "dependencies"
+    "structure" | "connections" | "dependencies" | "services"
   >("structure");
   const [providerDraft, setProviderDraft] = useState<{
     instanceId: string;
@@ -97,10 +106,13 @@ export default function App() {
       if (!isTauri()) return;
       try {
         const initial = await initialProject();
+        const initialProfileName = await initialProfile();
         const stored = window.localStorage.getItem(LAST_PATH_KEY);
+        const storedProfile = window.localStorage.getItem(LAST_PROFILE_KEY);
         const path = initial ?? stored;
+        const profile = initialProfileName ?? storedProfile;
         if (path && !cancelled) {
-          await loadProject(path);
+          await loadProject(path, profile);
         }
       } catch {
         // A missing startup argument is not an application error.
@@ -112,7 +124,33 @@ export default function App() {
     };
   }, []);
 
-  async function loadProject(rawPath: string) {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        void handleUndo();
+      } else if ((key === "z" && event.shiftKey) || key === "y") {
+        event.preventDefault();
+        void handleRedo();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [snapshot, loadState]);
+
+  async function loadProject(rawPath: string, profile: string | null = null) {
     const path = rawPath.trim();
     if (!path) {
       setShowPath(true);
@@ -121,13 +159,55 @@ export default function App() {
     setLoadState("loading");
     setError(null);
     try {
-      const next = await openProject(path);
+      const next = await openProject(path, profile);
       setSnapshot(next);
       setPathInput(path);
       setLoadState("ready");
       window.localStorage.setItem(LAST_PATH_KEY, path);
+      if (profile) {
+        window.localStorage.setItem(LAST_PROFILE_KEY, profile);
+      } else {
+        window.localStorage.removeItem(LAST_PROFILE_KEY);
+      }
     } catch (reason) {
       setLoadState("error");
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  }
+
+  function switchProfile(profile: string) {
+    if (!snapshot) return;
+    void loadProject(snapshot.root, profile);
+  }
+
+  async function handleUndo() {
+    if (!snapshot?.canUndo || loadState === "loading") return;
+    setError(null);
+    try {
+      const response = await performUndo();
+      setSnapshot(response.snapshot);
+      if (!response.accepted) {
+        setError(
+          response.diagnostics[0]?.message ?? "Undo was rejected by the Core.",
+        );
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  }
+
+  async function handleRedo() {
+    if (!snapshot?.canRedo || loadState === "loading") return;
+    setError(null);
+    try {
+      const response = await performRedo();
+      setSnapshot(response.snapshot);
+      if (!response.accepted) {
+        setError(
+          response.diagnostics[0]?.message ?? "Redo was rejected by the Core.",
+        );
+      }
+    } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     }
   }
@@ -144,7 +224,7 @@ export default function App() {
         title: "Open Composition Project",
       });
       if (typeof selected === "string") {
-        await loadProject(selected);
+        await loadProject(selected, null);
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
@@ -153,7 +233,7 @@ export default function App() {
 
   function handlePathSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void loadProject(pathInput);
+    void loadProject(pathInput, null);
   }
 
   const model = snapshot?.model ?? null;
@@ -164,6 +244,9 @@ export default function App() {
   const connections = composition?.connections ?? [];
   const dependencies = model?.dependencies ?? [];
   const modules = model?.modules ?? [];
+  const services = instances.filter(
+    (instance) => instance.scope === "service",
+  );
   const diagnostics = snapshot?.diagnostics ?? [];
   const rootId = composition?.root ?? "";
 
@@ -189,6 +272,7 @@ export default function App() {
     setRevealLine(null);
     setPendingReview(null);
     setCreateDraft(null);
+    setServiceDraft(false);
     setBindingDraft(null);
     setConnectionDraft(null);
     setProviderDraft(null);
@@ -292,16 +376,16 @@ export default function App() {
   async function handleReloadProject() {
     setReloading(true);
     setEditError(null);
+    const review = pendingReview;
     try {
       const next = await reloadProject();
       setSnapshot(next);
       setExternal(null);
-      setPendingReview(null);
       setCreateDraft(null);
+      setServiceDraft(false);
       setBindingDraft(null);
       setConnectionDraft(null);
       setProviderDraft(null);
-      setBottomTab("diagnostics");
       setRevealLine(null);
       if (next.model) {
         const composition = next.model.composition;
@@ -325,6 +409,23 @@ export default function App() {
         }
       } else {
         setSource(null);
+      }
+      if (review && next.model?.revision) {
+        const rebased = {
+          ...review.transaction,
+          base_revision: next.model.revision,
+        };
+        try {
+          const preview = await prepareTransaction(rebased);
+          setPendingReview({ ...review, transaction: rebased, preview });
+        } catch (reason) {
+          setPendingReview(null);
+          setEditError(
+            reason instanceof Error ? reason.message : String(reason),
+          );
+        }
+      } else if (!next.model) {
+        setPendingReview(null);
       }
     } catch (reason) {
       setEditError(reason instanceof Error ? reason.message : String(reason));
@@ -419,6 +520,7 @@ export default function App() {
       }
       setPendingReview(null);
       setCreateDraft(null);
+    setServiceDraft(false);
       setBindingDraft(null);
       setConnectionDraft(null);
       setProviderDraft(null);
@@ -551,6 +653,25 @@ export default function App() {
             <>
               <span className="project-name">{project.name}</span>
               <code>{project.id}</code>
+              {project.schema_version === 3 &&
+                (project.profiles?.length ?? 0) > 0 && (
+                  <label className="profile-picker">
+                    <span>Profile</span>
+                    <select
+                      aria-label="Composition profile"
+                      value={project.active_profile ?? "default"}
+                      disabled={loadState === "loading"}
+                      onChange={(event) => switchProfile(event.target.value)}
+                    >
+                      <option value="default">default</option>
+                      {project.profiles?.map((profile) => (
+                        <option key={profile.name} value={profile.name}>
+                          {profile.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
             </>
           ) : (
             <span className="muted">No project open</span>
@@ -558,6 +679,24 @@ export default function App() {
         </div>
 
         <div className="topbar-actions">
+          <button
+            type="button"
+            className="button button-ghost"
+            onClick={() => void handleUndo()}
+            disabled={!snapshot?.canUndo || loadState === "loading"}
+            title="Undo (Ctrl+Z)"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            className="button button-ghost"
+            onClick={() => void handleRedo()}
+            disabled={!snapshot?.canRedo || loadState === "loading"}
+            title="Redo (Ctrl+Shift+Z / Ctrl+Y)"
+          >
+            Redo
+          </button>
           <button
             type="button"
             className="button button-ghost"
@@ -732,6 +871,7 @@ export default function App() {
                     ["structure", "Structure", bindings.length],
                     ["connections", "Connections", connections.length],
                     ["dependencies", "Dependencies", dependencies.length],
+                    ["services", "Services", services.length],
                   ] as const
                 ).map(([value, label, count]) => (
                   <button
@@ -777,8 +917,20 @@ export default function App() {
                   }
                   onDeleteConnection={handleDeleteConnection}
                 />
-              ) : (
-                <DependencyView
+                ) : stageView === "services" ? (
+                  <ServicesView
+                    instances={instances}
+                    modules={modules}
+                    connections={connections}
+                    dependencies={dependencies}
+                    selectedId={selectedId}
+                    canEdit={canEdit && !externalDirty}
+                    projectSchemaVersion={model?.project.schema_version ?? 1}
+                    onSelectInstance={handleSelectTree}
+                    onNewService={() => setServiceDraft(true)}
+                  />
+                ) : (
+                  <DependencyView
                   instances={instances}
                   modules={modules}
                   dependencies={dependencies}
@@ -795,7 +947,9 @@ export default function App() {
                     ? "Drag to arrange · positions write to .designer/layout.toml · structure edits go through Core transactions"
                     : stageView === "connections"
                       ? "Port connections · direction/type/protocol come from module contracts · edits go through Core transactions"
-                      : "Dependency resolutions · explicit providers are editable through Core transactions"}
+                      : stageView === "services"
+                        ? "Services live outside the Binding tree · primitive modules only · edits go through Core transactions"
+                        : "Dependency resolutions · explicit providers are editable through Core transactions"}
                 </span>
                 <div className="stage-counts">
                   {stageView === "structure" ? (
@@ -808,6 +962,13 @@ export default function App() {
                     <>
                       <span>{connections.length} port connections</span>
                       <span>{modulePortCount} module ports</span>
+                    </>
+                  ) : stageView === "services" ? (
+                    <>
+                      <span>{services.length} services</span>
+                      <span>
+                        {instances.length - services.length} structure instances
+                      </span>
                     </>
                   ) : (
                     <>
@@ -828,6 +989,8 @@ export default function App() {
               <SelectionDetails
                 instance={selectedInstance}
                 moduleKind={selectedModule?.kind}
+                scope={selectedInstance.scope}
+                interfaces={selectedModule?.contract.interfaces ?? []}
                 slots={selectedModule?.contract.slots.length ?? 0}
                 ports={selectedModule?.contract.ports.length ?? 0}
                 properties={selectedModule?.contract.properties ?? []}
@@ -1011,6 +1174,18 @@ export default function App() {
         />
       )}
 
+      {serviceDraft && (
+        <CreateServiceDialog
+          instances={instances}
+          modules={modules}
+          suspended={pendingReview !== null}
+          onCancel={() => setServiceDraft(false)}
+          onReview={(commands, description, options) =>
+            void reviewCommands(commands, description, options)
+          }
+        />
+      )}
+
       {bindingDraftValue && bindingDraftChild && (
         <BindingEditorDialog
           key={bindingDraftValue.id}
@@ -1068,8 +1243,11 @@ export default function App() {
           transaction={pendingReview.transaction}
           preview={pendingReview.preview}
           description={pendingReview.description}
-          busy={reviewBusy}
+          busy={reviewBusy || reloading}
           error={editError}
+          externalDirty={externalDirty}
+          reloading={reloading}
+          onReload={() => void handleReloadProject()}
           onApply={() => void applyPendingReview()}
           onClose={() => {
             setPendingReview(null);
@@ -1133,6 +1311,8 @@ function Property({
 function SelectionDetails({
   instance,
   moduleKind,
+  scope,
+  interfaces,
   slots,
   ports,
   properties,
@@ -1144,6 +1324,8 @@ function SelectionDetails({
 }: {
   instance: Instance;
   moduleKind?: string;
+  scope?: InstanceScope | null;
+  interfaces: InterfaceDeclaration[];
   slots: number;
   ports: number;
   properties: PropertyContract[];
@@ -1161,6 +1343,7 @@ function SelectionDetails({
         <Property label="Module" value={instance.module.id} mono />
         <Property label="Version" value={instance.module.version} mono />
         <Property label="Kind" value={moduleKind ?? "unknown"} />
+        <Property label="Scope" value={scope ?? "structure"} />
         <Property label="Role" value={isRoot ? "root" : "child"} />
         <Property
           label="Source"
@@ -1195,6 +1378,15 @@ function SelectionDetails({
         <Property label="Properties" value={String(properties.length)} />
         <Property label="Slots" value={String(slots)} />
         <Property label="Ports" value={String(ports)} />
+        <Property label="Interfaces" value={String(interfaces.length)} />
+        {interfaces.map((declaration) => (
+          <Property
+            key={`${declaration.id}@${declaration.version}`}
+            label="Implements"
+            value={`${declaration.id}@${declaration.version}`}
+            mono
+          />
+        ))}
         <Property
           label="Configured"
           value={String(Object.keys(instance.config ?? {}).length)}

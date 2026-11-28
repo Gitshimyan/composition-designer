@@ -19,16 +19,21 @@ pub mod schema;
 pub mod source;
 pub mod value;
 
-pub use composition::{Binding, Composition, Connection, Instance, ModuleRef, PortRef};
+pub use composition::{
+    Binding, Composition, Connection, Instance, InstanceScope, ModuleRef, PortRef,
+};
 pub use contract::{
-    Contract, DependencyRequirement, PortContract, PortDirection, PropertyContract, PropertyType,
-    SlotCardinality, SlotContract,
+    Contract, DependencyRequirement, DependencyTarget, InterfaceDeclaration, PortContract,
+    PortDirection, PropertyContract, PropertyType, SlotCardinality, SlotContract,
 };
 pub use diagnostic::{Diagnostic, ObjectId};
 pub use error::{DomainError, DomainResult};
 pub use error_code::{ErrorCode, ErrorLayer, Severity};
-pub use ids::{LocalId, ModuleId, TypeId, Version};
-pub use model::{CompositionModel, DependencyResolution, DependencyStatus, Project};
+pub use ids::{InterfaceId, LocalId, ModuleId, TypeId, Version};
+pub use model::{
+    CompositionModel, DependencyResolution, DependencyStatus, DependencyTargetInfo,
+    DependencyTargetKind, ProfileDefinition, Project,
+};
 pub use module::{ModuleDefinition, ModuleKind};
 pub use revision::{Revision, SourceDigest};
 pub use schema::SchemaVersion;

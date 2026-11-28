@@ -12,6 +12,9 @@ interface ChangeReviewProps {
   description: string;
   busy: boolean;
   error: string | null;
+  externalDirty?: boolean;
+  reloading?: boolean;
+  onReload?: () => void;
   onApply: () => void;
   onClose: () => void;
 }
@@ -52,6 +55,9 @@ export default function ChangeReview({
   description,
   busy,
   error,
+  externalDirty = false,
+  reloading = false,
+  onReload,
   onApply,
   onClose,
 }: ChangeReviewProps) {
@@ -209,6 +215,23 @@ export default function ChangeReview({
           )}
         </section>
 
+        {externalDirty && (
+          <div className="review-external" role="alert">
+            <span>
+              Files changed on disk. Reload and revalidate this review against the new base
+              revision.
+            </span>
+            <button
+              type="button"
+              className="button button-ghost"
+              onClick={onReload}
+              disabled={reloading || !onReload}
+            >
+              {reloading ? "Reloading…" : "Reload and revalidate"}
+            </button>
+          </div>
+        )}
+
         {error && <div className="review-error">{error}</div>}
 
         <div className="review-actions">
@@ -219,7 +242,7 @@ export default function ChangeReview({
             type="button"
             className="button button-primary"
             onClick={onApply}
-            disabled={busy || !preview.accepted}
+            disabled={busy || externalDirty || !preview.accepted}
           >
             {busy ? "Applying…" : "Apply transaction"}
           </button>

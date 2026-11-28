@@ -4,7 +4,8 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 use composition_domain::{
-    Diagnostic, ErrorCode, ModuleId, ObjectId, Project, SchemaVersion, SourceDigest,
+    Diagnostic, ErrorCode, LocalId, ModuleId, ObjectId, ProfileDefinition, Project, SchemaVersion,
+    SourceDigest,
 };
 use toml_edit::{ImDocument, Item, Table};
 
@@ -50,7 +51,12 @@ impl LoadedWorkspace {
 
 /// 加载项目声明。不 panic；所有失败以 `Diagnostic` 返回。
 pub fn load_project(root: impl AsRef<Path>) -> LoadedWorkspace {
-    load_project_inner(root.as_ref(), None)
+    load_project_inner(root.as_ref(), None, None)
+}
+
+/// 按 profile 选择加载项目；`None` / `Some("default")` 使用 `workspace.composition`。
+pub fn load_project_with_profile(root: impl AsRef<Path>, profile: Option<&str>) -> LoadedWorkspace {
+    load_project_inner(root.as_ref(), None, profile)
 }
 
 /// 使用给定的 Composition 文本替代磁盘文件，用于 Source 编辑的候选验证。
@@ -59,10 +65,23 @@ pub fn load_project_with_composition_text(
     root: impl AsRef<Path>,
     composition_text: &str,
 ) -> LoadedWorkspace {
-    load_project_inner(root.as_ref(), Some(composition_text))
+    load_project_inner(root.as_ref(), Some(composition_text), None)
 }
 
-fn load_project_inner(requested: &Path, composition_override: Option<&str>) -> LoadedWorkspace {
+/// 与 [`load_project_with_composition_text`] 相同，但保持指定的 profile 选择。
+pub fn load_project_with_profile_and_composition_text(
+    root: impl AsRef<Path>,
+    profile: Option<&str>,
+    composition_text: &str,
+) -> LoadedWorkspace {
+    load_project_inner(root.as_ref(), Some(composition_text), profile)
+}
+
+fn load_project_inner(
+    requested: &Path,
+    composition_override: Option<&str>,
+    profile: Option<&str>,
+) -> LoadedWorkspace {
     let root = fs::canonicalize(requested).unwrap_or_else(|_| requested.to_path_buf());
     let mut workspace = LoadedWorkspace {
         root: root.clone(),
@@ -119,7 +138,7 @@ fn load_project_inner(requested: &Path, composition_override: Option<&str>) -> L
         return workspace;
     }
 
-    let project = match decode_project(&workspace.files[0], &mut workspace.diagnostics) {
+    let project = match decode_project(&workspace.files[0], profile, &mut workspace.diagnostics) {
         Some(project) => project,
         None => return workspace,
     };
@@ -268,17 +287,14 @@ fn load_project_inner(requested: &Path, composition_override: Option<&str>) -> L
     workspace
 }
 
-fn decode_project(file: &LoadedFile, diagnostics: &mut Vec<Diagnostic>) -> Option<Project> {
+fn decode_project(
+    file: &LoadedFile,
+    profile: Option<&str>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Option<Project> {
     let document = file.document()?;
     let root_table = document.as_table();
     let object = ObjectId::project();
-    check_unknown(
-        root_table,
-        &["project", "workspace"],
-        file,
-        Some(&object),
-        diagnostics,
-    );
 
     let project_table = required_table(
         root_table,
@@ -324,11 +340,35 @@ fn decode_project(file: &LoadedFile, diagnostics: &mut Vec<Diagnostic>) -> Optio
         push_at(
             diagnostics,
             ErrorCode::SchemaUnsupportedVersion,
-            format!("unsupported schema_version {version}; v0.1 expects 1"),
+            format!("unsupported schema_version {version}; expected 1, 2 or 3"),
             file,
             table_field_span(project_table, "schema_version"),
             Some(&object),
         );
+        return None;
+    }
+    let is_v3 = schema_version.is_v3();
+    check_unknown(
+        root_table,
+        if is_v3 {
+            &["project", "workspace", "profiles"]
+        } else {
+            &["project", "workspace"]
+        },
+        file,
+        Some(&object),
+        diagnostics,
+    );
+    if profile.is_some() && !is_v3 {
+        push_at(
+            diagnostics,
+            ErrorCode::ProfileUnsupported,
+            "profile selection requires a v3 project",
+            file,
+            table_field_span(project_table, "schema_version"),
+            Some(&object),
+        );
+        return None;
     }
 
     let id_raw = required_string(
@@ -380,7 +420,7 @@ fn decode_project(file: &LoadedFile, diagnostics: &mut Vec<Diagnostic>) -> Optio
         "workspace",
         diagnostics,
     )?;
-    let composition_entry = match normalize_relative_path(&composition_raw) {
+    let default_entry = match normalize_relative_path(&composition_raw) {
         Ok(path) => path,
         Err(code) => {
             push_path_error(
@@ -394,7 +434,7 @@ fn decode_project(file: &LoadedFile, diagnostics: &mut Vec<Diagnostic>) -> Optio
             return None;
         }
     };
-    if !composition_entry.ends_with(".toml") {
+    if !default_entry.ends_with(".toml") {
         push_at(
             diagnostics,
             ErrorCode::FilePathInvalid,
@@ -405,6 +445,129 @@ fn decode_project(file: &LoadedFile, diagnostics: &mut Vec<Diagnostic>) -> Optio
         );
         return None;
     }
+
+    let mut profiles: Vec<ProfileDefinition> = Vec::new();
+    if is_v3 {
+        if let Some(item) = root_table.get("profiles") {
+            let Some(profiles_table) = item.as_table() else {
+                push_at(
+                    diagnostics,
+                    ErrorCode::SchemaTypeMismatch,
+                    "profiles must be a table",
+                    file,
+                    item.span(),
+                    Some(&object),
+                );
+                return None;
+            };
+            for (name, profile_item) in profiles_table.iter() {
+                if name == "default" {
+                    push_at(
+                        diagnostics,
+                        ErrorCode::ProfileReservedName,
+                        "profile name \"default\" is reserved",
+                        file,
+                        profile_item.span(),
+                        Some(&object),
+                    );
+                    return None;
+                }
+                if let Err(error) = LocalId::parse(name) {
+                    push_at(
+                        diagnostics,
+                        error.code(),
+                        error.message(),
+                        file,
+                        profile_item.span(),
+                        Some(&object),
+                    );
+                    return None;
+                }
+                let Some(profile_table) = profile_item.as_table() else {
+                    push_at(
+                        diagnostics,
+                        ErrorCode::SchemaTypeMismatch,
+                        format!("profile {name:?} must be a table"),
+                        file,
+                        profile_item.span(),
+                        Some(&object),
+                    );
+                    return None;
+                };
+                check_unknown(
+                    profile_table,
+                    &["composition"],
+                    file,
+                    Some(&object),
+                    diagnostics,
+                );
+                let raw = required_string(
+                    profile_table,
+                    "composition",
+                    file,
+                    Some(&object),
+                    "profile",
+                    diagnostics,
+                )?;
+                let entry = match normalize_relative_path(&raw) {
+                    Ok(path) => path,
+                    Err(code) => {
+                        push_path_error(
+                            diagnostics,
+                            code,
+                            &raw,
+                            file,
+                            table_field_span(profile_table, "composition"),
+                            Some(&object),
+                        );
+                        return None;
+                    }
+                };
+                if !entry.ends_with(".toml") {
+                    push_at(
+                        diagnostics,
+                        ErrorCode::FilePathInvalid,
+                        format!("profile {name:?} composition must end with .toml"),
+                        file,
+                        table_field_span(profile_table, "composition"),
+                        Some(&object),
+                    );
+                    return None;
+                }
+                profiles.push(ProfileDefinition {
+                    name: name.to_owned(),
+                    composition: entry,
+                });
+            }
+        }
+        profiles.sort_by(|left, right| left.name.cmp(&right.name));
+    }
+
+    let active_profile = profile.unwrap_or("default");
+    let selected_entry = if active_profile == "default" {
+        default_entry.clone()
+    } else {
+        match profiles
+            .iter()
+            .find(|candidate| candidate.name == active_profile)
+        {
+            Some(selected) => selected.composition.clone(),
+            None => {
+                push_at(
+                    diagnostics,
+                    ErrorCode::ProfileNotFound,
+                    format!("profile {active_profile:?} is not declared"),
+                    file,
+                    root_table
+                        .get("profiles")
+                        .and_then(Item::span)
+                        .or_else(|| project_table.span()),
+                    Some(&object),
+                );
+                return None;
+            }
+        }
+    };
 
     let roots_raw = required_string_array(
         workspace_table,
@@ -472,7 +635,12 @@ fn decode_project(file: &LoadedFile, diagnostics: &mut Vec<Diagnostic>) -> Optio
         }
     }
 
-    let mut project = Project::new(schema_version, id, name, composition_entry, module_roots);
+    let mut project = Project::new(schema_version, id, name, selected_entry, module_roots);
+    if is_v3 {
+        project.default_composition = Some(default_entry);
+        project.active_profile = Some(active_profile.to_owned());
+        project.profiles = profiles;
+    }
     project.source = Some(
         file.source_ref(table_field_span(root_table, "project").or_else(|| project_table.span())),
     );

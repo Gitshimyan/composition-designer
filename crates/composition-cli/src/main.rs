@@ -3,7 +3,7 @@ use std::fs;
 use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 
-use composition_core::{validate_project, ValidationResult};
+use composition_core::{validate_project_with_profile, ValidationResult};
 use composition_domain::{
     CompositionModel, Diagnostic, ModuleDefinition, Project, Severity, SourceDigest,
 };
@@ -62,11 +62,24 @@ where
                 usage();
                 return 2;
             };
-            if args.next().is_some() {
-                usage();
-                return 2;
+            let mut profile = None;
+            while let Some(arg) = args.next() {
+                match arg.as_str() {
+                    "--profile" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        profile = Some(value);
+                    }
+                    flag => {
+                        eprintln!("unknown option {flag}");
+                        usage();
+                        return 2;
+                    }
+                }
             }
-            run_jsonl(Path::new(&path))
+            run_jsonl(Path::new(&path), profile.as_deref())
         }
         "query" => {
             let Some(path) = args.next() else {
@@ -77,11 +90,24 @@ where
                 usage();
                 return 2;
             };
-            if args.next().is_some() {
-                usage();
-                return 2;
+            let mut profile = None;
+            while let Some(arg) = args.next() {
+                match arg.as_str() {
+                    "--profile" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        profile = Some(value);
+                    }
+                    flag => {
+                        eprintln!("unknown option {flag}");
+                        usage();
+                        return 2;
+                    }
+                }
             }
-            run_query(Path::new(&path), &op)
+            run_query(Path::new(&path), &op, profile.as_deref())
         }
         "apply" => {
             let Some(path) = args.next() else {
@@ -93,9 +119,17 @@ where
                 return 2;
             };
             let mut dry_run = false;
-            for arg in args {
+            let mut profile = None;
+            while let Some(arg) = args.next() {
                 match arg.as_str() {
                     "--dry-run" => dry_run = true,
+                    "--profile" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        profile = Some(value);
+                    }
                     flag => {
                         eprintln!("unknown option {flag}");
                         usage();
@@ -103,14 +137,166 @@ where
                     }
                 }
             }
-            run_apply(Path::new(&path), Path::new(&transaction_path), dry_run)
+            run_apply(
+                Path::new(&path),
+                Path::new(&transaction_path),
+                dry_run,
+                profile.as_deref(),
+            )
+        }
+        "context" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let mut profile = None;
+            while let Some(arg) = args.next() {
+                match arg.as_str() {
+                    "--profile" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        profile = Some(value);
+                    }
+                    flag => {
+                        eprintln!("unknown option {flag}");
+                        usage();
+                        return 2;
+                    }
+                }
+            }
+            run_query(Path::new(&path), "context", profile.as_deref())
+        }
+        "impact" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let mut module = None;
+            let mut instance = None;
+            let mut transaction = None;
+            let mut profile = None;
+            while let Some(arg) = args.next() {
+                match arg.as_str() {
+                    "--module" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        module = Some(value);
+                    }
+                    "--instance" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        instance = Some(value);
+                    }
+                    "--transaction" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        transaction = Some(value);
+                    }
+                    "--profile" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        profile = Some(value);
+                    }
+                    flag => {
+                        eprintln!("unknown option {flag}");
+                        usage();
+                        return 2;
+                    }
+                }
+            }
+            let selected = usize::from(module.is_some())
+                + usize::from(instance.is_some())
+                + usize::from(transaction.is_some());
+            if selected != 1 {
+                eprintln!("impact requires exactly one of --module, --instance or --transaction");
+                usage();
+                return 2;
+            }
+            let params = if let Some(selector) = module {
+                let Some((id, version)) = selector.rsplit_once('@') else {
+                    eprintln!("--module expects <id>@<version>");
+                    return 2;
+                };
+                json!({ "module": { "id": id, "version": version } })
+            } else if let Some(instance) = instance {
+                json!({ "instance": instance })
+            } else if let Some(transaction) = transaction {
+                let text = match fs::read_to_string(&transaction) {
+                    Ok(text) => text,
+                    Err(error) => {
+                        eprintln!("cannot read {transaction}: {error}");
+                        return 2;
+                    }
+                };
+                let transaction = match serde_json::from_str::<serde_json::Value>(&text) {
+                    Ok(transaction) => transaction,
+                    Err(error) => {
+                        eprintln!("invalid transaction JSON: {error}");
+                        return 2;
+                    }
+                };
+                json!({ "transaction": transaction })
+            } else {
+                unreachable!()
+            };
+            run_impact(Path::new(&path), params, profile.as_deref())
+        }
+        "batch" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let Some(requests_path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let mut profile = None;
+            while let Some(arg) = args.next() {
+                match arg.as_str() {
+                    "--profile" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        profile = Some(value);
+                    }
+                    flag => {
+                        eprintln!("unknown option {flag}");
+                        usage();
+                        return 2;
+                    }
+                }
+            }
+            run_batch(
+                Path::new(&path),
+                Path::new(&requests_path),
+                profile.as_deref(),
+            )
         }
         "inspect" | "resolve" | "validate" => {
             let mut path = None;
             let mut json = false;
-            for arg in args {
+            let mut profile = None;
+            while let Some(arg) = args.next() {
                 match arg.as_str() {
                     "--json" => json = true,
+                    "--profile" => {
+                        let Some(value) = args.next() else {
+                            usage();
+                            return 2;
+                        };
+                        profile = Some(value);
+                    }
                     flag if flag.starts_with('-') => {
                         eprintln!("unknown option {flag}");
                         usage();
@@ -130,7 +316,7 @@ where
                 usage();
                 return 2;
             };
-            let result = validate_project(&path);
+            let result = validate_project_with_profile(&path, profile.as_deref());
             let valid = result.is_valid();
             let written = match command.as_str() {
                 "inspect" => write_json(&inspect_output(&result)),
@@ -160,8 +346,8 @@ where
     }
 }
 
-fn run_jsonl(root: &Path) -> i32 {
-    let mut session = ProtocolSession::new(root);
+fn run_jsonl(root: &Path, profile: Option<&str>) -> i32 {
+    let mut session = ProtocolSession::new_with_profile(root, profile);
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     for line in stdin.lock().lines() {
@@ -191,8 +377,8 @@ fn run_jsonl(root: &Path) -> i32 {
     0
 }
 
-fn run_query(root: &Path, op: &str) -> i32 {
-    let mut session = ProtocolSession::new(root);
+fn run_query(root: &Path, op: &str, profile: Option<&str>) -> i32 {
+    let mut session = ProtocolSession::new_with_profile(root, profile);
     let response = session.dispatch(Request {
         id: "cli-query".to_owned(),
         op: op.to_owned(),
@@ -201,7 +387,52 @@ fn run_query(root: &Path, op: &str) -> i32 {
     write_response_pretty(&response)
 }
 
-fn run_apply(root: &Path, transaction_path: &Path, dry_run: bool) -> i32 {
+fn run_impact(root: &Path, params: serde_json::Value, profile: Option<&str>) -> i32 {
+    let mut session = ProtocolSession::new_with_profile(root, profile);
+    let response = session.dispatch(Request {
+        id: "cli-impact".to_owned(),
+        op: "impact".to_owned(),
+        params,
+    });
+    write_response_pretty(&response)
+}
+
+fn run_batch(root: &Path, requests_path: &Path, profile: Option<&str>) -> i32 {
+    let text = match fs::read_to_string(requests_path) {
+        Ok(text) => text,
+        Err(error) => {
+            eprintln!("cannot read {}: {error}", requests_path.display());
+            return 2;
+        }
+    };
+    let value = match serde_json::from_str::<serde_json::Value>(&text) {
+        Ok(value) => value,
+        Err(error) => {
+            eprintln!("invalid batch JSON: {error}");
+            return 2;
+        }
+    };
+    let requests = if value.is_array() {
+        value
+    } else {
+        match value.get("requests").cloned() {
+            Some(requests) => requests,
+            None => {
+                eprintln!("batch file must be an array or an object with a requests array");
+                return 2;
+            }
+        }
+    };
+    let mut session = ProtocolSession::new_with_profile(root, profile);
+    let response = session.dispatch(Request {
+        id: "cli-batch".to_owned(),
+        op: "batch".to_owned(),
+        params: json!({ "requests": requests }),
+    });
+    write_response_pretty(&response)
+}
+
+fn run_apply(root: &Path, transaction_path: &Path, dry_run: bool, profile: Option<&str>) -> i32 {
     let text = match fs::read_to_string(transaction_path) {
         Ok(text) => text,
         Err(error) => {
@@ -216,7 +447,7 @@ fn run_apply(root: &Path, transaction_path: &Path, dry_run: bool) -> i32 {
             return 2;
         }
     };
-    let mut session = ProtocolSession::new(root);
+    let mut session = ProtocolSession::new_with_profile(root, profile);
     let response = session.dispatch(Request {
         id: "cli-apply".to_owned(),
         op: if dry_run {
@@ -344,25 +575,39 @@ fn severity_name(severity: Severity) -> &'static str {
 }
 
 fn usage() {
-    eprintln!("Usage: composition-cli <inspect|resolve|validate|query|apply|jsonl> ...");
+    eprintln!(
+        "Usage: composition-cli <inspect|resolve|validate|context|impact|batch|query|apply|jsonl> ..."
+    );
 }
 
 fn print_help() {
     println!("composition-cli {}", env!("CARGO_PKG_VERSION"));
     println!();
     println!("Usage:");
-    println!("  composition-cli inspect <project-dir>");
-    println!("  composition-cli resolve <project-dir>");
-    println!("  composition-cli validate <project-dir> [--json]");
-    println!("  composition-cli query <project-dir> <op>");
-    println!("  composition-cli apply <project-dir> <transaction.json> [--dry-run]");
-    println!("  composition-cli jsonl <project-dir>");
+    println!("  composition-cli inspect <project-dir> [--profile <name>]");
+    println!("  composition-cli resolve <project-dir> [--profile <name>]");
+    println!("  composition-cli validate <project-dir> [--json] [--profile <name>]");
+    println!("  composition-cli context <project-dir> [--profile <name>]");
+    println!(
+        "  composition-cli impact <project-dir> (--module <id>@<version> | --instance <id> | --transaction <file>) [--profile <name>]"
+    );
+    println!("  composition-cli batch <project-dir> <requests.json> [--profile <name>]");
+    println!("  composition-cli query <project-dir> <op> [--profile <name>]");
+    println!(
+        "  composition-cli apply <project-dir> <transaction.json> [--dry-run] [--profile <name>]"
+    );
+    println!("  composition-cli jsonl <project-dir> [--profile <name>]");
+    println!();
+    println!("Profile selection applies to v3 projects; omit it for the default entry.");
     println!();
     println!("Commands:");
     println!("  inspect   project, module contracts, diagnostics and source digest");
     println!("  resolve   normalized CompositionModel, diagnostics and source digest");
     println!("  validate  validation summary and diagnostics (human by default)");
-    println!("  query     protocol query: inspect | resolve | validate | source");
+    println!("  context   compact agent context (modules, instances, diagnostics, revision)");
+    println!("  impact    module/instance/transaction impact analysis (JSON)");
+    println!("  batch     read-only requests from a JSON file (max 16)");
+    println!("  query     protocol query: inspect | resolve | validate | source | context");
     println!("  apply     protocol transaction from a JSON file (use --dry-run to prepare)");
     println!("  jsonl     line-delimited JSON requests on stdin / responses on stdout");
     println!();

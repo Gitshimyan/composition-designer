@@ -26,6 +26,11 @@ export interface Diagnostic {
   hint?: string | null;
 }
 
+export interface ProfileDefinition {
+  name: string;
+  composition: string;
+}
+
 export interface Project {
   schema_version: number;
   id: string;
@@ -33,6 +38,9 @@ export interface Project {
   composition_entry: string;
   module_roots: string[];
   source?: SourceRef | null;
+  default_composition?: string | null;
+  active_profile?: string | null;
+  profiles?: ProfileDefinition[];
 }
 
 export interface ModuleRef {
@@ -73,9 +81,15 @@ export interface PortContract {
   protocol?: string | null;
 }
 
+export interface InterfaceDeclaration {
+  id: string;
+  version: string;
+}
+
 export interface DependencyContract {
   id: string;
-  module: string;
+  module?: string;
+  interface?: string;
   version?: string | null;
   optional: boolean;
 }
@@ -85,6 +99,8 @@ export interface Contract {
   slots: SlotContract[];
   ports: PortContract[];
   dependencies: DependencyContract[];
+  /** v2 项目统一输出；v1 项目可缺省。 */
+  interfaces?: InterfaceDeclaration[];
 }
 
 export interface ModuleDefinition {
@@ -96,9 +112,12 @@ export interface ModuleDefinition {
   source?: SourceRef | null;
 }
 
+export type InstanceScope = "structure" | "service";
+
 export interface Instance {
   id: string;
   module: ModuleRef;
+  scope?: InstanceScope | null;
   config: Record<string, unknown>;
   effective_config: Record<string, unknown>;
   dependency_providers: Record<string, string>;
@@ -135,9 +154,16 @@ export interface Composition {
   source?: SourceRef | null;
 }
 
+export interface DependencyTarget {
+  kind: "module" | "interface";
+  id: string;
+  version?: string | null;
+}
+
 export interface DependencyResolution {
   requirement_id: string;
   from_instance: string;
+  target?: DependencyTarget | null;
   provider_instance?: string | null;
   optional: boolean;
   status: string;
@@ -166,6 +192,8 @@ export interface ProjectSnapshot {
   model?: CompositionModel | null;
   diagnostics: Diagnostic[];
   canEdit: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export type EditCommand =
@@ -175,6 +203,7 @@ export type EditCommand =
       module: string;
       version: string;
       config: Record<string, unknown>;
+      scope?: InstanceScope;
     }
   | {
       type: "delete_instance";

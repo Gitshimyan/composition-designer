@@ -1,6 +1,8 @@
-# Composition Protocol v1（M4 016）
+# Composition Protocol v1（M4 016；M8 036 Extend；S2 041 Profile）
 
-- 状态：M4 016 冻结（2026-11-26）
+- 状态：M4 016 冻结（2026-11-26）；M8 036 经用户授权新增只读
+  `context` / `impact` 查询（协议语义未变）；S2 041 增加 profile 选择入口
+  （会话绑定，不改变请求结构）
 - 传输：单行 JSON（JSONL）或 CLI 单次请求
 - 实现：`composition-protocol` + `composition-cli`
 
@@ -28,6 +30,85 @@
 | `resolve` | `{}` | `{model}`（可为 null） |
 | `validate` | `{}` | `{valid, errorCount, warningCount, sourceDigest}` |
 | `source` | `{}` | `{entry, text}`；仅可编辑会话 |
+| `context` | `{}` | 紧凑 Agent 上下文（见 §1.1） |
+| `impact` | 三个目标之一（见 §1.2） | 模块/实例/事务影响分析 |
+| `batch` | `{"requests":[Request,...]}` | 只读批量查询（见 §1.3） |
+
+### 1.1 `context`
+
+`context` 不复制 Config 值；需要完整值时调用 `resolve`。
+
+```json
+{
+  "project": {
+    "id": "...", "name": "...", "schemaVersion": 3, "root": "app",
+    "activeProfile": "desktop",
+    "profiles": [{ "name": "desktop", "composition": "composition/desktop.toml" }]
+  },
+  "counts": {
+    "modules": 2, "instances": 3, "structureInstances": 2, "services": 1,
+    "bindings": 1, "connections": 0, "dependencies": 1, "errors": 0, "warnings": 0
+  },
+  "modules": [
+    {
+      "id": "example.app", "version": "1.0.0", "kind": "composite",
+      "interfaces": [],
+      "dependencies": [{ "id": "session", "target": { "kind": "interface", "id": "example.session.api", "version": "1.0.0" }, "optional": false }]
+    }
+  ],
+  "instances": [
+    {
+      "id": "session", "module": { "id": "example.session", "version": "1.0.0" },
+      "scope": "service", "interfaces": [{ "id": "example.session.api", "version": "1.0.0" }],
+      "configKeys": [], "providerKeys": []
+    }
+  ],
+  "diagnostics": [],
+  "revision": { "seq": 0, "source_digest": "sha256:..." }
+}
+```
+
+- 项目不可读时 `project=null`、计数为 0，`diagnostics` 仍返回。
+- v3 增加 `activeProfile`（`"default"` 或具名）与 `profiles`（具名、按 name 升序）；
+  v1/v2 省略。选择在会话/进程边界固定。
+- `scope` 仅 v2/v3 实例出现；v1 省略（等价 structure）。
+
+### 1.2 `impact`
+
+`params` 必须恰好包含 `module`、`instance`、`transaction` 之一。
+
+| 目标 | params | result 关键字段 |
+|---|---|---|
+| 模块 | `{"module":{"id":"...","version":"..."}}` | `kind=module`、`module.instances`、`interfaceImplementers`、`dependents` |
+| 实例 | `{"instance":"app"}` | `kind=instance`、`parentBindings`、`childBindings`、`connections`、`requires`、`providesFor` |
+| 事务 | `{"transaction": <Transaction>}` | `kind=transaction`、`accepted`、`replayed`、`diff`、`changedObjects`；只执行 prepare，不写文件 |
+
+- 模块的 `interfaceImplementers` 按该模块声明的每个接口列出实现实例；
+  `dependents` 列出以该模块（v1）或其接口（v2）为目标的依赖要求。
+- 实例的 `connections` 标注 `role=from|to` 与对端端点；`providesFor` 同时包含显式映射与解析结果。
+- 事务影响的 `changedObjects` 来自 `ModelDiff.changes[].object_id`；`diagnostics` 为 prepare 诊断。
+- 目标不存在：`project-not-readable` 或 `protocol-unknown-target`。
+- 影响分析只读；`transaction` 目标不会写入文件或递增 Revision。
+
+### 1.3 `batch`
+
+```json
+{
+  "requests": [
+    { "id": "a", "op": "inspect" },
+    { "id": "b", "op": "context" },
+    { "id": "c", "op": "impact", "params": { "instance": "app" } }
+  ]
+}
+```
+
+- 1..16 条请求；只允许只读 op：`inspect`、`resolve`、`validate`、`source`、
+  `context`、`impact`。写操作、`batch` 自身与未知 op 返回
+  `protocol-operation-not-allowed`，整个 batch 不执行。
+- 空数组或超过 16 条返回 `protocol-invalid-params`。
+- `result` 为 `{count, results}`；每个 `results[i]` 是完整 `Response`
+  （`id`、`ok`、`result`、`diagnostics`、`error`），按请求顺序排列。
+- 单条失败不终止其它请求；顶层 `ok=true` 表示 batch 本身被接受。
 
 ### 命令
 
@@ -59,12 +140,15 @@
   - `protocol-unknown-operation`
   - `protocol-invalid-params`
   - `project-not-editable`
+  - `project-not-readable`（impact 需要可读模型）
+  - `protocol-unknown-target`（impact 的模块/实例不存在）
+  - `protocol-operation-not-allowed`（batch 中含写操作/未知 op）
 - 命令诊断示例：`edit-revision-conflict`（外部修改/旧 Revision）、
   `structure-slot-cardinality`（候选模型非法）。
 
 ## 3. JSONL
 
-`composition-cli jsonl <project-dir>`：
+`composition-cli jsonl <project-dir> [--profile <name>]`：
 
 - stdin 每行一个 `Request`；空行忽略。
 - stdout 每行一个 `Response`，发送后 flush。
@@ -76,21 +160,33 @@
 
 ```powershell
 composition-cli query examples/minimal-project validate
+composition-cli context examples/v3/valid-profiles --profile desktop
+composition-cli impact examples/minimal-project --instance app
+composition-cli impact examples/minimal-project --module leaf.widget@1.0.0
+composition-cli impact examples/minimal-project --transaction transaction.json
+composition-cli batch examples/minimal-project requests.json
 composition-cli apply examples/minimal-project transaction.json --dry-run
-composition-cli apply examples/minimal-project transaction.json
-composition-cli jsonl examples/minimal-project
+composition-cli apply examples/v3/valid-profiles transaction.json --profile headless
+composition-cli jsonl examples/minimal-project --profile default
 ```
 
-- `query` 输出 pretty JSON；`ok=false` 退出 1。
+- 所有命令接受 `--profile <name>`；省略 / `default` 使用 `workspace.composition`。
+  v1/v2.0 上显式选择返回 `profile-unsupported`；未知名称返回 `profile-not-found`。
+- `query` / `context` / `impact` / `batch` 输出 pretty JSON；`ok=false` 退出 1。
+- `batch` 文件可以是请求数组，或 `{ "requests": [...] }` 对象；格式错误退出 2。
+- `impact` 只接受一个目标；同时给多个或都不给退出 2。
 - `apply` 读取 transaction JSON；`--dry-run` 调 `prepare_transaction`，否则 `apply_transaction`；
   `ok=false` 退出 1，IO/JSON 错误退出 2。
-- 既有 `inspect` / `resolve` / `validate` 保持 M1 输出与退出码。
+- `inspect` / `resolve` / `validate` 通过 `validate_project_with_profile` 选择；
+  输出与 M1 一致，v3 项目额外带 `active_profile` / `profiles` / `default_composition`。
 
 ## 5. 一致性规则
 
 - 所有查询/命令复用 `composition-core` / `composition-editor`。
+- `context` / `impact` 只读派生自规范化模型，不维护缓存或第二套状态。
 - 写操作必须带 `base_revision`；旧 Revision 或磁盘 digest 变化返回
   `edit-revision-conflict`，不覆盖。
 - `source` 只读；直接 Source 编辑尚未进入协议。
 - JSONL 会话与 CLI 单次命令不持久化 Revision 历史；跨进程幂等未实现。
+- Revision、Digest、Source 与事务只针对会话所选 profile；切换 profile 必须重开会话。
 - 协议不包含 GUI 布局、Canvas 坐标或 `.designer/**`。

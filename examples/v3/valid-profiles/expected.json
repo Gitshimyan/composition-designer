@@ -1,0 +1,5 @@
+{
+  "valid": true,
+  "diagnostics": [],
+  "notes": "v3 project with default plus desktop/headless profiles; the default entry is composition/main.toml."
+}

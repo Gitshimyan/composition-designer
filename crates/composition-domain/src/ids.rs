@@ -50,7 +50,6 @@ impl fmt::Display for ModuleId {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct TypeId(String);
-
 impl TypeId {
     pub fn parse(value: &str) -> DomainResult<Self> {
         if is_dotted_lower_kebab(value) {
@@ -80,6 +79,45 @@ impl FromStr for TypeId {
 }
 
 impl fmt::Display for TypeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// 接口标识，词法与模块 ID 相同，例如 `glide.terminal.session`（v2.0）。
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct InterfaceId(String);
+
+impl InterfaceId {
+    pub fn parse(value: &str) -> DomainResult<Self> {
+        if is_dotted_lower_kebab(value) {
+            Ok(Self(value.to_owned()))
+        } else {
+            Err(invalid_identifier("interface id", value))
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<str> for InterfaceId {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl FromStr for InterfaceId {
+    type Err = DomainError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
+
+impl fmt::Display for InterfaceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.0)
     }
@@ -276,6 +314,23 @@ mod tests {
         assert!(TypeId::parse("string").is_ok());
         assert!(TypeId::parse("contract.task.state.v1").is_ok());
         assert!(TypeId::parse("String").is_err());
+    }
+
+    #[test]
+    fn interface_ids_use_module_grammar() {
+        for value in ["glide.terminal.session", "a", "contract.task.v2"] {
+            let id = InterfaceId::parse(value).expect(value);
+            assert_eq!(id.as_str(), value);
+        }
+        for value in [
+            "",
+            "Glide.Terminal",
+            "glide..terminal",
+            "glide.terminal_session",
+        ] {
+            let error = InterfaceId::parse(value).expect_err(value);
+            assert_eq!(error.code(), ErrorCode::SchemaInvalidIdentifier);
+        }
     }
 
     #[test]

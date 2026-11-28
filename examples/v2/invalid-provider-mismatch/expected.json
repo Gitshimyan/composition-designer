@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "dependency-interface-mismatch"
+  ],
+  "notes": "An explicit provider does not implement the required interface identity."
+}

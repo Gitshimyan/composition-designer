@@ -1,0 +1,57 @@
+change:
+  id: change.040-profile-core
+  intent: 按 039 冻结语义实现 Project profiles、Loader/Core 选择与校验、Revision/Digest 作用域和 Session/Source 绑定；不做 CLI/MCP/UI。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+      - rearchitect
+    approved:
+      - modify
+      - rearchitect
+    evidence: "用户 2026-11-28 明确授权开始 S2（039–041）"
+  targets:
+    - README.md
+    - crates/composition-domain
+    - crates/composition-toml
+    - crates/composition-core
+    - crates/composition-editor
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/decision-history.md
+    - working/tasks/040-profile-core.md
+    - changes/040-profile-core.yaml
+  operations:
+    - modify
+    - rearchitect
+  scope:
+    allowed:
+      - schema_version_v3
+      - project_profiles
+      - loader_profile_selection
+      - core_profile_validation
+      - revision_digest_scope
+      - session_source_profile
+      - profile_error_codes
+      - tests
+      - plan_update
+    forbidden:
+      - command_schema
+      - cli_mcp_ui
+      - toml_schema_changes
+      - design_baseline
+      - examples_changes
+      - profile_overlay
+  unresolved_items:
+    - UW-004
+    - UW-018
+  impact:
+    expected_schema_changes: true
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 040 只实现 Core/Session 选择；CLI/MCP/Designer 入口与 fixtures 属 041。

@@ -61,8 +61,11 @@ export default function SourceView({
   const onReviewRef = useRef(onReview);
   const compartment = useRef(new Compartment()).current;
   const [dirty, setDirty] = useState(false);
+  const [preserved, setPreserved] = useState(false);
+  const dirtyRef = useRef(false);
   const canEdit = editable && !blocked;
 
+  dirtyRef.current = dirty;
   textRef.current = text;
   onReviewRef.current = onReview;
 
@@ -109,12 +112,20 @@ export default function SourceView({
     const current = editor.state.doc.toString();
     if (current === text) {
       setDirty(false);
+      setPreserved(false);
+      return;
+    }
+    if (dirtyRef.current) {
+      // Keep the local draft across an external reload; the next review
+      // validates it against the new base revision.
+      setPreserved(true);
       return;
     }
     editor.dispatch({
       changes: { from: 0, to: current.length, insert: text },
     });
     setDirty(false);
+    setPreserved(false);
   }, [text]);
 
   useEffect(() => {
@@ -146,6 +157,7 @@ export default function SourceView({
       changes: { from: 0, to: current.length, insert: textRef.current },
     });
     setDirty(false);
+    setPreserved(false);
   }
 
   return (
@@ -153,10 +165,12 @@ export default function SourceView({
       <div className="source-toolbar">
         <span className="source-mode">
           {blocked
-            ? "External change detected · Reload before editing"
-            : canEdit
-              ? "Editable · Review before writing"
-              : "Read-only"}
+            ? "External change detected · Draft kept · Reload before editing"
+            : preserved
+              ? "Draft kept across external change · Review before writing"
+              : canEdit
+                ? "Editable · Review before writing"
+                : "Read-only"}
         </span>
         {canEdit && (
           <div className="source-actions">

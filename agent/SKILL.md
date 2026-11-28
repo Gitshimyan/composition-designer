@@ -17,18 +17,28 @@ Revision and TOML formatting stay consistent.
 | `composition_resolve` | Normalized model, including `revision.seq` and contract IDs |
 | `composition_validate` | Validity plus L1–L7 diagnostics |
 | `composition_source` | Read-only composition TOML |
+| `composition_context` | Compact project/module/instance/diagnostic context; v3 includes `activeProfile` |
+| `composition_impact` | References for a module or instance, or dry-run impact of a transaction |
+| `composition_batch` | Up to 16 read-only queries in one call; each returns its own result |
 | `composition_prepare_transaction` | Validate a transaction and inspect its Diff; no write |
 | `composition_apply_transaction` | Atomically apply a transaction |
 
 Resources: `composition://project/inspect`, `composition://project/model`,
-`composition://project/diagnostics`, `composition://project/source`.
+`composition://project/diagnostics`, `composition://project/source`,
+`composition://project/context`.
 
 ## Workflow
 
 1. **Inspect** the project. If `canEdit` is false, stop and report the diagnostics.
 2. **Resolve** the model. Read `model.revision.seq` / `model.revision.source_digest`.
    Read module contract IDs from `model.modules[].contract`.
-3. Build a transaction:
+3. **Context** with `composition_context` for a compact module/instance index when the project
+   is large. Use `composition_impact` with `{ "instance": "..." }` or
+   `{ "module": { "id": "...", "version": "..." } }` before changing or deleting an object:
+   check parent/child bindings, connections, dependents and explicit providers.
+   For several independent reads, call `composition_batch` with up to 16
+   `{ "id", "op", "params" }` items instead of multiple round trips.
+4. Build a transaction:
 
 ```json
 {
@@ -51,6 +61,9 @@ Resources: `composition://project/inspect`, `composition://project/model`,
 4. Call `composition_prepare_transaction` with `{ "transaction": ... }`.
    - `isError=false` and `accepted=true`: inspect `diff.summary`/`diff.changes`.
    - `isError=true`: read the diagnostics; do not retry the same payload blindly.
+   - For a denied or risky edit, call `composition_impact` with
+     `{ "transaction": ... }`: it runs the same prepare without writing and lists
+     `changedObjects` plus diagnostics.
 5. Call `composition_apply_transaction` with the same transaction.
 6. Call `composition_validate`; report `valid`, error codes and source locations.
 7. Optionally read `composition_source` to confirm the written TOML.
@@ -64,6 +77,16 @@ Resources: `composition://project/inspect`, `composition://project/model`,
 - If you receive `edit-revision-conflict`, the project changed on disk or the Revision is stale:
   re-run `composition_resolve` / reload the MCP server, then prepare a new transaction.
 - `composition_source` is read-only. Source editing is not part of protocol v1.
+- `composition_context` / `composition_impact` are derived from the same model and never write;
+  an impact transaction target is a prepare-only preview, not an apply.
+- `composition_impact` accepts exactly one of `module`, `instance`, `transaction`; never combine
+  them in one call.
+- `composition_batch` is read-only (inspect/resolve/validate/source/context/impact), max 16 items;
+  a failing item does not abort the others. Writes stay in prepare/apply transaction calls.
+- A v3 project can have profiles (`activeProfile="default"` or a name). The MCP process is bound
+  to one profile at startup (`--profile <name>`); all tools, Source and transactions use only
+  that profile's Composition. Restart the server to switch; never assume another profile's file
+  was written.
 - Layout (`.designer/layout.toml`) and Canvas positions are not project semantics and are not
   exposed by MCP.
 - Prefer one command per transaction for clear review; multiple commands are allowed and atomic.
@@ -89,5 +112,12 @@ The repository contains a real MCP stdio end-to-end test:
 cargo test -p composition-mcp --test e2e -- --nocapture
 ```
 
+Deterministic Skill evaluation:
+
+```powershell
+cargo test -p composition-mcp --test skill_eval
+```
+
 It starts `composition-mcp --project <copy>`, resolves the project, prepares and applies a
-`set_config` transaction, validates, and confirms the TOML source changed.
+`set_config` transaction, validates, and confirms the TOML source changed. See
+[EVALUATION.md](./EVALUATION.md) for the scenario list.

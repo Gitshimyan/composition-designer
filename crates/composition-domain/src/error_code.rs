@@ -30,6 +30,10 @@ pub enum ErrorCode {
     SchemaEmptyValue,
     SchemaDuplicateEntry,
     SchemaConstraintMismatch,
+    SchemaVersionMismatch,
+    ProfileNotFound,
+    ProfileUnsupported,
+    ProfileReservedName,
     // L3 — identity and references
     IdDuplicateModule,
     IdDuplicateInstance,
@@ -39,6 +43,7 @@ pub enum ErrorCode {
     IdDuplicateSlot,
     IdDuplicatePort,
     IdDuplicateDependency,
+    IdDuplicateInterface,
     RefModuleNotFound,
     RefModuleVersionNotFound,
     RefModuleAmbiguous,
@@ -46,6 +51,7 @@ pub enum ErrorCode {
     RefSlotNotFound,
     RefPortNotFound,
     RefRootNotFound,
+    RefInterfaceNotFound,
     // L4 — contracts and config
     ContractModuleInvalid,
     ContractPropertyUnknown,
@@ -54,6 +60,7 @@ pub enum ErrorCode {
     ContractPropertyValueInvalid,
     ContractSlotRejectsModule,
     ContractDependencyUnknown,
+    ContractServiceModuleInvalid,
     // L5 — structure
     StructureRootNotComposite,
     StructureRootHasParent,
@@ -62,6 +69,8 @@ pub enum ErrorCode {
     StructureSlotCardinality,
     StructureCycle,
     StructureUnreachableInstance,
+    StructureServiceInBinding,
+    StructureRootScopeInvalid,
     // L6 — connections and dependencies
     ConnectionDirectionInvalid,
     ConnectionTypeMismatch,
@@ -73,6 +82,8 @@ pub enum ErrorCode {
     DependencyAmbiguous,
     DependencyProviderInvalid,
     DependencySelf,
+    DependencyInterfaceMismatch,
+    ServiceUnused,
     // L7 — whole-project consistency
     CompositionProjectIdMismatch,
     CompositionInternalError,
@@ -86,7 +97,7 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 69] = [
+    pub const ALL: [Self; 80] = [
         Self::FileProjectMissing,
         Self::FileCompositionMissing,
         Self::FileModuleRootMissing,
@@ -109,6 +120,10 @@ impl ErrorCode {
         Self::SchemaEmptyValue,
         Self::SchemaDuplicateEntry,
         Self::SchemaConstraintMismatch,
+        Self::SchemaVersionMismatch,
+        Self::ProfileNotFound,
+        Self::ProfileUnsupported,
+        Self::ProfileReservedName,
         Self::IdDuplicateModule,
         Self::IdDuplicateInstance,
         Self::IdDuplicateBinding,
@@ -117,6 +132,7 @@ impl ErrorCode {
         Self::IdDuplicateSlot,
         Self::IdDuplicatePort,
         Self::IdDuplicateDependency,
+        Self::IdDuplicateInterface,
         Self::RefModuleNotFound,
         Self::RefModuleVersionNotFound,
         Self::RefModuleAmbiguous,
@@ -124,6 +140,7 @@ impl ErrorCode {
         Self::RefSlotNotFound,
         Self::RefPortNotFound,
         Self::RefRootNotFound,
+        Self::RefInterfaceNotFound,
         Self::ContractModuleInvalid,
         Self::ContractPropertyUnknown,
         Self::ContractPropertyRequiredMissing,
@@ -131,6 +148,7 @@ impl ErrorCode {
         Self::ContractPropertyValueInvalid,
         Self::ContractSlotRejectsModule,
         Self::ContractDependencyUnknown,
+        Self::ContractServiceModuleInvalid,
         Self::StructureRootNotComposite,
         Self::StructureRootHasParent,
         Self::StructureInstanceMultipleParents,
@@ -138,6 +156,8 @@ impl ErrorCode {
         Self::StructureSlotCardinality,
         Self::StructureCycle,
         Self::StructureUnreachableInstance,
+        Self::StructureServiceInBinding,
+        Self::StructureRootScopeInvalid,
         Self::ConnectionDirectionInvalid,
         Self::ConnectionTypeMismatch,
         Self::ConnectionProtocolMismatch,
@@ -148,6 +168,8 @@ impl ErrorCode {
         Self::DependencyAmbiguous,
         Self::DependencyProviderInvalid,
         Self::DependencySelf,
+        Self::DependencyInterfaceMismatch,
+        Self::ServiceUnused,
         Self::CompositionProjectIdMismatch,
         Self::CompositionInternalError,
         Self::EditInvalidCommand,
@@ -182,6 +204,10 @@ impl ErrorCode {
             Self::SchemaEmptyValue => "schema-empty-value",
             Self::SchemaDuplicateEntry => "schema-duplicate-entry",
             Self::SchemaConstraintMismatch => "schema-constraint-mismatch",
+            Self::SchemaVersionMismatch => "schema-version-mismatch",
+            Self::ProfileNotFound => "profile-not-found",
+            Self::ProfileUnsupported => "profile-unsupported",
+            Self::ProfileReservedName => "profile-reserved-name",
             Self::IdDuplicateModule => "id-duplicate-module",
             Self::IdDuplicateInstance => "id-duplicate-instance",
             Self::IdDuplicateBinding => "id-duplicate-binding",
@@ -190,6 +216,7 @@ impl ErrorCode {
             Self::IdDuplicateSlot => "id-duplicate-slot",
             Self::IdDuplicatePort => "id-duplicate-port",
             Self::IdDuplicateDependency => "id-duplicate-dependency",
+            Self::IdDuplicateInterface => "id-duplicate-interface",
             Self::RefModuleNotFound => "ref-module-not-found",
             Self::RefModuleVersionNotFound => "ref-module-version-not-found",
             Self::RefModuleAmbiguous => "ref-module-ambiguous",
@@ -197,6 +224,7 @@ impl ErrorCode {
             Self::RefSlotNotFound => "ref-slot-not-found",
             Self::RefPortNotFound => "ref-port-not-found",
             Self::RefRootNotFound => "ref-root-not-found",
+            Self::RefInterfaceNotFound => "ref-interface-not-found",
             Self::ContractModuleInvalid => "contract-module-invalid",
             Self::ContractPropertyUnknown => "contract-property-unknown",
             Self::ContractPropertyRequiredMissing => "contract-property-required-missing",
@@ -204,6 +232,7 @@ impl ErrorCode {
             Self::ContractPropertyValueInvalid => "contract-property-value-invalid",
             Self::ContractSlotRejectsModule => "contract-slot-rejects-module",
             Self::ContractDependencyUnknown => "contract-dependency-unknown",
+            Self::ContractServiceModuleInvalid => "contract-service-module-invalid",
             Self::StructureRootNotComposite => "structure-root-not-composite",
             Self::StructureRootHasParent => "structure-root-has-parent",
             Self::StructureInstanceMultipleParents => "structure-instance-multiple-parents",
@@ -211,6 +240,8 @@ impl ErrorCode {
             Self::StructureSlotCardinality => "structure-slot-cardinality",
             Self::StructureCycle => "structure-cycle",
             Self::StructureUnreachableInstance => "structure-unreachable-instance",
+            Self::StructureServiceInBinding => "structure-service-in-binding",
+            Self::StructureRootScopeInvalid => "structure-root-scope-invalid",
             Self::ConnectionDirectionInvalid => "connection-direction-invalid",
             Self::ConnectionTypeMismatch => "connection-type-mismatch",
             Self::ConnectionProtocolMismatch => "connection-protocol-mismatch",
@@ -221,6 +252,8 @@ impl ErrorCode {
             Self::DependencyAmbiguous => "dependency-ambiguous",
             Self::DependencyProviderInvalid => "dependency-provider-invalid",
             Self::DependencySelf => "dependency-self",
+            Self::DependencyInterfaceMismatch => "dependency-interface-mismatch",
+            Self::ServiceUnused => "service-unused",
             Self::CompositionProjectIdMismatch => "composition-project-id-mismatch",
             Self::CompositionInternalError => "composition-internal-error",
             Self::EditInvalidCommand => "edit-invalid-command",
@@ -262,7 +295,11 @@ impl ErrorCode {
             | Self::SchemaInconsistency
             | Self::SchemaEmptyValue
             | Self::SchemaDuplicateEntry
-            | Self::SchemaConstraintMismatch => ErrorLayer::L2,
+            | Self::SchemaConstraintMismatch
+            | Self::SchemaVersionMismatch
+            | Self::ProfileNotFound
+            | Self::ProfileUnsupported
+            | Self::ProfileReservedName => ErrorLayer::L2,
             Self::IdDuplicateModule
             | Self::IdDuplicateInstance
             | Self::IdDuplicateBinding
@@ -271,27 +308,32 @@ impl ErrorCode {
             | Self::IdDuplicateSlot
             | Self::IdDuplicatePort
             | Self::IdDuplicateDependency
+            | Self::IdDuplicateInterface
             | Self::RefModuleNotFound
             | Self::RefModuleVersionNotFound
             | Self::RefModuleAmbiguous
             | Self::RefInstanceNotFound
             | Self::RefSlotNotFound
             | Self::RefPortNotFound
-            | Self::RefRootNotFound => ErrorLayer::L3,
+            | Self::RefRootNotFound
+            | Self::RefInterfaceNotFound => ErrorLayer::L3,
             Self::ContractModuleInvalid
             | Self::ContractPropertyUnknown
             | Self::ContractPropertyRequiredMissing
             | Self::ContractPropertyTypeMismatch
             | Self::ContractPropertyValueInvalid
             | Self::ContractSlotRejectsModule
-            | Self::ContractDependencyUnknown => ErrorLayer::L4,
+            | Self::ContractDependencyUnknown
+            | Self::ContractServiceModuleInvalid => ErrorLayer::L4,
             Self::StructureRootNotComposite
             | Self::StructureRootHasParent
             | Self::StructureInstanceMultipleParents
             | Self::StructureDuplicateBinding
             | Self::StructureSlotCardinality
             | Self::StructureCycle
-            | Self::StructureUnreachableInstance => ErrorLayer::L5,
+            | Self::StructureUnreachableInstance
+            | Self::StructureServiceInBinding
+            | Self::StructureRootScopeInvalid => ErrorLayer::L5,
             Self::ConnectionDirectionInvalid
             | Self::ConnectionTypeMismatch
             | Self::ConnectionProtocolMismatch
@@ -301,7 +343,9 @@ impl ErrorCode {
             | Self::DependencyOptionalUnresolved
             | Self::DependencyAmbiguous
             | Self::DependencyProviderInvalid
-            | Self::DependencySelf => ErrorLayer::L6,
+            | Self::DependencySelf
+            | Self::DependencyInterfaceMismatch
+            | Self::ServiceUnused => ErrorLayer::L6,
             Self::CompositionProjectIdMismatch | Self::CompositionInternalError => ErrorLayer::L7,
             Self::EditInvalidCommand
             | Self::EditUnsupportedOperation
@@ -314,7 +358,7 @@ impl ErrorCode {
 
     pub fn severity(self) -> Severity {
         match self {
-            Self::DependencyOptionalUnresolved => Severity::Warning,
+            Self::DependencyOptionalUnresolved | Self::ServiceUnused => Severity::Warning,
             _ => Severity::Error,
         }
     }
@@ -366,9 +410,9 @@ mod tests {
 
     #[test]
     fn all_codes_are_listed_once() {
-        assert_eq!(ErrorCode::ALL.len(), 69);
+        assert_eq!(ErrorCode::ALL.len(), 80);
         let unique: HashSet<&str> = ErrorCode::ALL.iter().map(|code| code.as_str()).collect();
-        assert_eq!(unique.len(), 69);
+        assert_eq!(unique.len(), 80);
     }
 
     #[test]
@@ -381,7 +425,7 @@ mod tests {
             .iter()
             .filter(|code| code.is_reserved())
             .count();
-        assert_eq!(validation, 63);
+        assert_eq!(validation, 74);
         assert_eq!(reserved, 6);
     }
 
@@ -397,10 +441,21 @@ mod tests {
     fn layers_follow_the_spec() {
         assert_eq!(ErrorCode::TomlSyntaxError.layer(), ErrorLayer::L1);
         assert_eq!(ErrorCode::SchemaInconsistency.layer(), ErrorLayer::L2);
+        assert_eq!(ErrorCode::SchemaVersionMismatch.layer(), ErrorLayer::L2);
         assert_eq!(ErrorCode::RefModuleNotFound.layer(), ErrorLayer::L3);
+        assert_eq!(ErrorCode::RefInterfaceNotFound.layer(), ErrorLayer::L3);
         assert_eq!(ErrorCode::ContractPropertyUnknown.layer(), ErrorLayer::L4);
+        assert_eq!(
+            ErrorCode::ContractServiceModuleInvalid.layer(),
+            ErrorLayer::L4
+        );
         assert_eq!(ErrorCode::StructureCycle.layer(), ErrorLayer::L5);
+        assert_eq!(ErrorCode::StructureServiceInBinding.layer(), ErrorLayer::L5);
         assert_eq!(ErrorCode::ConnectionTypeMismatch.layer(), ErrorLayer::L6);
+        assert_eq!(
+            ErrorCode::DependencyInterfaceMismatch.layer(),
+            ErrorLayer::L6
+        );
         assert_eq!(
             ErrorCode::CompositionProjectIdMismatch.layer(),
             ErrorLayer::L7
@@ -410,9 +465,12 @@ mod tests {
     }
 
     #[test]
-    fn optional_dependency_unresolved_is_the_only_warning() {
+    fn optional_dependency_and_unused_service_are_warnings() {
         for code in ErrorCode::ALL {
-            let expected = if code == ErrorCode::DependencyOptionalUnresolved {
+            let expected = if matches!(
+                code,
+                ErrorCode::DependencyOptionalUnresolved | ErrorCode::ServiceUnused
+            ) {
                 Severity::Warning
             } else {
                 Severity::Error

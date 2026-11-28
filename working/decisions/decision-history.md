@@ -25,3 +25,19 @@
 | D-018 | 2026-11-27 | 完成 030 Source UI | M7；Modify | CodeMirror 编辑、draft、Review/文本 Diff、Discard、冲突只读；30 UI |
 | D-019 | 2026-11-27 | 完成 031 M7 Source 验收 | M7；Modify | Glide 试点 Source 编辑；173 tests/16 Tauri/30 UI；M7 完成 |
 | D-020 | 2026-11-27 | 关闭 UW-011，登记 UW-031 | M7 完成后的覆盖审计 | Composition Source 已实现；模块文件编辑仍只读，转 UW-031 deferred |
+| D-021 | 2026-11-28 | 明确授权：先修正文档漂移（G09），再执行 032 Schema v2.0 ADR 批准与接口/服务语义冻结（Rearchitect + Extend） | 用户对话 | G09 文档一致性；032 可执行；033–035 仍需逐卡授权 |
+| D-022 | 2026-11-28 | 完成 032 Schema v2.0 语义冻结 | 用户授权（D-021）；032 卡 | ADR-0006、v2.0 规范与 8 个新代码；接口/scope/命令/兼容矩阵冻结；UW-002/003 in_progress；新增 UW-032；无代码变更 |
+| D-023 | 2026-11-28 | 完成 033 Domain/Loader/Validation | 用户明确授权开始 033；Rearchitect + Modify | 接口/接口依赖/scope 类型、解码、版本矩阵、8 个诊断；v1 输出不变；workspace 189 测试；无命令/UI/示例改动 |
+| D-024 | 2026-11-28 | 完成 034 Commands/UI/CLI/MCP | 用户明确授权进行 034；Extend + Modify | `create_instance.scope` 与写回、Services 视图/创建、接口展示；CLI/MCP v2；196 workspace / 34 UI / 17 Tauri；无 Schema/基线改动 |
+| D-025 | 2026-11-28 | 完成 035 v2 验收，S1 收口 | 用户要求开始 035；Modify + Compose | 11 个 v2 数据集、迁移拒绝、Glide v2 试点 CLI 验收；UW-002/UW-003 关闭；S1 完成 |
+| D-026 | 2026-11-28 | 完成 036 Agent context/impact | 用户明确授权 M8（036–038）；Extend + Rearchitect（协议文档） | protocol/CLI/MCP context/impact；只读；协议/MCP/Skill 更新；210 workspace 测试 |
+| D-027 | 2026-11-28 | 完成 037 只读 batch | 用户授权 M8；Extend + Rearchitect（协议文档） | batch 1..16、只读白名单、逐项结果；CLI/MCP；218 workspace 测试；progress/cancel 仍 deferred |
+| D-028 | 2026-11-28 | 完成 038 Skill 评测与 M8 收口 | 用户授权 M8；Modify + Extend | skill_eval（minimal + Glide v2）、configure.mjs、EVALUATION；220 workspace 测试；M8 完成 |
+| D-029 | 2026-11-28 | 完成 039 Schema v2.1 语义冻结 | 用户明确授权开始 S2（039–041）；Rearchitect + Extend | format 3、`[profiles]`、选择/Revision/Digest/3 个诊断；ADR-0007；UW-004/018 in_progress；无代码变更 |
+| D-030 | 2026-11-28 | 完成 040 Core/Session profile 实现 | 用户授权 S2；Rearchitect + Modify | v3、Loader/Core 选择、Revision/Digest、Session/Source；233 workspace；v1/v2.0 不变 |
+| D-031 | 2026-11-28 | 完成 041 入口验收与 S2 收口 | 用户授权 S2；Extend + Modify + Rearchitect（协议文档） | CLI/MCP/Designer profile、v3 数据集、40 expected；238 workspace + 35 UI + 17 Tauri；UW-004/018 关闭 |
+| D-032 | 2026-11-28 | 完成 042 undo/redo | 用户明确授权 042 undo；Extend + Modify | Editor 文本快照 undo/redo、新 Revision；Tauri IPC；Designer 按钮/快捷键；241 workspace + 36 UI + 17 Tauri；UW-014 关闭 |
+| D-033 | 2026-11-28 | 完成 043 Revision/request 持久化 | 用户明确授权 043；Modify + Extend | `.designer/state/<profile>.json`；重启恢复 seq/request；过期/损坏丢弃；247 workspace；UW-015 关闭 |
+| D-034 | 2026-11-28 | 完成 044 fsync/崩溃恢复 | 用户明确授权 044；Modify | 文件 fsync、目录 fsync（Unix）、备份恢复、清理；251 workspace；UW-019 关闭 |
+| D-035 | 2026-11-28 | 完成 045 草稿/外部修改策略 | 用户授权 045 并要求研究后决策；Modify + Extend | 保留 2s 轮询；Source 草稿保留 + Review 重基；原生 watcher/三向合并 deferred（UW-017）；38 UI |
+| D-036 | 2026-11-28 | 完成 046 真实 WebView2 smoke | 用户授权 046 并要求研究后决策；Extend + Modify | 真实 Tauri 窗口 + Playwright CDP；启动/打开/编辑/Apply/截图；UW-012 关闭；H1 完成 |

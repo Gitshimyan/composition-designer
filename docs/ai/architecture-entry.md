@@ -9,11 +9,11 @@
 | 项 | 值 |
 |---|---|
 | 项目 | Composition Designer |
-| 版本 | v0.1 冻结；v0.2 M6 完成 |
-| 当前阶段 | v0.2 M6 完成；G01–G08 完成；ADR-0004/0005 Accepted；M7 Source 完成；下一阶段 S1 Schema v2.0 |
+| 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
+| 当前阶段 | **S1、M8、S2、H1 完成**；下一步 M9 生态/维护（按需） |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
-| 冻结规范 | [`docs/spec/`](../spec/)（domain / schema / error codes） |
+| 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
 | 测试数据 | [`examples/`](../../examples/README.md)（每个样例带 `expected.json`） |
 | 执行顺序 | 设计基线 §16：冻结语义 → 冻结 Schema → 样例 → Core → 编辑事务 → GUI → Agent |
 | 技术栈 | Rust Core + `toml_edit`；Tauri 2；React + TypeScript；`@xyflow/react`；CodeMirror 6（设计建议，未冻结） |
@@ -116,7 +116,7 @@
 | 设计基线（Rearchitect） | `docs/design/v0.1-design.md` |
 | 评审与路线图 | `docs/reviews/2026-11-27-project-review-and-roadmap.md` |
 | 领域模型与术语 | `docs/spec/domain-model-v1.md`、`docs/glossary.md`（已冻结） |
-| TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（已冻结） |
+| TOML Schema 与错误码 | `docs/spec/composition-schema-v1.md`、`docs/spec/error-codes-v1.md`（v1 已冻结）；v2.0 增量见 `composition-schema-v2.md`、`error-codes-v2.md`（032 冻结，033–035 实现）；v2.1（format 3）见 `composition-schema-v3.md`、`error-codes-v3.md`（039 冻结，040–041 实现） |
 | 编辑命令 Schema | `docs/spec/command-schema-v1.md`（M2 009） |
 | Layout 格式 | `docs/spec/designer-layout-v1.md`（M3 013） |
 | 示例项目 | `examples/`（26 个样例，均带 `expected.json`） |
@@ -172,5 +172,37 @@
   外部冲突守卫；
 - 030/031 完成：CodeMirror 可编辑 Source、Review/Discard/冲突只读；Glide 试点 Source
   验收；workspace 173、UI 30、Tauri 16；M7 完成；
+- 032 完成：Schema v2.0 语义冻结（ADR-0006、`composition-schema-v2.md`、
+  `error-codes-v2.md`）：版本矩阵、接口标记、接口依赖、实例 scope、8 个新诊断、
+  `create_instance.scope`；无代码变更；033–035 实现；
+- 033 完成：接口声明/接口依赖/scope 的领域类型、TOML 解码与 L2–L7 校验；
+  v1 输出不变；workspace 189 测试；034–035 补命令/UI/CLI/MCP 与验收；
+- 034 完成：`create_instance.scope` 与写回、Services 视图/service 创建、
+  Inspector scope/interface、Dependency 接口目标；CLI/MCP v2 事务；
+  workspace 196 / UI 34 / Tauri 17；
+- 035 完成：11 个 v2 数据集（37 总数）、迁移拒绝、Glide v2 试点与 CLI 编辑验收；
+  UW-002/UW-003 关闭；S1 完成；
+- 036 完成：protocol/CLI/MCP `context` 与 `impact`（module/instance/transaction）；
+  `impact` 的 transaction 仅 prepare；协议/MCP/Skill 文档更新；210 workspace 测试；
+- 037 完成：protocol/CLI/MCP 只读 `batch`（1..16、写操作拒绝、逐项 Response）；
+  协议/MCP/Skill 文档更新；218 workspace 测试；
+- 038 完成：`skill_eval`（minimal + Glide v2）、`agent/configure.mjs`、
+  `agent/EVALUATION.md`；220 workspace 测试；M8 完成；
+- 039 完成：Schema v2.1（format 3）Profile/多入口语义冻结（ADR-0007、
+  `composition-schema-v3.md`、`error-codes-v3.md`）；3 个新代码；无代码变更；040–041 实现；
+- 040 完成：Domain v3、Loader `[profiles]`/选择、Core 版本矩阵与校验、
+  Revision/Digest 作用域、Session/Source 绑定；v1/v2.0 不变；233 workspace；
+- 041 完成：CLI/MCP/Designer profile 入口、v3 数据集（40 总数）、S2 验收；
+  UW-004/UW-018 关闭；238 workspace + 35 UI + 17 Tauri；
+- 042 完成：Editor undo/redo（会话文本快照、新 Revision）、Tauri IPC、
+  Designer 按钮/快捷键；UW-014 关闭；241 workspace + 36 UI + 17 Tauri；
+- 043 完成：`.designer/state/<profile>.json` 持久化 Revision/request；重启恢复
+  seq 与 request 幂等；过期/损坏状态丢弃；UW-015 关闭；247 workspace；
+- 044 完成：写临时文件 + 文件 fsync + 备份 + rename + 目录 fsync（Unix）+ 校验 + 清理；
+  崩溃窗口恢复测试；UW-019 关闭；251 workspace；
+- 045 完成：Source 草稿跨外部修改保留、Review 语义重基、冲突 UX；保留 2s 轮询；
+  原生 watcher/自动三向合并/layout 合并仍 deferred（UW-017）；38 UI；
+- 046 完成：真实 WebView2 窗口 + Playwright CDP smoke（启动/打开/编辑/Apply/截图）；
+  UW-012 关闭；H1 完成；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

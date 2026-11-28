@@ -1,0 +1,131 @@
+[composition]
+schema_version = 2
+id = "glide.task-terminal"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "glide.app"
+version = "1.0.0"
+
+[[instances]]
+id = "workbench"
+module = "glide.presentation.workbench"
+version = "1.0.0"
+
+[instances.config]
+title = "Glide"
+
+[[instances]]
+id = "task-panel"
+module = "glide.presentation.task-panel"
+version = "1.0.0"
+
+[instances.config]
+active-profile = "development"
+
+[[instances]]
+id = "terminal-panel"
+module = "glide.presentation.terminal-panel"
+version = "1.0.0"
+
+[instances.config]
+shell = "pwsh"
+cwd = "."
+
+[[instances]]
+id = "task-runner"
+module = "glide.runtime.task-runner"
+version = "1.0.0"
+scope = "service"
+
+[instances.config]
+profile = "development"
+
+[[instances]]
+id = "terminal-web"
+module = "glide.terminal.web"
+version = "1.0.0"
+scope = "service"
+
+[[instances]]
+id = "conpty-session"
+module = "glide.platform.conpty-session"
+version = "1.0.0"
+scope = "service"
+
+[instances.config]
+rows = 24
+cols = 80
+
+[[bindings]]
+id = "app-workbench"
+parent = "app"
+slot = "workbench"
+child = "workbench"
+
+[[bindings]]
+id = "workbench-tasks"
+parent = "workbench"
+slot = "tasks"
+child = "task-panel"
+
+[[bindings]]
+id = "workbench-terminal"
+parent = "workbench"
+slot = "terminal"
+child = "terminal-panel"
+
+[[connections]]
+id = "tasks-to-runner"
+[connections.from]
+instance = "task-panel"
+port = "run"
+[connections.to]
+instance = "task-runner"
+port = "start"
+
+[[connections]]
+id = "runner-to-tasks"
+[connections.from]
+instance = "task-runner"
+port = "events"
+[connections.to]
+instance = "task-panel"
+port = "events"
+
+[[connections]]
+id = "panel-to-web"
+[connections.from]
+instance = "terminal-panel"
+port = "to-web"
+[connections.to]
+instance = "terminal-web"
+port = "from-panel"
+
+[[connections]]
+id = "web-to-panel"
+[connections.from]
+instance = "terminal-web"
+port = "to-panel"
+[connections.to]
+instance = "terminal-panel"
+port = "from-web"
+
+[[connections]]
+id = "web-to-pty"
+[connections.from]
+instance = "terminal-web"
+port = "to-pty"
+[connections.to]
+instance = "conpty-session"
+port = "stdin"
+
+[[connections]]
+id = "pty-to-web"
+[connections.from]
+instance = "conpty-session"
+port = "stdout"
+[connections.to]
+instance = "terminal-web"
+port = "from-pty"

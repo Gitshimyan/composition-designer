@@ -1,18 +1,20 @@
 use std::collections::BTreeMap;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use composition_core::{validate_loaded, validate_project, ValidationResult};
+use composition_core::{validate_loaded, validate_project_with_profile, ValidationResult};
 use composition_domain::{
     CompositionModel, ConfigValue, Diagnostic, ErrorCode, LocalId, ObjectId, PortRef, Revision,
 };
-use composition_toml::{load_project, load_project_with_composition_text};
+use composition_toml::{load_project_with_profile, load_project_with_profile_and_composition_text};
 use toml_edit::{Array, ArrayOfTables, DocumentMut, Item, Table, Value};
 
 use crate::command::{Command, Transaction};
 use crate::diff::{ModelDiff, SourceDiff};
-use crate::workspace::{EditorWorkspace, TransactionOutcome};
+use crate::state::{self, CommitState, SessionState};
+use crate::workspace::{EditorWorkspace, RestoredCommit, TransactionOutcome};
 
 #[derive(Debug, Clone)]
 struct SourceCommitted {
@@ -27,22 +29,33 @@ struct SourceCommitted {
 #[derive(Debug)]
 pub struct ProjectSession {
     root: PathBuf,
+    profile: Option<String>,
     composition_entry: String,
     current_text: String,
     document: DocumentMut,
     workspace: EditorWorkspace,
     source_requests: BTreeMap<String, SourceCommitted>,
+    undo_stack: Vec<String>,
+    redo_stack: Vec<String>,
+    text_history: Vec<String>,
 }
 
 impl ProjectSession {
     pub fn open(root: impl AsRef<Path>) -> Result<Self, Vec<Diagnostic>> {
+        Self::open_with_profile(root, None)
+    }
+
+    pub fn open_with_profile(
+        root: impl AsRef<Path>,
+        profile: Option<&str>,
+    ) -> Result<Self, Vec<Diagnostic>> {
         let root = root.as_ref().to_path_buf();
-        let mut loaded = load_project(&root);
+        let mut loaded = load_project_with_profile(&root, profile);
         if loaded.composition_file().is_none() {
             if let Some(project) = loaded.project.as_ref() {
                 let entry = project.composition_entry.clone();
                 if recover_composition_file(&root, &entry) {
-                    loaded = load_project(&root);
+                    loaded = load_project_with_profile(&root, profile);
                 }
             }
         }
@@ -60,14 +73,21 @@ impl ProjectSession {
                 "cannot parse {composition_entry} for editing: {error}"
             ))]
         })?;
-        Ok(Self {
+        let mut session = Self {
             root,
+            profile: profile.map(str::to_owned),
             composition_entry,
             current_text,
             document,
             workspace,
             source_requests: BTreeMap::new(),
-        })
+            undo_stack: Vec::new(),
+            redo_stack: Vec::new(),
+            text_history: Vec::new(),
+        };
+        session.text_history.push(session.current_text.clone());
+        session.restore_state();
+        Ok(session)
     }
 
     pub fn workspace(&self) -> &EditorWorkspace {
@@ -76,6 +96,10 @@ impl ProjectSession {
 
     pub fn root(&self) -> &Path {
         &self.root
+    }
+
+    pub fn profile(&self) -> Option<&str> {
+        self.profile.as_deref()
     }
 
     pub fn composition_entry(&self) -> &str {
@@ -94,12 +118,195 @@ impl ProjectSession {
         }
     }
 
+    pub fn can_undo(&self) -> bool {
+        !self.undo_stack.is_empty()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        !self.redo_stack.is_empty()
+    }
+
+    /// 回退到上一个已提交文本；通过 replace_source 走同一验证/写回路径，并生成新 Revision。
+    pub fn undo(&mut self) -> TransactionOutcome {
+        self.restore_from_stack(true)
+    }
+
+    /// 重做上一次撤销；新编辑会清空 redo。
+    pub fn redo(&mut self) -> TransactionOutcome {
+        self.restore_from_stack(false)
+    }
+
+    fn restore_from_stack(&mut self, undo: bool) -> TransactionOutcome {
+        let target = if undo {
+            self.undo_stack.pop()
+        } else {
+            self.redo_stack.pop()
+        };
+        let Some(target) = target else {
+            return TransactionOutcome::Rejected {
+                diagnostics: vec![Diagnostic::new(
+                    ErrorCode::EditInvalidCommand,
+                    if undo {
+                        "nothing to undo"
+                    } else {
+                        "nothing to redo"
+                    },
+                )
+                .with_object_id(ObjectId::composition())],
+            };
+        };
+        let before = self.current_text.clone();
+        let transaction = Transaction::new(
+            format!(
+                "{}-{}",
+                if undo { "undo" } else { "redo" },
+                self.workspace.revision().seq + 1
+            ),
+            self.workspace.revision(),
+            vec![Command::ReplaceSource {
+                source: target.clone(),
+            }],
+        );
+        let outcome = self.apply_source(&transaction);
+        if outcome.is_accepted() {
+            self.text_history.push(self.current_text.clone());
+            self.persist_state();
+            if undo {
+                self.redo_stack.push(before);
+            } else {
+                self.undo_stack.push(before);
+            }
+        } else if undo {
+            self.undo_stack.push(target);
+        } else {
+            self.redo_stack.push(target);
+        }
+        outcome
+    }
+
+    /// 从 `.designer/state/<profile>.json` 恢复 Revision/request；状态过期或损坏时静默丢弃。
+    fn restore_state(&mut self) {
+        let Some(state) = state::load(&self.root, self.profile.as_deref()) else {
+            return;
+        };
+        let Some(last) = state.commits.last() else {
+            return;
+        };
+        if last.revision.source_digest != self.workspace.revision().source_digest {
+            return;
+        }
+        if last.source_text != self.current_text {
+            return;
+        }
+
+        let mut restored = Vec::with_capacity(state.commits.len());
+        let mut source_requests = BTreeMap::new();
+        let mut texts = Vec::with_capacity(state.commits.len());
+        let mut previous_text = state.base_source_text.clone();
+        for commit in &state.commits {
+            let loaded = load_project_with_profile_and_composition_text(
+                &self.root,
+                self.profile.as_deref(),
+                &commit.source_text,
+            );
+            let validation = validate_loaded(&loaded);
+            if !validation.is_valid() {
+                return;
+            }
+            let Some(mut model) = validation.model else {
+                return;
+            };
+            model.revision = Some(commit.revision.clone());
+            model.diagnostics = validation.diagnostics.clone();
+            if let [Command::ReplaceSource { .. }] = commit.transaction.commands.as_slice() {
+                source_requests.insert(
+                    commit.request_id.clone(),
+                    SourceCommitted {
+                        transaction: commit.transaction.clone(),
+                        model: model.clone(),
+                        diagnostics: validation.diagnostics.clone(),
+                        diff: commit.diff.clone(),
+                        source_diff: SourceDiff {
+                            before: previous_text.clone(),
+                            after: commit.source_text.clone(),
+                        },
+                    },
+                );
+            }
+            restored.push(RestoredCommit {
+                request_id: commit.request_id.clone(),
+                revision: commit.revision.clone(),
+                transaction: commit.transaction.clone(),
+                model,
+                diagnostics: validation.diagnostics,
+                diff: commit.diff.clone(),
+            });
+            texts.push(commit.source_text.clone());
+            previous_text = commit.source_text.clone();
+        }
+        if !self
+            .workspace
+            .restore_commits(state.base_revision.clone(), &restored)
+        {
+            return;
+        }
+        self.text_history.clear();
+        self.text_history.push(state.base_source_text);
+        self.text_history.extend(texts);
+        self.source_requests = source_requests;
+    }
+
+    fn persist_state(&self) {
+        let history = self.workspace.history();
+        if history.len() <= 1 || history.len() != self.text_history.len() {
+            return;
+        }
+        let mut commits = Vec::with_capacity(history.len() - 1);
+        for (index, record) in history.iter().enumerate().skip(1) {
+            let parts = self
+                .workspace
+                .request_parts(&record.request_id)
+                .or_else(|| {
+                    self.source_requests
+                        .get(&record.request_id)
+                        .map(|record| (&record.transaction, &record.diff))
+                });
+            let Some((transaction, diff)) = parts else {
+                return;
+            };
+            commits.push(CommitState {
+                request_id: record.request_id.clone(),
+                transaction: transaction.clone(),
+                revision: record.revision.clone(),
+                source_text: self.text_history[index].clone(),
+                diff: diff.clone(),
+            });
+        }
+        let state = SessionState {
+            version: 1,
+            profile: self.profile.clone(),
+            base_revision: history[0].revision.clone(),
+            base_source_text: self.text_history[0].clone(),
+            commits,
+        };
+        let _ = state::save(&self.root, self.profile.as_deref(), &state);
+    }
+
     /// 先在模型上原子提交，再写回保留格式的 TOML；写回或重新校验失败时回滚文件与工作区。
     pub fn apply(&mut self, transaction: &Transaction) -> TransactionOutcome {
-        if has_replace_source(transaction) {
-            return self.apply_source(transaction);
+        let before = self.current_text.clone();
+        let outcome = if has_replace_source(transaction) {
+            self.apply_source(transaction)
+        } else {
+            self.apply_object(transaction)
+        };
+        if outcome.is_accepted() && !outcome.is_replayed() {
+            self.undo_stack.push(before);
+            self.redo_stack.clear();
+            self.text_history.push(self.current_text.clone());
+            self.persist_state();
         }
-        self.apply_object(transaction)
+        outcome
     }
 
     fn apply_object(&mut self, transaction: &Transaction) -> TransactionOutcome {
@@ -191,7 +398,11 @@ impl ProjectSession {
             };
         }
 
-        let loaded = load_project_with_composition_text(&self.root, source);
+        let loaded = load_project_with_profile_and_composition_text(
+            &self.root,
+            self.profile.as_deref(),
+            source,
+        );
         let validation = validate_loaded(&loaded);
         if !validation.is_valid() {
             return TransactionOutcome::Rejected {
@@ -231,7 +442,8 @@ impl ProjectSession {
             return rejected_source("replace_source must be the only command in a transaction");
         };
 
-        let disk_digest = validate_project(&self.root).source_digest;
+        let disk_digest =
+            validate_project_with_profile(&self.root, self.profile.as_deref()).source_digest;
         if disk_digest != self.workspace.revision().source_digest {
             return TransactionOutcome::Rejected {
                 diagnostics: vec![Diagnostic::new(
@@ -317,12 +529,32 @@ impl ProjectSession {
         let _ = fs::remove_file(&temp);
         let _ = fs::remove_file(&backup);
 
-        fs::write(&temp, new_text).map_err(|error| {
+        let mut temp_file = fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&temp)
+            .map_err(|error| {
+                vec![transaction_failed(format!(
+                    "cannot create temporary {}: {error}",
+                    temp.display()
+                ))]
+            })?;
+        temp_file.write_all(new_text.as_bytes()).map_err(|error| {
+            let _ = fs::remove_file(&temp);
             vec![transaction_failed(format!(
                 "cannot write temporary {}: {error}",
                 temp.display()
             ))]
         })?;
+        temp_file.sync_all().map_err(|error| {
+            let _ = fs::remove_file(&temp);
+            vec![transaction_failed(format!(
+                "cannot flush temporary {}: {error}",
+                temp.display()
+            ))]
+        })?;
+        drop(temp_file);
         if let Err(error) = fs::rename(&path, &backup) {
             let _ = fs::remove_file(&temp);
             return Err(vec![transaction_failed(format!(
@@ -330,6 +562,7 @@ impl ProjectSession {
                 path.display()
             ))]);
         }
+        sync_directory_best_effort(path.parent());
         if let Err(error) = fs::rename(&temp, &path) {
             let _ = fs::rename(&backup, &path);
             let _ = fs::remove_file(&temp);
@@ -338,8 +571,9 @@ impl ProjectSession {
                 path.display()
             ))]);
         }
+        sync_directory_best_effort(path.parent());
 
-        let validation = validate_project(&self.root);
+        let validation = validate_project_with_profile(&self.root, self.profile.as_deref());
         if !validation.is_valid() {
             let _ = fs::remove_file(&path);
             if let Err(error) = fs::rename(&backup, &path) {
@@ -347,6 +581,7 @@ impl ProjectSession {
                     "edited TOML is invalid and rollback failed: {error}"
                 ))]);
             }
+            sync_directory_best_effort(path.parent());
             let mut diagnostics = validation.diagnostics;
             if diagnostics.is_empty() {
                 diagnostics.push(transaction_failed(
@@ -356,6 +591,7 @@ impl ProjectSession {
             return Err(diagnostics);
         }
         let _ = fs::remove_file(&backup);
+        sync_directory_best_effort(path.parent());
         Ok(validation)
     }
 }
@@ -430,7 +666,27 @@ fn recover_composition_file(root: &Path, entry: &str) -> bool {
     let Some((_, backup)) = newest else {
         return false;
     };
-    fs::rename(backup, &path).is_ok()
+    if fs::rename(backup, &path).is_ok() {
+        sync_directory_best_effort(path.parent());
+        true
+    } else {
+        false
+    }
+}
+
+/// Best-effort directory durability. Unix flushes the directory entry; Windows
+/// has no portable directory fsync, so the file fsync + rename remain the barrier.
+fn sync_directory_best_effort(directory: Option<&Path>) {
+    #[cfg(unix)]
+    {
+        if let Some(directory) = directory {
+            let _ = fs::File::open(directory).and_then(|file| file.sync_all());
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = directory;
+    }
 }
 
 fn transaction_failed(message: impl Into<String>) -> Diagnostic {
@@ -445,11 +701,15 @@ fn edit_document(document: &mut DocumentMut, command: &Command) -> Result<(), St
             module,
             version,
             config,
+            scope,
         } => {
             let mut table = Table::new();
             set_str(&mut table, "id", id.as_str());
             set_str(&mut table, "module", module.as_str());
             set_str(&mut table, "version", &version.to_string());
+            if let Some(scope) = scope {
+                set_str(&mut table, "scope", scope.as_str());
+            }
             if !config.is_empty() {
                 let mut config_table = Table::new();
                 for (key, value) in config {

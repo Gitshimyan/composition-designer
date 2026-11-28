@@ -1,0 +1,13 @@
+[module]
+schema_version = 2
+id = "example.session"
+version = "1.0.0"
+kind = "primitive"
+
+[[contract.interfaces]]
+id = "example.session.api"
+version = "1.0.0"
+
+[[contract.interfaces]]
+id = "example.session.api"
+version = "1.0.0"

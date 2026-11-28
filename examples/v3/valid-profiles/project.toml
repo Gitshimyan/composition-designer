@@ -1,0 +1,14 @@
+[project]
+schema_version = 3
+id = "example.v3"
+name = "V3 valid profiles"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]
+
+[profiles.desktop]
+composition = "composition/desktop.toml"
+
+[profiles.headless]
+composition = "composition/headless.toml"

@@ -1,0 +1,8 @@
+[project]
+schema_version = 2
+id = "example.v2"
+name = "V2 service in binding"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]
