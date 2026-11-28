@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use composition_core::{validate_model, validate_project, SourceMap, ValidationResult};
 use composition_domain::{
-    Binding, CompositionModel, Diagnostic, ErrorCode, Instance, ModuleRef, ObjectId, PortRef,
-    Revision,
+    Binding, CompositionModel, Diagnostic, ErrorCode, Instance, InstanceScope, ModuleRef, ObjectId,
+    PortRef, Revision, SchemaVersion,
 };
 use serde::Serialize;
 
@@ -327,7 +327,14 @@ fn apply_command(model: &mut CompositionModel, command: &Command) -> Result<(), 
             module,
             version,
             config,
+            scope,
         } => {
+            if scope.is_some() && model.project.schema_version != SchemaVersion::V2 {
+                return Err(invalid_command(
+                    "create_instance.scope is only available in v2 projects",
+                    ObjectId::instance(id),
+                ));
+            }
             if model
                 .composition
                 .instances
@@ -340,6 +347,11 @@ fn apply_command(model: &mut CompositionModel, command: &Command) -> Result<(), 
                 ));
             }
             let mut instance = Instance::new(id.clone(), ModuleRef::new(module.clone(), *version));
+            instance.scope = if model.project.schema_version == SchemaVersion::V2 {
+                Some(scope.unwrap_or(InstanceScope::Structure))
+            } else {
+                None
+            };
             instance.config = config.clone();
             model.composition.instances.push(instance);
         }

@@ -1,13 +1,15 @@
 import type { Page } from "@playwright/test";
-import { invalidSnapshot, sourceText, validSnapshot } from "./fixtures";
+import { invalidSnapshot, sourceText, v2Snapshot, v2SourceText, validSnapshot } from "./fixtures";
 
-export type MockMode = "valid" | "invalid" | "edit-failure";
+export type MockMode = "valid" | "invalid" | "edit-failure" | "v2";
 
 interface MockPayload {
   mode: MockMode;
   valid: ReturnType<typeof validSnapshot>;
   invalid: ReturnType<typeof invalidSnapshot>;
+  v2: ReturnType<typeof v2Snapshot>;
   sourceText: string;
+  v2SourceText: string;
 }
 
 type MockSnapshot = ReturnType<typeof validSnapshot>;
@@ -30,12 +32,17 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
     mode,
     valid: validSnapshot(),
     invalid: invalidSnapshot(),
+    v2: v2Snapshot(),
     sourceText,
+    v2SourceText,
   };
 
   await page.addInitScript((data: MockPayload) => {
-    let current = structuredClone(data.valid);
-    let currentSource = data.sourceText;
+    let current = structuredClone(
+      data.mode === "v2" ? data.v2 : data.valid,
+    );
+    let currentSource =
+      data.mode === "v2" ? data.v2SourceText : data.sourceText;
     const testState = {
       mode: data.mode,
       dirty: false,
@@ -86,13 +93,27 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           continue;
         }
         const candidates = requirement
-          ? composition.instances.filter(
-              (candidate) =>
-                candidate.id !== instance.id &&
+          ? composition.instances.filter((candidate) => {
+              if (candidate.id === instance.id) return false;
+              const candidateModule = model.modules.find(
+                (module) =>
+                  module.id === candidate.module.id &&
+                  module.version === candidate.module.version,
+              );
+              if (requirement.interface) {
+                return (candidateModule?.contract.interfaces ?? []).some(
+                  (declaration) =>
+                    declaration.id === requirement.interface &&
+                    (!requirement.version ||
+                      declaration.version === requirement.version),
+                );
+              }
+              return (
                 candidate.module.id === requirement.module &&
                 (!requirement.version ||
-                  candidate.module.version === requirement.version),
-            )
+                  candidate.module.version === requirement.version)
+              );
+            })
           : [];
         resolution.provider_instance =
           candidates.length === 1 ? candidates[0].id : null;
@@ -120,12 +141,21 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           case "create_instance": {
             const id = String(command.id);
             const config = (command.config ?? {}) as Record<string, unknown>;
+            const scope = command.scope as "structure" | "service" | undefined;
             const instance = {
               id,
               module: {
                 id: String(command.module),
                 version: String(command.version),
               },
+              ...(scope ||
+              model.project.schema_version >= 2
+                ? {
+                    scope:
+                      scope ??
+                      ("structure" as "structure" | "service"),
+                  }
+                : {}),
               config: structuredClone(config),
               effective_config: structuredClone(config),
               dependency_providers: {},

@@ -17,6 +17,7 @@ import CompositionCanvas from "./canvas/CompositionCanvas";
 import StructureTree from "./explorer/StructureTree";
 import BindingEditorDialog from "./inspector/BindingEditorDialog";
 import CreateInstanceDialog from "./inspector/CreateInstanceDialog";
+import CreateServiceDialog from "./inspector/CreateServiceDialog";
 import InstanceActions from "./inspector/InstanceActions";
 import { parseDraft, toDraftValue } from "./inspector/configDraft";
 import { autoLayout, buildStructure } from "./layout";
@@ -24,6 +25,7 @@ import ConnectionDialog from "./relations/ConnectionDialog";
 import ConnectionView from "./relations/ConnectionView";
 import DependencyProviderDialog from "./relations/DependencyProviderDialog";
 import DependencyView from "./relations/DependencyView";
+import ServicesView from "./relations/ServicesView";
 import type { DependencyDetail } from "./relations/relationModel";
 import ChangeReview from "./review/ChangeReview";
 import SourceView from "./source/SourceView";
@@ -35,6 +37,8 @@ import type {
   EditResponse,
   ExternalChangeState,
   Instance,
+  InstanceScope,
+  InterfaceDeclaration,
   LayoutNodes,
   NodePosition,
   ProjectSnapshot,
@@ -79,12 +83,13 @@ export default function App() {
     parentId: string;
     slotId: string;
   } | null>(null);
+  const [serviceDraft, setServiceDraft] = useState(false);
   const [bindingDraft, setBindingDraft] = useState<string | null>(null);
   const [connectionDraft, setConnectionDraft] = useState<
     { mode: "create" } | { mode: "edit"; id: string } | null
   >(null);
   const [stageView, setStageView] = useState<
-    "structure" | "connections" | "dependencies"
+    "structure" | "connections" | "dependencies" | "services"
   >("structure");
   const [providerDraft, setProviderDraft] = useState<{
     instanceId: string;
@@ -164,6 +169,9 @@ export default function App() {
   const connections = composition?.connections ?? [];
   const dependencies = model?.dependencies ?? [];
   const modules = model?.modules ?? [];
+  const services = instances.filter(
+    (instance) => instance.scope === "service",
+  );
   const diagnostics = snapshot?.diagnostics ?? [];
   const rootId = composition?.root ?? "";
 
@@ -189,6 +197,7 @@ export default function App() {
     setRevealLine(null);
     setPendingReview(null);
     setCreateDraft(null);
+    setServiceDraft(false);
     setBindingDraft(null);
     setConnectionDraft(null);
     setProviderDraft(null);
@@ -298,6 +307,7 @@ export default function App() {
       setExternal(null);
       setPendingReview(null);
       setCreateDraft(null);
+    setServiceDraft(false);
       setBindingDraft(null);
       setConnectionDraft(null);
       setProviderDraft(null);
@@ -419,6 +429,7 @@ export default function App() {
       }
       setPendingReview(null);
       setCreateDraft(null);
+    setServiceDraft(false);
       setBindingDraft(null);
       setConnectionDraft(null);
       setProviderDraft(null);
@@ -732,6 +743,7 @@ export default function App() {
                     ["structure", "Structure", bindings.length],
                     ["connections", "Connections", connections.length],
                     ["dependencies", "Dependencies", dependencies.length],
+                    ["services", "Services", services.length],
                   ] as const
                 ).map(([value, label, count]) => (
                   <button
@@ -777,8 +789,20 @@ export default function App() {
                   }
                   onDeleteConnection={handleDeleteConnection}
                 />
-              ) : (
-                <DependencyView
+                ) : stageView === "services" ? (
+                  <ServicesView
+                    instances={instances}
+                    modules={modules}
+                    connections={connections}
+                    dependencies={dependencies}
+                    selectedId={selectedId}
+                    canEdit={canEdit && !externalDirty}
+                    projectSchemaVersion={model?.project.schema_version ?? 1}
+                    onSelectInstance={handleSelectTree}
+                    onNewService={() => setServiceDraft(true)}
+                  />
+                ) : (
+                  <DependencyView
                   instances={instances}
                   modules={modules}
                   dependencies={dependencies}
@@ -795,7 +819,9 @@ export default function App() {
                     ? "Drag to arrange · positions write to .designer/layout.toml · structure edits go through Core transactions"
                     : stageView === "connections"
                       ? "Port connections · direction/type/protocol come from module contracts · edits go through Core transactions"
-                      : "Dependency resolutions · explicit providers are editable through Core transactions"}
+                      : stageView === "services"
+                        ? "Services live outside the Binding tree · primitive modules only · edits go through Core transactions"
+                        : "Dependency resolutions · explicit providers are editable through Core transactions"}
                 </span>
                 <div className="stage-counts">
                   {stageView === "structure" ? (
@@ -808,6 +834,13 @@ export default function App() {
                     <>
                       <span>{connections.length} port connections</span>
                       <span>{modulePortCount} module ports</span>
+                    </>
+                  ) : stageView === "services" ? (
+                    <>
+                      <span>{services.length} services</span>
+                      <span>
+                        {instances.length - services.length} structure instances
+                      </span>
                     </>
                   ) : (
                     <>
@@ -828,6 +861,8 @@ export default function App() {
               <SelectionDetails
                 instance={selectedInstance}
                 moduleKind={selectedModule?.kind}
+                scope={selectedInstance.scope}
+                interfaces={selectedModule?.contract.interfaces ?? []}
                 slots={selectedModule?.contract.slots.length ?? 0}
                 ports={selectedModule?.contract.ports.length ?? 0}
                 properties={selectedModule?.contract.properties ?? []}
@@ -1011,6 +1046,18 @@ export default function App() {
         />
       )}
 
+      {serviceDraft && (
+        <CreateServiceDialog
+          instances={instances}
+          modules={modules}
+          suspended={pendingReview !== null}
+          onCancel={() => setServiceDraft(false)}
+          onReview={(commands, description, options) =>
+            void reviewCommands(commands, description, options)
+          }
+        />
+      )}
+
       {bindingDraftValue && bindingDraftChild && (
         <BindingEditorDialog
           key={bindingDraftValue.id}
@@ -1133,6 +1180,8 @@ function Property({
 function SelectionDetails({
   instance,
   moduleKind,
+  scope,
+  interfaces,
   slots,
   ports,
   properties,
@@ -1144,6 +1193,8 @@ function SelectionDetails({
 }: {
   instance: Instance;
   moduleKind?: string;
+  scope?: InstanceScope | null;
+  interfaces: InterfaceDeclaration[];
   slots: number;
   ports: number;
   properties: PropertyContract[];
@@ -1161,6 +1212,7 @@ function SelectionDetails({
         <Property label="Module" value={instance.module.id} mono />
         <Property label="Version" value={instance.module.version} mono />
         <Property label="Kind" value={moduleKind ?? "unknown"} />
+        <Property label="Scope" value={scope ?? "structure"} />
         <Property label="Role" value={isRoot ? "root" : "child"} />
         <Property
           label="Source"
@@ -1195,6 +1247,15 @@ function SelectionDetails({
         <Property label="Properties" value={String(properties.length)} />
         <Property label="Slots" value={String(slots)} />
         <Property label="Ports" value={String(ports)} />
+        <Property label="Interfaces" value={String(interfaces.length)} />
+        {interfaces.map((declaration) => (
+          <Property
+            key={`${declaration.id}@${declaration.version}`}
+            label="Implements"
+            value={`${declaration.id}@${declaration.version}`}
+            mono
+          />
+        ))}
         <Property
           label="Configured"
           value={String(Object.keys(instance.config ?? {}).length)}

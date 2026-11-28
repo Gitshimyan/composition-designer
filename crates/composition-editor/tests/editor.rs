@@ -142,6 +142,7 @@ fn create_instance_and_binding_in_one_transaction() {
                 module: module("item.card"),
                 version: version(),
                 config: BTreeMap::from([(local("title"), ConfigValue::String("C".into()))]),
+                scope: None,
             },
             Command::CreateBinding {
                 id: local("board-cards-c"),
@@ -200,6 +201,7 @@ fn duplicate_instance_id_is_a_command_error() {
             module: module("leaf.widget"),
             version: version(),
             config: BTreeMap::new(),
+            scope: None,
         }],
     ));
     assert!(!outcome.is_accepted());
@@ -292,6 +294,7 @@ fn create_instance_diff_marks_both_objects_added() {
                 module: module("item.card"),
                 version: version(),
                 config: BTreeMap::from([(local("title"), ConfigValue::String("C".into()))]),
+                scope: None,
             },
             Command::CreateBinding {
                 id: local("board-cards-c"),

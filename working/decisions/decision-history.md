@@ -28,3 +28,4 @@
 | D-021 | 2026-11-28 | 明确授权：先修正文档漂移（G09），再执行 032 Schema v2.0 ADR 批准与接口/服务语义冻结（Rearchitect + Extend） | 用户对话 | G09 文档一致性；032 可执行；033–035 仍需逐卡授权 |
 | D-022 | 2026-11-28 | 完成 032 Schema v2.0 语义冻结 | 用户授权（D-021）；032 卡 | ADR-0006、v2.0 规范与 8 个新代码；接口/scope/命令/兼容矩阵冻结；UW-002/003 in_progress；新增 UW-032；无代码变更 |
 | D-023 | 2026-11-28 | 完成 033 Domain/Loader/Validation | 用户明确授权开始 033；Rearchitect + Modify | 接口/接口依赖/scope 类型、解码、版本矩阵、8 个诊断；v1 输出不变；workspace 189 测试；无命令/UI/示例改动 |
+| D-024 | 2026-11-28 | 完成 034 Commands/UI/CLI/MCP | 用户明确授权进行 034；Extend + Modify | `create_instance.scope` 与写回、Services 视图/创建、接口展示；CLI/MCP v2；196 workspace / 34 UI / 17 Tauri；无 Schema/基线改动 |

@@ -445,11 +445,15 @@ fn edit_document(document: &mut DocumentMut, command: &Command) -> Result<(), St
             module,
             version,
             config,
+            scope,
         } => {
             let mut table = Table::new();
             set_str(&mut table, "id", id.as_str());
             set_str(&mut table, "module", module.as_str());
             set_str(&mut table, "version", &version.to_string());
+            if let Some(scope) = scope {
+                set_str(&mut table, "scope", scope.as_str());
+            }
             if !config.is_empty() {
                 let mut config_table = Table::new();
                 for (key, value) in config {

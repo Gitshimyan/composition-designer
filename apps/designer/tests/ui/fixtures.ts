@@ -368,4 +368,142 @@ export function invalidSnapshot(): ProjectSnapshot {
   };
 }
 
+const v2CompositionText = `[composition]
+schema_version = 2
+id = "example.v2"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "example.app"
+version = "1.0.0"
+
+[[instances]]
+id = "session"
+module = "example.session"
+version = "1.0.0"
+scope = "service"
+`;
+
+const v2Modules: ModuleDefinition[] = [
+  {
+    id: "example.app",
+    version: "1.0.0",
+    kind: "composite",
+    description: "V2 application shell",
+    contract: {
+      properties: [],
+      slots: [],
+      ports: [],
+      dependencies: [
+        {
+          id: "session",
+          interface: "example.session.api",
+          version: "1.0.0",
+          optional: false,
+        },
+      ],
+      interfaces: [],
+    },
+    source: { file: "modules/app/module.toml" },
+  },
+  {
+    id: "example.session",
+    version: "1.0.0",
+    kind: "primitive",
+    description: "Session service",
+    contract: {
+      properties: [],
+      slots: [],
+      ports: [
+        {
+          id: "line",
+          direction: "input",
+          type: "log.line",
+          multi: false,
+          protocol: "log.v1",
+        },
+      ],
+      dependencies: [],
+      interfaces: [{ id: "example.session.api", version: "1.0.0" }],
+    },
+    source: { file: "modules/session/module.toml" },
+  },
+];
+
+const v2Instances: Instance[] = [
+  {
+    id: "app",
+    module: { id: "example.app", version: "1.0.0" },
+    scope: "structure",
+    config: {},
+    effective_config: {},
+    dependency_providers: {},
+    source: { file: "composition/main.toml" },
+  },
+  {
+    id: "session",
+    module: { id: "example.session", version: "1.0.0" },
+    scope: "service",
+    config: {},
+    effective_config: {},
+    dependency_providers: {},
+    source: { file: "composition/main.toml" },
+  },
+];
+
+const v2Dependencies: DependencyResolution[] = [
+  {
+    requirement_id: "session",
+    from_instance: "app",
+    target: {
+      kind: "interface",
+      id: "example.session.api",
+      version: "1.0.0",
+    },
+    provider_instance: "session",
+    optional: false,
+    status: "resolved",
+  },
+];
+
+export function v2Snapshot(
+  seq = 0,
+  sourceDigest = "sha256:v2fixture",
+): ProjectSnapshot {
+  return {
+    root: "C:\\projects\\v2",
+    valid: true,
+    errorCount: 0,
+    warningCount: 0,
+    sourceDigest,
+    model: {
+      project: {
+        schema_version: 2,
+        id: "example.v2",
+        name: "V2 Services",
+        composition_entry: "composition/main.toml",
+        module_roots: ["modules"],
+        source: { file: "project.toml" },
+      },
+      composition: {
+        schema_version: 2,
+        id: "example.v2",
+        root: "app",
+        instances: structuredClone(v2Instances),
+        bindings: [],
+        connections: [],
+        source: { file: "composition/main.toml" },
+      },
+      modules: structuredClone(v2Modules),
+      dependencies: structuredClone(v2Dependencies),
+      diagnostics: [],
+      revision: { seq, source_digest: sourceDigest },
+    },
+    diagnostics: [],
+    canEdit: true,
+  };
+}
+
 export const sourceText = compositionText;
+export const v2SourceText = v2CompositionText;

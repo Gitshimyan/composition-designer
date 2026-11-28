@@ -319,6 +319,7 @@ fn create_instance_and_binding_writes_valid_toml() {
                 config: [(local("title"), ConfigValue::String("C".into()))]
                     .into_iter()
                     .collect(),
+                scope: None,
             },
             Command::CreateBinding {
                 id: local("board-cards-c"),

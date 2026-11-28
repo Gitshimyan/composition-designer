@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use composition_domain::{ConfigValue, LocalId, ModuleId, PortRef, Revision, Version};
+use composition_domain::{
+    ConfigValue, InstanceScope, LocalId, ModuleId, PortRef, Revision, Version,
+};
 use serde::{Deserialize, Serialize};
 
 /// v0.1 支持的编辑命令。所有命令都通过事务应用，不直接写 TOML。
@@ -12,6 +14,9 @@ pub enum Command {
         module: ModuleId,
         version: Version,
         config: BTreeMap<LocalId, ConfigValue>,
+        /// v2.0 实例 scope；v1 项目必须省略。
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        scope: Option<InstanceScope>,
     },
     DeleteInstance {
         id: LocalId,

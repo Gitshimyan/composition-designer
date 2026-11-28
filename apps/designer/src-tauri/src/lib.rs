@@ -579,6 +579,7 @@ mod tests {
                     module: module("leaf.widget"),
                     version: version("1.0.0"),
                     config,
+                    scope: None,
                 },
                 Command::CreateBinding {
                     id: local("panel-1-status-2"),
@@ -761,18 +762,21 @@ mod tests {
                     module: module("ui.page"),
                     version: version("1.0.0"),
                     config: page_config,
+                    scope: None,
                 },
                 Command::CreateInstance {
                     id: local("panel-3"),
                     module: module("ui.panel"),
                     version: version("1.0.0"),
                     config: panel_config,
+                    scope: None,
                 },
                 Command::CreateInstance {
                     id: local("leaf-3"),
                     module: module("leaf.widget"),
                     version: version("1.0.0"),
                     config: leaf_config,
+                    scope: None,
                 },
                 Command::CreateBinding {
                     id: local("app-content-page-3"),
@@ -1011,6 +1015,57 @@ mod tests {
             .iter()
             .any(|diagnostic| diagnostic.code.as_str() == "dependency-provider-invalid"));
         assert_eq!(fs::read_to_string(&path).unwrap(), before);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn service_scope_transaction_writes_scope() {
+        let root = std::env::temp_dir().join(format!(
+            "composition-service-scope-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        let write = |relative: &str, text: &str| {
+            let path = root.join(relative);
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent).unwrap();
+            }
+            fs::write(path, text).unwrap();
+        };
+        write(
+            "project.toml",
+            "[project]\nschema_version = 2\nid = \"example.v2\"\nname = \"V2\"\n\n[workspace]\ncomposition = \"composition/main.toml\"\nmodule_roots = [\"modules\"]\n",
+        );
+        write(
+            "composition/main.toml",
+            "[composition]\nschema_version = 2\nid = \"example.v2\"\nroot = \"app\"\n\n[[instances]]\nid = \"app\"\nmodule = \"example.app\"\nversion = \"1.0.0\"\n",
+        );
+        write(
+            "modules/app/module.toml",
+            "[module]\nschema_version = 2\nid = \"example.app\"\nversion = \"1.0.0\"\nkind = \"composite\"\n",
+        );
+        write(
+            "modules/session/module.toml",
+            "[module]\nschema_version = 2\nid = \"example.session\"\nversion = \"1.0.0\"\nkind = \"primitive\"\n",
+        );
+
+        let mut session = ProjectSession::open(&root).unwrap();
+        let outcome = session.apply(&Transaction::new(
+            "create-service",
+            session.workspace().revision(),
+            vec![Command::CreateInstance {
+                id: local("session"),
+                module: module("example.session"),
+                version: version("1.0.0"),
+                config: Default::default(),
+                scope: Some(composition_domain::InstanceScope::Service),
+            }],
+        ));
+        assert!(outcome.is_accepted(), "{:?}", outcome.diagnostics());
+        let text = fs::read_to_string(root.join("composition/main.toml")).unwrap();
+        assert!(text.contains("scope = \"service\""), "{text}");
+        let validation = validate_project(&root);
+        assert!(validation.is_valid(), "{:?}", validation.diagnostics);
         let _ = fs::remove_dir_all(&root);
     }
 }

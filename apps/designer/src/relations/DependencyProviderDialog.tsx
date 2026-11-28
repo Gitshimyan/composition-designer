@@ -6,7 +6,7 @@ import type {
   ModuleDefinition,
   ReviewOptions,
 } from "../types";
-import { dependencyDetails } from "./relationModel";
+import { dependencyDetails, requirementTarget } from "./relationModel";
 
 interface DependencyProviderDialogProps {
   instanceId: string;
@@ -108,14 +108,7 @@ export default function DependencyProviderDialog({
 
         <div className="dialog-slot-meta">
           <span>
-            target{" "}
-            {detail?.requirement
-              ? `${detail.requirement.module}${
-                  detail.requirement.version
-                    ? `@${detail.requirement.version}`
-                    : ""
-                }`
-              : "unknown"}
+            target {requirementTarget(detail?.requirement)}
           </span>
           <span>
             {detail?.requirement?.optional ? "optional" : "required"}
@@ -152,7 +145,7 @@ export default function DependencyProviderDialog({
           </div>
         ) : (
           <div className="dialog-note">
-            No instance provides {detail?.requirement?.module ?? "the target module"}.
+            No instance implements {requirementTarget(detail?.requirement)}.
             Create a matching instance first.
           </div>
         )}
@@ -173,9 +166,9 @@ export default function DependencyProviderDialog({
           </button>
         </div>
         <p className="dialog-note">
-          Candidates match the requirement's module and version. Core
-          revalidates target, version, self-provision and ambiguity before the
-          mapping is written to <code>[instances.dependencies]</code>.
+          Candidates implement the requirement's module or interface identity.
+          Core revalidates target, version, self-provision and ambiguity before
+          the mapping is written to <code>[instances.dependencies]</code>.
         </p>
       </section>
     </div>

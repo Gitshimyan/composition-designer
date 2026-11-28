@@ -4,14 +4,15 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
 结构 Canvas/Tree、Inspector 配置编辑/Change Review、CodeMirror Source 与外部修改
 同步/Reload；M6 022–025 增加 Instance/Binding/Connection/Dependency 编辑，
 026 完成 Change Review 的分类、Before/After、依赖影响与完整诊断；M7 029–031 把 Source
-升级为可编辑（草稿/Review/冲突只读），027 在 Glide 试点副本完成 CLI/Protocol 全链路验收。**
+升级为可编辑（草稿/Review/冲突只读），027 在 Glide 试点副本完成 CLI/Protocol 全链路验收；
+S1 034 增加 Services 视图、service 创建、scope 与接口目标展示。**
 
 | 区域 | 目录 | 职责 |
 |---|---|---|
 | Composition Canvas | `src/canvas/` | 实例与结构 Binding 的 `@xyflow/react` 呈现（013） |
 | Project Explorer | `src/explorer/` | 项目目录、结构 Tree、模块来源与搜索 |
-| Inspector | `src/inspector/` | 实例详情、配置编辑、Instance/Binding 操作与 Change Review |
-| Relation Views | `src/relations/` | Connection 列表/端口投影与编辑、Dependency 只读投影（024） |
+| Inspector | `src/inspector/` | 实例详情、scope/接口展示、配置编辑、Instance/Binding 操作与 Change Review |
+| Relation Views | `src/relations/` | Structure/Connection/Dependency/Services 投影与编辑（024、034） |
 | Change Review | `src/review/` | 分类、Before/After、命令、Dependency 影响、完整诊断（026） |
 | TOML Source | `src/source/` | CodeMirror 6 可编辑 Source、草稿/Review/冲突只读与诊断定位（014、030） |
 | Diagnostics | `src/diagnostics/` | 错误/警告、源码位置、修正提示 |
@@ -25,6 +26,7 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
 - Composition：`@xyflow/react` 实例节点 + Binding 边、Fit/Reset、拖动节点；
 - Inspector：
   - 选中实例的模块/契约与配置编辑器（Set/Unset Config）；
+  - 显示实例 `scope`（structure/service）与模块声明的 interfaces（034）；
   - 重命名 Instance（引用重写由 Core 事务完成）；
   - 换 Module / Version（同一事务内移除不兼容配置、补齐必填属性）；
   - 删除 Instance（Review 前展示子树、Binding、Connection、Dependency 影响）；
@@ -37,8 +39,11 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
   - `Connections`：Connection 列表、每个实例的 Port 投影（方向/type/protocol/multi/
     连接关系），Create/Edit/Delete 经 Core 事务；
   - `Dependencies`：按实例分组的依赖要求、required/optional、Provider（显式/自动）、
-    候选与解析状态；可设置显式 Provider 或清空回退自动解析（025 Extend）；
-  - 三个视图共享 `selectedId`，切换后保持选择并高亮；
+    候选与解析状态；模块 ID 或接口身份（v2）作为目标；可设置显式 Provider 或清空回退
+    自动解析（025 Extend、034）；
+  - `Services`（034）：service 实例列表（模块、接口、config/provider/connection 计数、
+    被引用者）、选中与创建；v1 项目提示需要 schema v2；
+  - 四个视图共享 `selectedId`，切换后保持选择并高亮；
 - Diagnostics：L1–L7 代码、消息、文件:行:列；点击可跳到 Source；
 - Change Review（026）：命令列表、Instance/Binding/Connection 分类、Before/After、
   Dependency Provider 影响、完整诊断与 accepted/rejected 分区；取消不写入，拒绝/失败保留诊断；
@@ -68,6 +73,14 @@ v0.1 可视化设计器：Tauri 2 宿主 + React/TypeScript 界面。**M3 012–
     requirement/provider 合法性、自引用与歧义由 Core 最终判定。
 - Connection / Dependency 视图与完整 Before/After Review 分别属于 024 / 025。
 
+### Services 与 scope（034）
+
+- v2 项目可创建 `scope = "service"` 的实例；service 不进入 Binding 树，创建时不产生 Binding。
+- 只能选择 `primitive` 模块；Core 会以 `contract-service-module-invalid` 拒绝 composite service。
+- Services 视图展示接口、config/provider/connection 计数与被引用者，并与 Dependency 视图共享选择。
+- 依赖目标可以是接口；候选按模块声明的 interface 身份匹配，显式 Provider 仍经 Core 校验。
+- v1 项目不提供可用的创建入口，并提示需要 schema v2。
+
 ## 开发命令
 
 ```powershell
@@ -95,7 +108,7 @@ npm run tauri dev   # Tauri 开发模式
 - React 不重复实现 Core 的契约规则；
 - Tauri Host 不直接修改 TOML 以绕开 Core。
 
-## UI 自动化（020 / 022–026 / 030）
+## UI 自动化（020 / 022–026 / 030 / 034）
 
 ```powershell
 npm run test:ui
@@ -105,14 +118,15 @@ npm run test:ui
 - 通过 Vite preview 运行生产构建；
 - 测试在页面加载前注入测试专用 `window.__TAURI_INTERNALS__` fixture；
 - 生产代码不包含 fixture，真实 Tauri 后端仍由 host tests 覆盖；
-- 30 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
+- 34 条链路：valid/invalid、选择、配置 Review/Apply/Cancel、拒绝、外部修改 Reload、
   布局保存，Instance 重命名/换模块/创建/子树删除/非法 ID/拒绝事务，
   Binding 移动、Detach 诊断、required Slot 子树创建，
   三视图切换/选择保持、Connection 创建/修改/删除、Dependency 投影、
   Provider 设置/清空，完整 Review 的 Before/After、多命令分类、
-  Connection 字段与 Dependency 影响，以及 Source 编辑 + 文本 Diff 与非法文本拒绝。
-- `src-tauri/src/lib.rs` 另有 16 个 host tests，其中 12 个直接使用真实
-  `ProjectSession` 验证多命令事务与 TOML 写回（Source 文本写回、创建 + Binding、
-  删除级联、拒绝不写文件、重命名 root/引用、Binding 移动、Binding 子树创建、
-  Detach 拒绝、Connection 创建/修改/删除、非法方向拒绝、
+  Connection 字段与 Dependency 影响，Source 编辑 + 文本 Diff 与非法文本拒绝，
+  以及 Services 列表/scope/接口展示、接口依赖目标、service 创建与 v1 限制。
+- `src-tauri/src/lib.rs` 另有 17 个 host tests，其中 13 个直接使用真实
+  `ProjectSession` 验证多命令事务与 TOML 写回（Source 文本写回、service scope 写回、
+  创建 + Binding、删除级联、拒绝不写文件、重命名 root/引用、Binding 移动、
+  Binding 子树创建、Detach 拒绝、Connection 创建/修改/删除、非法方向拒绝、
   Dependency Provider 设置/清空）。

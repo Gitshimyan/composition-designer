@@ -1,7 +1,7 @@
 # 未决工作登记册
 
 > 状态：**Adopted 2026-11-27（G01）**；G03 完成 001–025 历史回溯；026 关闭 UW-025；027/G04 关闭 UW-028、UW-029、UW-010；G05 关闭 UW-030；
-> 032 冻结 v2.0 语义，UW-002/UW-003 转 in_progress，新增 UW-032。
+> 032 冻结 v2.0 语义，UW-002/UW-003 转 in_progress，新增 UW-032；034 已完成入口实现，待 035 验收。
 > 规则：只有实现并有证据、用户明确拒绝、被其他事项替代或用户明确不再需要，才可关闭。
 > “后续任务提到过”不构成关闭证据。
 
@@ -22,8 +22,8 @@
 | ID | 来源 | 功能缺口 | 类型 | 状态 | 所需授权 | 影响 | 后续处理 |
 |---|---|---|---|---|---|---|---|
 | UW-001 | 024 → 025 | Dependency Provider 的设置/清空编辑 | Extend | implemented | Extend + Modify | 已解除；Dependency 视图可编辑 | 025 已关闭，保留证据 |
-| UW-002 | 021 → 032 | Interface / Contract 的独立身份 | Rearchitect | in_progress | Rearchitect | 依赖无法与实现解耦 | 032 已冻结语义（ADR-0006）；033–035 实施 |
-| UW-003 | 021 → 032 | 非结构 runtime / service 容器 | Rearchitect | in_progress | Rearchitect | 运行时服务只能近似映射为结构节点 | 032 已冻结语义（ADR-0006）；033–035 实施 |
+| UW-002 | 021 → 032 | Interface / Contract 的独立身份 | Rearchitect | in_progress | Rearchitect | 依赖无法与实现解耦 | 032 冻结、033 实现、034 入口；035 验收后关闭 |
+| UW-003 | 021 → 032 | 非结构 runtime / service 容器 | Rearchitect | in_progress | Rearchitect | 运行时服务只能近似映射为结构节点 | 032 冻结、033 实现、034 入口；035 验收后关闭 |
 | UW-004 | 021 | 项目级 Profile / 条件组合选择 | Rearchitect | accepted | Rearchitect | 无法完整表达 profile/环境/task 变体 | ADR-0004 确认 Profile 入口；S2（039–041）实施 |
 | UW-005 | 022 / 025 | ConfigValue 整数值 float 的 JSON wire | Extend（协议方案） | pending_decision | Extend；协议基线变更再评估 Rearchitect | Agent/UI 传输可能无法保留数值类型 | 单独设计 wire 语义 |
 | UW-006 | 授权审计 | 权限集合、工程/文档/Compose/副作用边界 | Rearchitect | implemented | Rearchitect + Modify | 规则已生效 | G01 已关闭 |

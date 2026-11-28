@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
-| 当前阶段 | M7 Source 完成；G09 完成；**S1 032–033 完成（v2.0 语义冻结 + Domain/Loader/Validation）**；下一步 034–035 |
+| 当前阶段 | M7 Source 完成；G09 完成；**S1 032–034 完成（语义冻结、Core、命令/UI/入口）**；下一步 035 v2 验收 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
@@ -177,5 +177,8 @@
   `create_instance.scope`；无代码变更；033–035 实现；
 - 033 完成：接口声明/接口依赖/scope 的领域类型、TOML 解码与 L2–L7 校验；
   v1 输出不变；workspace 189 测试；034–035 补命令/UI/CLI/MCP 与验收；
+- 034 完成：`create_instance.scope` 与写回、Services 视图/service 创建、
+  Inspector scope/interface、Dependency 接口目标；CLI/MCP v2 事务；
+  workspace 196 / UI 34 / Tauri 17；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。
