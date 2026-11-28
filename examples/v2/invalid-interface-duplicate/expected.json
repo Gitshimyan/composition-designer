@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "id-duplicate-interface"
+  ],
+  "notes": "The same interface id/version is declared twice in one module."
+}

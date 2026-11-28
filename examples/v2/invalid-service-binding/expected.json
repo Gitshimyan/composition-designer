@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "structure-service-in-binding"
+  ],
+  "notes": "A service instance is bound into the structure tree."
+}

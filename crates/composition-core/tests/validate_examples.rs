@@ -70,7 +70,7 @@ fn every_dataset_matches_expected_codes() {
     let mut datasets = Vec::new();
     collect_datasets(&examples_root(), &mut datasets);
     datasets.sort();
-    assert_eq!(datasets.len(), 26);
+    assert_eq!(datasets.len(), 37);
 
     for directory in datasets {
         let relative = directory

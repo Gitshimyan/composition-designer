@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "contract-service-module-invalid"
+  ],
+  "notes": "A service instance uses a composite module; services must be primitive."
+}

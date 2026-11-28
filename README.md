@@ -2,7 +2,7 @@
 
 > v0.2 M6 与 G01–G08 完成；ADR-0004/0005 Accepted。
 > M7 Source Authoring 完成（029–031：编辑 Source、文本+对象 Review、Glide 验收）。
-> S1 032–034 完成：v2.0 语义冻结、Core 校验、命令/UI/CLI/MCP 入口；下一步 035 验收。
+> S1 032–035 完成：v2.0 语义、Core、命令/UI/入口与 v2 验收；下一步 M8 Agent。
 > 计划入口：[`working/plan.md`](./working/plan.md)。
 
 Composition Designer 是一个面向**声明式项目组合**的设计环境。项目由一个权威的 Composition
@@ -37,7 +37,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | working 编排 / AGENTS / Change Manifest | 就绪 |
 | 领域模型与术语（M0 002） | 已冻结 |
 | TOML Schema 与错误码（M0 003） | 已冻结（63 个验证代码 + 6 个预留代码） |
-| 示例项目集（M0 004） | 26 个 `expected.json` 数据集（25 个完整项目 + 入口缺失目录） |
+| 示例项目集（M0 004 / S1 035） | 37 个 `expected.json` 数据集（36 个完整项目 + 入口缺失目录；含 11 个 v2 数据集） |
 | Rust 领域层（M1 005） | 已建立：`composition-domain`，58 项测试 |
 | TOML 加载与 Source Map（M1 006 / M5 019） | 已建立：`composition-toml`，29 项测试 |
 | Core：解析 / 验证（M1 007 / M5 019） | 已建立：`composition-core`，9 项测试、26/26 数据集 |
@@ -55,7 +55,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | 完整性与验收 | 已完成（M5 019）：A01–A18 报告 |
 | v0.2 / M6 | M6 完成（020–027）：Glide 全链路、完整 Review、PR 强制门禁；G01–G05 完成，change-gate block |
 | M7 Source Authoring（029–031） | 完成：`replace_source` 独占事务、可编辑 Source、文本+对象 Diff、Glide 验收；G06–G08 完成 |
-| S1 Schema v2.0（032–034） | 032 语义冻结；033 Core 校验；034 `create_instance.scope`、Services 视图、接口展示、CLI/MCP v2；196 workspace / 34 UI / 17 Tauri；035 验收待做 |
+| S1 Schema v2.0（032–035） | 完成：语义冻结、Core 校验、命令/UI/入口、11 个 v2 数据集与 Glide v2 试点验收；UW-002/003 关闭 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
@@ -155,6 +155,7 @@ composition-designer/
 - [未决工作登记](./working/decisions/unresolved-work.md)
 - [决策与授权历史](./working/decisions/decision-history.md)
 - [Glide Task + Terminal 试点](./working/pilots/glide-task-terminal/README.md)
+- [Glide Task + Terminal v2 试点](./working/pilots/glide-task-terminal-v2/README.md)
 - [AI 架构入口](./docs/ai/architecture-entry.md)
 - [AI 工作规则](./AGENTS.md)
 - [术语表](./docs/glossary.md)

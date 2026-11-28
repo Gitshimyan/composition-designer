@@ -1,0 +1,8 @@
+[project]
+schema_version = 1
+id = "example.v2"
+name = "V1 project with v2 module"
+
+[workspace]
+composition = "composition/main.toml"
+module_roots = ["modules"]

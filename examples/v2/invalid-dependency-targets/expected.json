@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "schema-inconsistency"
+  ],
+  "notes": "A dependency declares both module and interface targets."
+}

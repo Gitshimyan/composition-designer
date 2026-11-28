@@ -1,0 +1,21 @@
+[composition]
+schema_version = 2
+id = "example.v2"
+root = "app"
+
+[[instances]]
+id = "app"
+module = "example.app"
+version = "1.0.0"
+
+[[instances]]
+id = "session"
+module = "example.session"
+version = "1.0.0"
+scope = "service"
+
+[[bindings]]
+id = "app-runtime"
+parent = "app"
+slot = "runtime"
+child = "session"

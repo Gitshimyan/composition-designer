@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "ref-interface-not-found"
+  ],
+  "notes": "The dependency targets an interface identity that no module declares."
+}

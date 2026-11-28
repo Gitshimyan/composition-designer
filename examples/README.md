@@ -14,7 +14,7 @@ v0.1 的项目样例，同时是 M0 的契约测试数据集。每个样例是�
 ```
 
 - `valid`：项目是否应在 v0.1 通过验证；
-- `diagnostics`：预期出现的错误代码集合（来自 `docs/spec/error-codes-v1.md`）；
+- `diagnostics`：预期出现的错误代码集合（v1 见 `error-codes-v1.md`，v2 见 `error-codes-v2.md`）；
 - `notes`：人读说明。
 - 样例目录中的 `README.md` 说明目的、覆盖类别与预期触发点。
 - 样例不包含 `.designer/`，因为本目录只提供项目语义数据；表现层隔离由 M3 的专门测试覆盖。
@@ -38,6 +38,25 @@ v0.1 的项目样例，同时是 M0 的契约测试数据集。每个样例是�
 | `edit-cases/` | 事务失败、Revision 冲突、重复请求（M2） | 场景说明 |
 | `external-change-cases/` | 外部合法/非法修改、未保存冲突（M3） | 场景说明 |
 
+### v2.0 数据集（035）
+
+`v2/**` 使用 `schema_version = 2`，覆盖接口身份、service scope、版本矩阵与迁移拒绝。
+每个目录带 `README.md` 与 `expected.json`。
+
+| 目录 | 内容 | 预期 |
+|---|---|---|
+| `v2/valid-service-interface/` | 接口依赖 + primitive service | valid |
+| `v2/warning-service-unused/` | 未被引用的 service | valid + warning |
+| `v2/invalid-interface-missing/` | 接口身份无声明 | `ref-interface-not-found` |
+| `v2/invalid-interface-duplicate/` | 同模块重复接口 | `id-duplicate-interface` |
+| `v2/invalid-dependency-targets/` | module + interface 同时出现 | `schema-inconsistency` |
+| `v2/invalid-service-binding/` | service 进入 Binding | `structure-service-in-binding` |
+| `v2/invalid-root-service/` | Root 为 service | `structure-root-scope-invalid` 等 |
+| `v2/invalid-service-composite/` | composite 模块作为 service | `contract-service-module-invalid` |
+| `v2/invalid-version-mismatch/` | v2 项目使用 v1 Composition | `schema-version-mismatch` |
+| `v2/invalid-provider-mismatch/` | provider 未实现接口 | `dependency-interface-mismatch` |
+| `v2/invalid-v1-project-v2-module/` | v1 项目加载 v2 模块 | `schema-unsupported-version` |
+
 ## 3. 设计基线 §12.1 覆盖矩阵
 
 | §12.1 类别 | 样例 |
@@ -54,6 +73,9 @@ v0.1 的项目样例，同时是 M0 的契约测试数据集。每个样例是�
 | 10 编辑错误 | `edit-cases/README.md`（M2 补载荷） |
 | 11 外部修改 | `external-change-cases/README.md`（M3 补序列） |
 | 12 格式保留 | `edge-valid/format-preserved/` |
+| v2 接口/service 合法 | `v2/valid-service-interface/`、`v2/warning-service-unused/` |
+| v2 接口/service 诊断 | `v2/invalid-*/` |
+| v1/v2 迁移拒绝 | `v2/invalid-version-mismatch/`、`v2/invalid-v1-project-v2-module/` |
 
 ## 4. 使用约定
 

@@ -1,0 +1,15 @@
+# v2: the workbench is the only structural child; runtime services are scope = "service".
+[module]
+schema_version = 2
+id = "glide.app"
+version = "1.0.0"
+kind = "composite"
+
+[description]
+summary = "Glide App composition root"
+
+[[contract.slots]]
+id = "workbench"
+cardinality = "one"
+required = true
+accepts = ["glide.presentation.workbench"]

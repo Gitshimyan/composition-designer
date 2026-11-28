@@ -1,0 +1,52 @@
+change:
+  id: change.035-v2-acceptance
+  intent: 补齐 v2 正反例数据集与迁移拒绝路径，在 Glide v2 试点副本上完成 CLI 验收，并关闭 UW-002/UW-003、结束 S1。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - compose
+    approved:
+      - modify
+      - compose
+    evidence: "用户 2026-11-28 要求开始 035；examples/pilots 组合声明按 Compose 默认授权"
+  targets:
+    - README.md
+    - examples
+    - working/pilots
+    - crates/composition-core/tests
+    - crates/composition-cli/tests
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/035-v2-acceptance.md
+    - changes/035-v2-acceptance.yaml
+  operations:
+    - modify
+    - compose
+  scope:
+    allowed:
+      - v2_example_datasets
+      - migration_rejection_cases
+      - glide_v2_pilot
+      - cli_acceptance_test
+      - uw_closeout
+      - docs_plan_update
+    forbidden:
+      - product_code
+      - toml_schema
+      - command_protocol
+      - design_baseline
+      - v2_1_profiles
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - composition-cli validate working/pilots/glide-task-terminal-v2 --json
+  notes: 035 只新增声明数据与验收测试；不改 Core/命令/规范语义。

@@ -1,0 +1,33 @@
+[module]
+schema_version = 2
+id = "glide.runtime.task-runner"
+version = "1.0.0"
+kind = "primitive"
+
+[description]
+summary = "Process-backed project task runner"
+
+[[contract.interfaces]]
+id = "glide.task.runner"
+version = "1.0.0"
+
+[contract.properties.profile]
+type = "string"
+required = true
+
+[[contract.ports]]
+id = "start"
+direction = "input"
+type = "glide.task.command.v1"
+protocol = "glide.task.v1"
+
+[[contract.ports]]
+id = "events"
+direction = "output"
+type = "glide.task.output.v1"
+protocol = "glide.task.v1"
+
+[[contract.dependencies]]
+id = "terminal-session"
+interface = "glide.terminal.session"
+version = "1.0.0"

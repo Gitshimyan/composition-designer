@@ -1,0 +1,9 @@
+{
+  "valid": false,
+  "diagnostics": [
+    "structure-root-scope-invalid",
+    "structure-root-not-composite",
+    "service-unused"
+  ],
+  "notes": "The root is a service; root must be a structure composite. The service is unused."
+}

@@ -6,9 +6,9 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：196 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
-> 当前阶段：M7 完成；**S1 032–034 完成（语义冻结、Core、命令/UI/入口）**；
-> 下一步 **035 v2 验收**。
+> 测试基线：199 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
+> 当前阶段：M7 完成；**S1 032–035 完成（v2.0 语义、Core、入口、验收）**；
+> 下一步 **M8 Agent Authoring（036–038）**。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -50,9 +50,11 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 - S1 034 完成：`create_instance.scope` 与 TOML 写回、Services 视图/service 创建、
   Inspector scope/interface、Dependency 接口目标；CLI/MCP v2 事务；workspace 196 /
   UI 34 / Tauri 17。
-- 未决登记：32 项；11 已关闭、5 等待决策、1 已接受待排期、2 进行中、13 延期、0 等待授权。
-- 关键缺口：035 v2 正式数据集与 Glide 试点验收、G3 Profile、
-  撤销/历史持久化、fsync、三向合并/草稿保留、ConfigValue float wire、模块文件编辑。
+- S1 035 完成：11 个 v2 数据集（37 个 expected.json）、迁移拒绝路径、Glide v2 试点
+  （7 实例 / 3 Binding / 6 Connection / 3 接口依赖）与 CLI 编辑验收；UW-002/003 关闭。
+- 未决登记：32 项；13 已关闭、5 等待决策、1 已接受待排期、0 进行中、13 延期、0 等待授权。
+- 关键缺口：G3 Profile（S2）、撤销/历史持久化、fsync、三向合并/草稿保留、
+  ConfigValue float wire、模块文件编辑（UW-031）。
 
 ## 3. 路线图
 
@@ -62,7 +64,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 | G7 | 领域缺口研究（UW-002/003/004） | done | [研究](../docs/reviews/2026-11-27-g7-domain-gaps.md)、[ADR-0004](../docs/adr/0004-schema-v2-direction.md) Accepted | Modify（研究） |
 | R1 | M7 Source 设计决议（028） | done | [ADR-0005](../docs/adr/0005-source-editing-transaction.md) Accepted | Modify（研究） |
 | M7 | Source Authoring（029–031） | done | Source 事务、UI、Review、Glide 验收 | Extend + Rearchitect（029） |
-| S1 | Schema v2.0（032–035） | in_progress（032–034 done） | 032 冻结；033 Core；034 命令/UI/入口；035 验收 | Rearchitect + Extend |
+| S1 | Schema v2.0（032–035） | done | 语义冻结、Core、命令/UI/入口、v2 数据集与 Glide 验收 | Rearchitect + Extend |
 | M8 | Agent Authoring（036–038） | later | 基于 v2 的上下文/影响、批处理、Skill 评测 | Extend / Modify |
 | S2 | Schema v2.1（039–041） | pending_decision | G3 Profile + 多 Composition 入口 | Rearchitect + Extend |
 | H1 | 选择性可靠性（042–046） | conditional | Undo、Revision 持久化、fsync、外部合并、WebView2 smoke | Modify / Extend |
@@ -104,14 +106,14 @@ M7 验收：
 - GUI/CLI/MCP 至少两个入口验证同一事务语义；
 - 不建立第二套模型或写入路径。
 
-### S1 — Schema v2.0（032–035，in_progress）
+### S1 — Schema v2.0（032–035，done）
 
 | 卡 | 方向 | 授权 | 状态 |
 |---|---|---|---|
 | 032 | Schema v2.0 ADR 批准 + 接口/服务语义冻结 | Rearchitect + Extend | done |
 | 033 | Domain/Loader/Validation：接口标记、service scope | Rearchitect + Modify | done |
 | 034 | Commands/UI/CLI/MCP：scope 创建、interface 展示 | Extend + Modify | done |
-| 035 | v1/v2 fixtures、迁移拒绝路径、Glide 试点 v2 验收 | Modify | todo |
+| 035 | v1/v2 fixtures、迁移拒绝路径、Glide 试点 v2 验收 | Modify + Compose | done |
 
 032 交付：[ADR-0006](../docs/adr/0006-schema-v2-freeze.md)、
 [composition-schema-v2.md](../docs/spec/composition-schema-v2.md)、
@@ -127,8 +129,9 @@ M7 验收：
 Services 视图与 service 创建（仅 primitive）；Inspector scope/interface；Dependency 接口
 目标与候选；CLI/MCP v2 inspect/validate/apply；Playwright 34、Tauri 17、workspace 196。
 
-035 前置：需 Modify（v2 fixtures、迁移拒绝、Glide 试点 v2 验收）。
-033–034 的实现按 032 冻结语义，不修改 v2 规范。
+035 交付：11 个 v2 数据集（总计 37 个 expected.json）、迁移拒绝路径；Glide v2 试点
+（4 structure + 3 service、3 接口依赖、6 Connection）与 CLI 编辑验收；
+UW-002/UW-003 关闭。S1 收口。
 
 ### M8 — Agent Authoring（036–038）
 
@@ -169,8 +172,8 @@ S2 前置：S1 完成 + UW-018 多入口决策。
 
 | 事项 | UW | 类型 | 计划 |
 |---|---|---|---|
-| Interface/Contract 独立身份 | UW-002 | Rearchitect | 032 已冻结（ADR-0006）；033–035 实施 |
-| 非结构 runtime/service 容器 | UW-003 | Rearchitect | 032 已冻结（实例 scope + primitive）；033–035 实施 |
+| Interface/Contract 独立身份 | UW-002 | Rearchitect | implemented（032–035；Glide v2 验收） |
+| 非结构 runtime/service 容器 | UW-003 | Rearchitect | implemented（实例 scope + primitive；Glide v2 验收） |
 | 项目级 Profile / 条件组合 | UW-004 | Rearchitect | ADR-0004 已确认 Profile 入口；S2（039–041） |
 | 接口方法与 service 内部组合 | UW-032 | Rearchitect | v2.0 明确排除；出现真实需求时评估 |
 | ConfigValue 整数值 float wire | UW-005 | Extend/协议 | M8 或独立小卡；不阻塞 Source 文本编辑 |
@@ -190,7 +193,7 @@ S2 前置：S1 完成 + UW-018 多入口决策。
 
 1. **Source 事务复杂度**：先 028 设计，避免把“可编辑文本框”当成 Source 能力；
 2. **草稿/外部冲突**：整项目 digest 只能保守检测，三向合并可能超出首版；
-3. **G1–G3 领域缺口**：G7 已完成研究；真实 runtime/Profile 采用前必须完成 S1/S2；
+3. **G3 Profile**：G7 已完成研究，S2 实施；G1/G2 已由 S1 交付；
 4. **可靠性缺口**：undo/历史/fsync 未实现，生产使用前需 H1；
 5. **单入口/单文件**：S2 前限制仍存在，M9 不再重复多入口。
 
@@ -205,7 +208,7 @@ S2 前置：S1 完成 + UW-018 多入口决策。
 | 等待用户决策 | 5 |
 | 等待授权 | 0 |
 | 已接受待排期 | 1 |
-| 进行中 | 2 |
+| 进行中 | 0 |
 | 明确延期 | 13 |
 
 ## 9. 常用命令
@@ -242,14 +245,18 @@ npm run desktop
 | 2026-11-28 | 032 | Schema v2.0 语义冻结：ADR-0006、接口/scope/诊断/命令/兼容矩阵；8 个新代码；无代码变更 |
 | 2026-11-28 | 033 | Domain/Loader/Validation：接口声明/解析、service scope、8 个诊断、版本矩阵；189 tests；v1 输出不变 |
 | 2026-11-28 | 034 | create_instance.scope、Services 视图/service 创建、接口展示；CLI/MCP v2；196 workspace / 34 UI / 17 Tauri |
+| 2026-11-28 | 035 | 11 个 v2 数据集（37 总数）、迁移拒绝、Glide v2 试点与 CLI 验收；UW-002/003 关闭；S1 完成 |
 
 ## 11. 下一步
 
-M7 完成，S1 032–034 完成。下一步：
+M7 与 S1 完成。下一步：
 
-1. **035 — v2 fixtures/迁移拒绝/Glide 试点 v2 验收**（Modify）：补齐 examples v2 正反例、
-   v1/v2 拒绝路径与真实试点验收；
-2. S1 收口后 M8 Agent；S2 Profile/multi-entry；H1 可靠性；
-3. 030/031 已关闭；Source 首版边界见 M7 验收记录。
+1. **M8 — Agent Authoring（036–038）**：上下文/影响分析查询、批处理与长任务、
+   Skill 评测；036 需 Extend 授权；
+2. **S2 — Schema v2.1（039–041）**：Profile + 多 Composition 入口，需 Rearchitect 授权与
+   UW-018 决策；
+3. **H1 可靠性（042–046，conditional）**：undo、Revision 持久化、fsync、外部合并、
+   WebView2 smoke；
+4. 030/031 已关闭；模块文件编辑仍为 UW-031 deferred。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

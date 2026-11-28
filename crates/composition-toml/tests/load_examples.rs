@@ -204,7 +204,7 @@ fn all_complete_projects_emit_only_expected_l1_codes() {
     let mut projects = Vec::new();
     collect_projects(&examples_root(), &mut projects);
     projects.sort();
-    assert_eq!(projects.len(), 25);
+    assert_eq!(projects.len(), 36);
 
     for project in projects {
         let relative = project

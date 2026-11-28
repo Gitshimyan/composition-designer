@@ -1,0 +1,11 @@
+[module]
+schema_version = 2
+id = "example.app"
+version = "1.0.0"
+kind = "composite"
+
+[[contract.dependencies]]
+id = "session"
+module = "example.session"
+interface = "example.session.api"
+version = "1.0.0"

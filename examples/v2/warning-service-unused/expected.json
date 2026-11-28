@@ -1,0 +1,7 @@
+{
+  "valid": true,
+  "diagnostics": [
+    "service-unused"
+  ],
+  "notes": "The service is valid but is not referenced by any dependency or connection."
+}
