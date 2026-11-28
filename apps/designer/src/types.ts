@@ -192,6 +192,8 @@ export interface ProjectSnapshot {
   model?: CompositionModel | null;
   diagnostics: Diagnostic[];
   canEdit: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export type EditCommand =

@@ -33,6 +33,8 @@ pub struct ProjectSession {
     document: DocumentMut,
     workspace: EditorWorkspace,
     source_requests: BTreeMap<String, SourceCommitted>,
+    undo_stack: Vec<String>,
+    redo_stack: Vec<String>,
 }
 
 impl ProjectSession {
@@ -76,6 +78,8 @@ impl ProjectSession {
             document,
             workspace,
             source_requests: BTreeMap::new(),
+            undo_stack: Vec::new(),
+            redo_stack: Vec::new(),
         })
     }
 
@@ -107,12 +111,83 @@ impl ProjectSession {
         }
     }
 
+    pub fn can_undo(&self) -> bool {
+        !self.undo_stack.is_empty()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        !self.redo_stack.is_empty()
+    }
+
+    /// 回退到上一个已提交文本；通过 replace_source 走同一验证/写回路径，并生成新 Revision。
+    pub fn undo(&mut self) -> TransactionOutcome {
+        self.restore_from_stack(true)
+    }
+
+    /// 重做上一次撤销；新编辑会清空 redo。
+    pub fn redo(&mut self) -> TransactionOutcome {
+        self.restore_from_stack(false)
+    }
+
+    fn restore_from_stack(&mut self, undo: bool) -> TransactionOutcome {
+        let target = if undo {
+            self.undo_stack.pop()
+        } else {
+            self.redo_stack.pop()
+        };
+        let Some(target) = target else {
+            return TransactionOutcome::Rejected {
+                diagnostics: vec![Diagnostic::new(
+                    ErrorCode::EditInvalidCommand,
+                    if undo {
+                        "nothing to undo"
+                    } else {
+                        "nothing to redo"
+                    },
+                )
+                .with_object_id(ObjectId::composition())],
+            };
+        };
+        let before = self.current_text.clone();
+        let transaction = Transaction::new(
+            format!(
+                "{}-{}",
+                if undo { "undo" } else { "redo" },
+                self.workspace.revision().seq + 1
+            ),
+            self.workspace.revision(),
+            vec![Command::ReplaceSource {
+                source: target.clone(),
+            }],
+        );
+        let outcome = self.apply_source(&transaction);
+        if outcome.is_accepted() {
+            if undo {
+                self.redo_stack.push(before);
+            } else {
+                self.undo_stack.push(before);
+            }
+        } else if undo {
+            self.undo_stack.push(target);
+        } else {
+            self.redo_stack.push(target);
+        }
+        outcome
+    }
+
     /// 先在模型上原子提交，再写回保留格式的 TOML；写回或重新校验失败时回滚文件与工作区。
     pub fn apply(&mut self, transaction: &Transaction) -> TransactionOutcome {
-        if has_replace_source(transaction) {
-            return self.apply_source(transaction);
+        let before = self.current_text.clone();
+        let outcome = if has_replace_source(transaction) {
+            self.apply_source(transaction)
+        } else {
+            self.apply_object(transaction)
+        };
+        if outcome.is_accepted() && !outcome.is_replayed() {
+            self.undo_stack.push(before);
+            self.redo_stack.clear();
         }
-        self.apply_object(transaction)
+        outcome
     }
 
     fn apply_object(&mut self, transaction: &Transaction) -> TransactionOutcome {

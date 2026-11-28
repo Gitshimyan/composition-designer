@@ -49,6 +49,8 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
     );
     let currentSource =
       data.mode === "v2" ? data.v2SourceText : data.sourceText;
+    const undoStack: MockSnapshot[] = [];
+    const redoStack: MockSnapshot[] = [];
     const testState = {
       mode: data.mode,
       dirty: false,
@@ -553,6 +555,39 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
       };
     }
 
+    function undoResponse(isRedo: boolean) {
+      const source = isRedo ? redoStack : undoStack;
+      const target = source.pop();
+      if (!target) {
+        return {
+          accepted: false,
+          replayed: false,
+          diff: null,
+          diagnostics: [
+            {
+              code: "edit-invalid-command",
+              severity: "error",
+              message: isRedo ? "nothing to redo" : "nothing to undo",
+            },
+          ],
+          snapshot: current,
+        };
+      }
+      const destination = isRedo ? undoStack : redoStack;
+      destination.push(current);
+      current = target;
+      current.canUndo = undoStack.length > 0;
+      current.canRedo = redoStack.length > 0;
+      return {
+        accepted: true,
+        replayed: false,
+        diff: null,
+        sourceDiff: null,
+        diagnostics: [],
+        snapshot: structuredClone(current),
+      };
+    }
+
     function rejectedResponse() {
       return {
         accepted: false,
@@ -632,9 +667,19 @@ export async function installMock(page: Page, mode: MockMode = "valid") {
           testState.lastCommands = transaction.commands;
           if (data.mode === "edit-failure") return rejectedResponse();
           const response = transactionResponse(transaction);
-          current = response.snapshot;
+          if (response.accepted) {
+            undoStack.push(current);
+            redoStack.length = 0;
+            response.snapshot.canUndo = true;
+            response.snapshot.canRedo = false;
+            current = response.snapshot;
+          }
           return response;
         }
+        case "undo":
+          return undoResponse(false);
+        case "redo":
+          return undoResponse(true);
         case "plugin:dialog|open":
           return null;
         default:

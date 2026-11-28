@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
-| 当前阶段 | **S1、M8、S2 完成**；下一步 H1 可靠性（042–046，需逐卡授权） |
+| 当前阶段 | S1、M8、S2 完成；**H1 042 undo/redo 完成**；下一步 043 持久化（需授权） |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
@@ -194,5 +194,7 @@
   Revision/Digest 作用域、Session/Source 绑定；v1/v2.0 不变；233 workspace；
 - 041 完成：CLI/MCP/Designer profile 入口、v3 数据集（40 总数）、S2 验收；
   UW-004/UW-018 关闭；238 workspace + 35 UI + 17 Tauri；
+- 042 完成：Editor undo/redo（会话文本快照、新 Revision）、Tauri IPC、
+  Designer 按钮/快捷键；UW-014 关闭；241 workspace + 36 UI + 17 Tauri；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

@@ -1,0 +1,54 @@
+change:
+  id: change.042-undo-redo
+  intent: 为 Editor 与 Designer 增加会话内 undo/redo，撤销/重做通过 replace_source 生成新 Revision；不改变 Schema/协议。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - extend
+    approved:
+      - modify
+      - extend
+    evidence: "用户 2026-11-28 明确授权开始 042 undo"
+  targets:
+    - README.md
+    - crates/composition-editor
+    - apps/designer/src-tauri
+    - apps/designer/src
+    - apps/designer/tests
+    - apps/designer/README.md
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/unresolved-work.md
+    - working/decisions/decision-history.md
+    - working/tasks/042-undo-redo.md
+    - changes/042-undo-redo.yaml
+  operations:
+    - modify
+    - extend
+  scope:
+    allowed:
+      - session_undo_redo
+      - tauri_undo_redo
+      - designer_undo_shortcuts
+      - undo_tests
+      - docs_update
+    forbidden:
+      - toml_schema
+      - command_schema
+      - protocol_semantics
+      - design_baseline
+      - cross_process_history
+      - cross_profile_undo
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+    - npm run test:ui (apps/designer)
+  notes: 042 只在内存保存已提交文本；持久化由 043 负责。

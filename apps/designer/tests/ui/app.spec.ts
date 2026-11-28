@@ -70,6 +70,28 @@ test("edits a property, reviews and applies the transaction", async ({ page }) =
   expect(calls).toBe(1);
 });
 
+test("undoes and redoes a committed edit", async ({ page }) => {
+  await openValid(page);
+  const input = titleRow(page).locator("input");
+  const original = await input.inputValue();
+  await input.fill("Undo Me");
+  await titleRow(page).getByRole("button", { name: "Review" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Apply transaction" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(input).toHaveValue("Undo Me");
+
+  const undoButton = page.getByRole("button", { name: "Undo" });
+  await expect(undoButton).toBeEnabled();
+  await undoButton.click();
+  await expect(input).toHaveValue(original);
+
+  const redoButton = page.getByRole("button", { name: "Redo" });
+  await expect(redoButton).toBeEnabled();
+  await redoButton.click();
+  await expect(input).toHaveValue("Undo Me");
+});
+
 test("cancels a review without applying", async ({ page }) => {
   await openValid(page);
   await titleRow(page).locator("input").fill("Not applied");

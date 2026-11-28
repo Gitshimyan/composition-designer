@@ -11,8 +11,10 @@ import {
   openProject,
   prepareTransaction,
   readSource,
+  redo as performRedo,
   reloadProject,
   saveLayout,
+  undo as performUndo,
 } from "./api";
 import CompositionCanvas from "./canvas/CompositionCanvas";
 import StructureTree from "./explorer/StructureTree";
@@ -122,6 +124,32 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        void handleUndo();
+      } else if ((key === "z" && event.shiftKey) || key === "y") {
+        event.preventDefault();
+        void handleRedo();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [snapshot, loadState]);
+
   async function loadProject(rawPath: string, profile: string | null = null) {
     const path = rawPath.trim();
     if (!path) {
@@ -150,6 +178,38 @@ export default function App() {
   function switchProfile(profile: string) {
     if (!snapshot) return;
     void loadProject(snapshot.root, profile);
+  }
+
+  async function handleUndo() {
+    if (!snapshot?.canUndo || loadState === "loading") return;
+    setError(null);
+    try {
+      const response = await performUndo();
+      setSnapshot(response.snapshot);
+      if (!response.accepted) {
+        setError(
+          response.diagnostics[0]?.message ?? "Undo was rejected by the Core.",
+        );
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  }
+
+  async function handleRedo() {
+    if (!snapshot?.canRedo || loadState === "loading") return;
+    setError(null);
+    try {
+      const response = await performRedo();
+      setSnapshot(response.snapshot);
+      if (!response.accepted) {
+        setError(
+          response.diagnostics[0]?.message ?? "Redo was rejected by the Core.",
+        );
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
   }
 
   async function handleChooseProject() {
@@ -603,6 +663,24 @@ export default function App() {
         </div>
 
         <div className="topbar-actions">
+          <button
+            type="button"
+            className="button button-ghost"
+            onClick={() => void handleUndo()}
+            disabled={!snapshot?.canUndo || loadState === "loading"}
+            title="Undo (Ctrl+Z)"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            className="button button-ghost"
+            onClick={() => void handleRedo()}
+            disabled={!snapshot?.canRedo || loadState === "loading"}
+            title="Redo (Ctrl+Shift+Z / Ctrl+Y)"
+          >
+            Redo
+          </button>
           <button
             type="button"
             className="button button-ghost"

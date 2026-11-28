@@ -53,6 +53,14 @@ export async function applyTransaction(
   return invoke<EditResponse>("apply_transaction", { transaction });
 }
 
+export async function undo(): Promise<EditResponse> {
+  return invoke<EditResponse>("undo");
+}
+
+export async function redo(): Promise<EditResponse> {
+  return invoke<EditResponse>("redo");
+}
+
 export async function readSource(): Promise<SourcePayload> {
   return invoke<SourcePayload>("read_source");
 }

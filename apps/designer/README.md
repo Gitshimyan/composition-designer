@@ -21,7 +21,7 @@ S1 034 增加 Services 视图、service 创建、scope 与接口目标展示。*
 
 ## 当前外壳
 
-- 顶栏：打开项目、路径输入、项目标识；v3 项目显示 Profile 选择器；
+- 顶栏：打开项目、路径输入、项目标识；v3 项目显示 Profile 选择器；Undo/Redo（Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y）；
 - Explorer：项目、模块、结构 Tree（层级/slot/选择/聚焦）；
 - Composition：`@xyflow/react` 实例节点 + Binding 边、Fit/Reset、拖动节点；
 - Inspector：

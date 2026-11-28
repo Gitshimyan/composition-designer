@@ -345,6 +345,8 @@ export function validSnapshot(seq = 0, sourceDigest = digest): ProjectSnapshot {
     model: model(seq, sourceDigest),
     diagnostics: [],
     canEdit: true,
+    canUndo: false,
+    canRedo: false,
   };
 }
 
@@ -365,6 +367,8 @@ export function invalidSnapshot(): ProjectSnapshot {
       },
     ],
     canEdit: false,
+    canUndo: false,
+    canRedo: false,
   };
 }
 
@@ -502,6 +506,8 @@ export function v2Snapshot(
     },
     diagnostics: [],
     canEdit: true,
+    canUndo: false,
+    canRedo: false,
   };
 }
 

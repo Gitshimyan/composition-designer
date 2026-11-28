@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：238 Core/Protocol/MCP/CLI + 35 UI + 17 Tauri。
-> 当前阶段：S1、M8、**S2 全部完成（039–041）**；下一步 **H1 可靠性决策**。
+> 测试基线：241 Core/Protocol/MCP/CLI + 36 UI + 17 Tauri。
+> 当前阶段：S1、M8、S2 完成；**H1 042 undo/redo 完成**；下一步 043（需单独授权）。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -58,8 +58,10 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
   Session/Source 作用域；核心 11 + editor 2 测试；v1/v2.0 不变。
 - S2 041 完成：CLI/MCP/Designer profile 入口、v3 数据集（40 总数）、S2 验收；
   UW-004/UW-018 关闭；238 workspace + 35 UI + 17 Tauri。
-- 未决登记：32 项；15 已关闭、5 等待决策、0 已接受待排期、0 进行中、12 延期、0 等待授权。
-- 关键缺口：S2 实现（040–041）、撤销/历史持久化、fsync、三向合并/草稿保留、
+- H1 042 完成：Editor undo/redo（文本快照 + 新 Revision）、Tauri IPC、Designer 按钮/快捷键；
+  UW-014 关闭；241 workspace + 36 UI + 17 Tauri。
+- 未决登记：32 项；16 已关闭、5 等待决策、0 已接受待排期、0 进行中、11 延期、0 等待授权。
+- 关键缺口：H1 043–046（Revision 持久化、fsync、外部合并、WebView2 smoke）、
   ConfigValue float wire、模块文件编辑（UW-031）。
 
 ## 3. 路线图
@@ -73,7 +75,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 | S1 | Schema v2.0（032–035） | done | 语义冻结、Core、命令/UI/入口、v2 数据集与 Glide 验收 | Rearchitect + Extend |
 | M8 | Agent Authoring（036–038） | done | 上下文/影响查询、只读 batch、Skill 评测与跨平台配置 | Extend / Modify |
 | S2 | Schema v2.1（039–041） | done | Profile + 多 Composition 入口；按 profile 的 Revision/Digest | Rearchitect + Extend |
-| H1 | 选择性可靠性（042–046） | conditional | Undo、Revision 持久化、fsync、外部合并、WebView2 smoke | Modify / Extend |
+| H1 | 选择性可靠性（042–046） | in_progress | Undo、Revision 持久化、fsync、外部合并、WebView2 smoke | Modify / Extend |
 | M9 | Composition Ecosystem（047+） | deferred | 模块库/版本、模板、Adapter | Rearchitect / Extend |
 
 顺序建议：`R0 → G7 → 028 → 029–031 → S1 → M8 → S2 → H1 → M9`。
@@ -210,10 +212,10 @@ S2 验收（全部满足）：
 - 自动迁移 v1/v2.0 → v3；
 - 远程/多项目调度。
 
-### H1 — 选择性可靠性（042–046，conditional）
+### H1 — 选择性可靠性（042–046，in_progress）
 
-- 042 撤销/重做（UW-014）；
-- 043 Revision/request 跨进程持久化（UW-015）；
+- 042 撤销/重做（UW-014）— **done**：会话文本快照、新 Revision、按钮/快捷键；
+- 043 Revision/request 跨进程持久化（UW-015）— 下一步，需单独授权；
 - 044 fsync/崩溃恢复（UW-019）；
 - 045 外部 watcher/三向合并/草稿保留（UW-017）；
 - 046 真实 WebView2 smoke（UW-012）。
@@ -254,7 +256,7 @@ S2 验收（全部满足）：
 1. **Source 事务复杂度**：先 028 设计，避免把“可编辑文本框”当成 Source 能力；
 2. **草稿/外部冲突**：整项目 digest 只能保守检测，三向合并可能超出首版；
 3. **G3 Profile**：G7 已完成研究，S2 实施；G1/G2 已由 S1 交付；
-4. **可靠性缺口**：undo/历史/fsync 未实现，生产使用前需 H1；
+4. **可靠性缺口**：undo 已实现；历史跨进程持久化/fsync 未实现，生产使用前需 H1 043–044；
 5. **单入口/单文件**：S2 已支持多入口；模块文件仍单文件（UW-031 deferred）。
 
 ## 8. 当前未决总览
@@ -264,12 +266,12 @@ S2 验收（全部满足）：
 | 指标 | 数量 |
 |---|---:|
 | 登记事项 | 32 |
-| 已实现 / 已关闭 | 15 |
+| 已实现 / 已关闭 | 16 |
 | 等待用户决策 | 5 |
 | 等待授权 | 0 |
 | 已接受待排期 | 0 |
 | 进行中 | 0 |
-| 明确延期 | 12 |
+| 明确延期 | 11 |
 
 ## 9. 常用命令
 
@@ -313,15 +315,16 @@ npm run desktop
 | 2026-11-28 | 039 | v2.1 语义冻结：format 3、Profile/多入口、选择/Revision/Digest、3 个新代码；无代码变更 |
 | 2026-11-28 | 040 | Domain v3、Loader/Core profile 选择、Revision/Digest、Session/Source 作用域；233 tests |
 | 2026-11-28 | 041 | CLI/MCP/Designer profile 入口、v3 数据集、S2 验收；238 tests + 35 UI + 17 Tauri；UW-004/018 关闭 |
+| 2026-11-28 | 042 | Editor/Designer undo/redo、Tauri IPC、快捷键；241 tests + 36 UI + 17 Tauri；UW-014 关闭 |
 
 ## 11. 下一步
 
-M7/S1/M8/S2 完成。下一步：
+M7/S1/M8/S2 完成，H1 进行中。下一步：
 
-1. **H1 — 选择性可靠性（042–046，conditional）**：undo、Revision 跨进程持久化、
-   fsync/崩溃恢复、外部合并/草稿、WebView2 smoke；按真实使用反馈排序，逐卡授权；
-2. **M9 生态（047+）**：模块库/模板，S2 后按需评估；
-3. UW-020（progress/cancel）、UW-031（模块文件编辑）、UW-032（接口形状）仍 deferred；
-4. H1 每张卡需单独授权；建议先做 042 undo 或 043 Revision 持久化，需你选择。
+1. **043 — Revision/request 跨进程持久化**（UW-015）：需单独授权（Modify + Extend）；
+2. 044/045/046 按真实反馈排序；每张卡单独授权；
+3. M9 生态按需；UW-020（progress/cancel）、UW-031（模块文件编辑）、
+   UW-032（接口形状）仍 deferred；
+4. 建议 043 之前先确认持久化位置与格式（仓库内 `.designer/` 或外部状态目录）。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

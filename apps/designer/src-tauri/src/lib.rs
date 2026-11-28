@@ -28,6 +28,8 @@ pub struct ProjectSnapshot {
     pub model: Option<CompositionModel>,
     pub diagnostics: Vec<Diagnostic>,
     pub can_edit: bool,
+    pub can_undo: bool,
+    pub can_redo: bool,
 }
 
 /// Presentation-only canvas position. `.designer/**` is never read by Core.
@@ -95,6 +97,8 @@ fn snapshot_from_model(root: String, model: &CompositionModel, can_edit: bool) -
         model: Some(model.clone()),
         diagnostics,
         can_edit,
+        can_undo: false,
+        can_redo: false,
     }
 }
 
@@ -116,6 +120,8 @@ fn snapshot_from_validation(
         model: validation.model.clone(),
         diagnostics: validation.diagnostics.clone(),
         can_edit,
+        can_undo: false,
+        can_redo: false,
     }
 }
 
@@ -125,11 +131,14 @@ fn snapshot(path: &str) -> ProjectSnapshot {
 }
 
 fn snapshot_from_session(session: &ProjectSession) -> ProjectSnapshot {
-    snapshot_from_model(
+    let mut snapshot = snapshot_from_model(
         session.root().to_string_lossy().into_owned(),
         session.workspace().model(),
         true,
-    )
+    );
+    snapshot.can_undo = session.can_undo();
+    snapshot.can_redo = session.can_redo();
+    snapshot
 }
 
 fn external_change_state(session: &ProjectSession) -> ExternalChangeState {
@@ -239,6 +248,36 @@ fn prepare_transaction(
         return Ok(conflict_response(session));
     }
     let outcome = session.prepare(&transaction);
+    Ok(edit_response(session, outcome))
+}
+
+#[tauri::command]
+fn undo(state: State<'_, SessionState>) -> Result<EditResponse, String> {
+    let mut guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_mut() else {
+        return Err("project is not editable".to_owned());
+    };
+    if external_dirty(session) {
+        return Ok(conflict_response(session));
+    }
+    let outcome = session.undo();
+    Ok(edit_response(session, outcome))
+}
+
+#[tauri::command]
+fn redo(state: State<'_, SessionState>) -> Result<EditResponse, String> {
+    let mut guard = state
+        .lock()
+        .map_err(|_| "project state lock poisoned".to_owned())?;
+    let Some(session) = guard.as_mut() else {
+        return Err("project is not editable".to_owned());
+    };
+    if external_dirty(session) {
+        return Ok(conflict_response(session));
+    }
+    let outcome = session.redo();
     Ok(edit_response(session, outcome))
 }
 
@@ -417,6 +456,8 @@ pub fn run() {
             initial_project,
             apply_transaction,
             prepare_transaction,
+            undo,
+            redo,
             read_source,
             check_external_changes,
             reload_project,
