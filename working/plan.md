@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：218 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
-> 当前阶段：S1 完成；**M8 036–037 完成**；下一步 **038 Agent Skill 评测**。
+> 测试基线：220 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
+> 当前阶段：S1 与 **M8 Agent Authoring 完成**；下一步 **S2 / H1 决策**。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -64,7 +64,7 @@ Source 编辑（保留格式 + 完整事务 + 冲突处理）
 | R1 | M7 Source 设计决议（028） | done | [ADR-0005](../docs/adr/0005-source-editing-transaction.md) Accepted | Modify（研究） |
 | M7 | Source Authoring（029–031） | done | Source 事务、UI、Review、Glide 验收 | Extend + Rearchitect（029） |
 | S1 | Schema v2.0（032–035） | done | 语义冻结、Core、命令/UI/入口、v2 数据集与 Glide 验收 | Rearchitect + Extend |
-| M8 | Agent Authoring（036–038） | in_progress | 上下文/影响查询、批处理、Skill 评测 | Extend / Modify |
+| M8 | Agent Authoring（036–038） | done | 上下文/影响查询、只读 batch、Skill 评测与跨平台配置 | Extend / Modify |
 | S2 | Schema v2.1（039–041） | pending_decision | G3 Profile + 多 Composition 入口 | Rearchitect + Extend |
 | H1 | 选择性可靠性（042–046） | conditional | Undo、Revision 持久化、fsync、外部合并、WebView2 smoke | Modify / Extend |
 | M9 | Composition Ecosystem（047+） | deferred | 模块库/版本、模板、Adapter | Rearchitect / Extend |
@@ -132,7 +132,7 @@ Services 视图与 service 创建（仅 primitive）；Inspector scope/interface
 （4 structure + 3 service、3 接口依赖、6 Connection）与 CLI 编辑验收；
 UW-002/UW-003 关闭。S1 收口。
 
-### M8 — Agent Authoring（036–038，in_progress）
+### M8 — Agent Authoring（036–038，done）
 
 目标：让 Agent 用结构化上下文/影响查询规划编辑，支持批量读取与可重复评测的 Skill；
 不改变 Core 写事务语义。
@@ -141,7 +141,15 @@ UW-002/UW-003 关闭。S1 收口。
 |---|---|---|---|
 | 036 | protocol/CLI/MCP `context` + `impact`（module / instance / transaction dry-run） | Extend + Rearchitect（协议文档） | done |
 | 037 | protocol/CLI/MCP `batch`（只读、限流、逐项结果）；progress/cancel 不在本阶段 | Extend + Rearchitect（协议文档） | done |
-| 038 | Agent eval harness（Node，跨平台）、`configure.sh`、Skill 文档与评测记录 | Modify + Extend | in_progress |
+| 038 | Agent eval harness（Node，跨平台）、`configure.mjs`、Skill 文档与评测记录 | Modify + Extend | done |
+
+交付：
+
+- 036：`context` / `impact`（module、instance、transaction prepare-only），CLI/MCP 与协议文档；
+- 037：只读 `batch`（1..16、写操作拒绝、逐项 Response），CLI/MCP 与协议文档；
+- 038：`composition-mcp/tests/skill_eval.rs`（minimal + Glide v2）、`agent/configure.mjs`、
+  `agent/EVALUATION.md`；
+- 收口：220 workspace 测试；M8 验收全部满足；UW-020 仍 deferred。
 
 M8 验收：
 
@@ -265,13 +273,16 @@ npm run desktop
 | 2026-11-28 | M8 | Agent Authoring 开始：036 context/impact 查询；037 batch；038 eval/跨平台配置 |
 | 2026-11-28 | 036 | context/impact：protocol/CLI/MCP、协议与 Skill；210 tests；只读 |
 | 2026-11-28 | 037 | 只读 batch：protocol/CLI/MCP、限流与逐项结果；218 tests；无 progress/cancel |
+| 2026-11-28 | 038 | Skill 评测（minimal + Glide v2）、configure.mjs；220 tests；M8 完成 |
 
 ## 11. 下一步
 
-M7/S1 完成，M8 进行中。下一步：
+M7/S1/M8 完成。下一步：
 
-1. **038 — Agent Skill 评测**：跨平台 eval harness（Node）与 `configure.sh`；
-2. M8 后 S2 Profile/multi-entry；H1 可靠性；模块文件编辑仍为 UW-031 deferred；
-3. UW-020（progress/cancel）在 037 评估后仍 deferred。
+1. **S2 — Schema v2.1（039–041）**：Profile + 多入口；需 Rearchitect 授权 + UW-018 决策；
+2. **H1 — 选择性可靠性（042–046，conditional）**：undo、Revision 持久化、fsync、
+   外部合并、WebView2 smoke；按真实反馈排序；
+3. **M9 生态（047+）**：S1/S2 完成后按需评估；UW-031 模块文件编辑仍 deferred；
+4. UW-020（MCP progress/cancel）在 037 评估后继续 deferred。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

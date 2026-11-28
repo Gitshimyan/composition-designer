@@ -1,0 +1,47 @@
+change:
+  id: change.038-agent-skill-eval
+  intent: 新增确定性 Skill 评测（minimal 与 Glide v2）与跨平台 MCP 配置生成，完成 M8。
+  coverage_status: complete
+  authorization:
+    required:
+      - modify
+      - extend
+    approved:
+      - modify
+      - extend
+    evidence: "用户 2026-11-28 明确授权 M8（036–038）"
+  targets:
+    - README.md
+    - agent
+    - crates/composition-mcp/tests
+    - docs/ai/architecture-entry.md
+    - working/plan.md
+    - working/decisions/decision-history.md
+    - working/tasks/038-agent-skill-eval.md
+    - changes/038-agent-skill-eval.yaml
+  operations:
+    - modify
+    - extend
+  scope:
+    allowed:
+      - skill_eval_test
+      - cross_platform_config
+      - agent_docs
+      - plan_update
+    forbidden:
+      - transaction_semantics
+      - toml_schema
+      - design_baseline
+      - designer_ui
+      - progress_cancel
+  unresolved_items: []
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: false
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test -p composition-mcp --test skill_eval
+    - cargo test --workspace
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 038 只新增 Agent 评测、配置脚本与文档；不改产品语义。

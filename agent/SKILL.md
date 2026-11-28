@@ -108,5 +108,12 @@ The repository contains a real MCP stdio end-to-end test:
 cargo test -p composition-mcp --test e2e -- --nocapture
 ```
 
+Deterministic Skill evaluation:
+
+```powershell
+cargo test -p composition-mcp --test skill_eval
+```
+
 It starts `composition-mcp --project <copy>`, resolves the project, prepares and applies a
-`set_config` transaction, validates, and confirms the TOML source changed.
+`set_config` transaction, validates, and confirms the TOML source changed. See
+[EVALUATION.md](./EVALUATION.md) for the scenario list.

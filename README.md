@@ -56,7 +56,7 @@ v0.1 **明确不做**：运行 / 构建 / 部署项目、生成业务代码、�
 | v0.2 / M6 | M6 完成（020–027）：Glide 全链路、完整 Review、PR 强制门禁；G01–G05 完成，change-gate block |
 | M7 Source Authoring（029–031） | 完成：`replace_source` 独占事务、可编辑 Source、文本+对象 Diff、Glide 验收；G06–G08 完成 |
 | S1 Schema v2.0（032–035） | 完成：语义冻结、Core 校验、命令/UI/入口、11 个 v2 数据集与 Glide v2 试点验收；UW-002/003 关闭 |
-| M8 Agent Authoring（036–037） | 036 `context`/`impact`；037 只读 `batch`（1..16、逐项结果）；protocol/CLI/MCP 同步 |
+| M8 Agent Authoring（036–038） | 完成：`context`/`impact`、只读 `batch`、Skill 评测与跨平台配置；220 workspace 测试 |
 
 当前已有 `composition-domain`、`composition-toml`、`composition-core`、`composition-cli`、
 `composition-editor`、`composition-protocol`、`composition-mcp` 与 `apps/designer`；
