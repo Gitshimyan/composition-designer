@@ -31,3 +31,4 @@
 | D-024 | 2026-11-28 | 完成 034 Commands/UI/CLI/MCP | 用户明确授权进行 034；Extend + Modify | `create_instance.scope` 与写回、Services 视图/创建、接口展示；CLI/MCP v2；196 workspace / 34 UI / 17 Tauri；无 Schema/基线改动 |
 | D-025 | 2026-11-28 | 完成 035 v2 验收，S1 收口 | 用户要求开始 035；Modify + Compose | 11 个 v2 数据集、迁移拒绝、Glide v2 试点 CLI 验收；UW-002/UW-003 关闭；S1 完成 |
 | D-026 | 2026-11-28 | 完成 036 Agent context/impact | 用户明确授权 M8（036–038）；Extend + Rearchitect（协议文档） | protocol/CLI/MCP context/impact；只读；协议/MCP/Skill 更新；210 workspace 测试 |
+| D-027 | 2026-11-28 | 完成 037 只读 batch | 用户授权 M8；Extend + Rearchitect（协议文档） | batch 1..16、只读白名单、逐项结果；CLI/MCP；218 workspace 测试；progress/cancel 仍 deferred |

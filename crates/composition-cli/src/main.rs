@@ -191,6 +191,21 @@ where
             };
             run_impact(Path::new(&path), params)
         }
+        "batch" => {
+            let Some(path) = args.next() else {
+                usage();
+                return 2;
+            };
+            let Some(requests_path) = args.next() else {
+                usage();
+                return 2;
+            };
+            if args.next().is_some() {
+                usage();
+                return 2;
+            }
+            run_batch(Path::new(&path), Path::new(&requests_path))
+        }
         "inspect" | "resolve" | "validate" => {
             let mut path = None;
             let mut json = false;
@@ -293,6 +308,41 @@ fn run_impact(root: &Path, params: serde_json::Value) -> i32 {
         id: "cli-impact".to_owned(),
         op: "impact".to_owned(),
         params,
+    });
+    write_response_pretty(&response)
+}
+
+fn run_batch(root: &Path, requests_path: &Path) -> i32 {
+    let text = match fs::read_to_string(requests_path) {
+        Ok(text) => text,
+        Err(error) => {
+            eprintln!("cannot read {}: {error}", requests_path.display());
+            return 2;
+        }
+    };
+    let value = match serde_json::from_str::<serde_json::Value>(&text) {
+        Ok(value) => value,
+        Err(error) => {
+            eprintln!("invalid batch JSON: {error}");
+            return 2;
+        }
+    };
+    let requests = if value.is_array() {
+        value
+    } else {
+        match value.get("requests").cloned() {
+            Some(requests) => requests,
+            None => {
+                eprintln!("batch file must be an array or an object with a requests array");
+                return 2;
+            }
+        }
+    };
+    let mut session = ProtocolSession::new(root);
+    let response = session.dispatch(Request {
+        id: "cli-batch".to_owned(),
+        op: "batch".to_owned(),
+        params: json!({ "requests": requests }),
     });
     write_response_pretty(&response)
 }
@@ -441,7 +491,7 @@ fn severity_name(severity: Severity) -> &'static str {
 
 fn usage() {
     eprintln!(
-        "Usage: composition-cli <inspect|resolve|validate|context|impact|query|apply|jsonl> ..."
+        "Usage: composition-cli <inspect|resolve|validate|context|impact|batch|query|apply|jsonl> ..."
     );
 }
 
@@ -456,6 +506,7 @@ fn print_help() {
     println!(
         "  composition-cli impact <project-dir> (--module <id>@<version> | --instance <id> | --transaction <file>)"
     );
+    println!("  composition-cli batch <project-dir> <requests.json>");
     println!("  composition-cli query <project-dir> <op>");
     println!("  composition-cli apply <project-dir> <transaction.json> [--dry-run]");
     println!("  composition-cli jsonl <project-dir>");
@@ -466,6 +517,7 @@ fn print_help() {
     println!("  validate  validation summary and diagnostics (human by default)");
     println!("  context   compact agent context (modules, instances, diagnostics, revision)");
     println!("  impact    module/instance/transaction impact analysis (JSON)");
+    println!("  batch     read-only requests from a JSON file (max 16)");
     println!("  query     protocol query: inspect | resolve | validate | source | context");
     println!("  apply     protocol transaction from a JSON file (use --dry-run to prepare)");
     println!("  jsonl     line-delimited JSON requests on stdin / responses on stdout");

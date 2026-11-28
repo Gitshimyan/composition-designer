@@ -34,6 +34,7 @@ Tools：
 - `composition_source`
 - `composition_context`
 - `composition_impact`
+- `composition_batch`
 - `composition_prepare_transaction`
 - `composition_apply_transaction`
 

@@ -10,7 +10,7 @@
 |---|---|
 | 项目 | Composition Designer |
 | 版本 | v0.1 冻结；v0.2 M6 完成；v0.3 M7 完成 |
-| 当前阶段 | S1 完成；**M8 036 完成（context/impact 查询）**；下一步 037 batch、038 Skill 评测 |
+| 当前阶段 | S1 完成；**M8 036–037 完成（context/impact、只读 batch）**；下一步 038 Skill 评测 |
 | 设计基线 | [`docs/design/v0.1-design.md`](../design/v0.1-design.md) |
 | 外部评审 | [项目评审](../reviews/2026-11-27-project-review-and-roadmap.md) · [授权审计](../reviews/2026-11-27-authorization-audit.md) · [未实现披露](../reviews/2026-11-27-unimplemented-work-transparency.md) · [整改计划](../reviews/2026-11-27-audit-response.md) |
 | 冻结规范 | [`docs/spec/`](../spec/)（domain / schema v1 / error codes；v2.0 增量另见 `composition-schema-v2.md`） |
@@ -184,5 +184,7 @@
   UW-002/UW-003 关闭；S1 完成；
 - 036 完成：protocol/CLI/MCP `context` 与 `impact`（module/instance/transaction）；
   `impact` 的 transaction 仅 prepare；协议/MCP/Skill 文档更新；210 workspace 测试；
+- 037 完成：protocol/CLI/MCP 只读 `batch`（1..16、写操作拒绝、逐项 Response）；
+  协议/MCP/Skill 文档更新；218 workspace 测试；
 - M6 优先使用现有 Domain/Schema/Commands；试点发现不足再提 Extend/Rearchitect；
 - 开始前先取 `working/plan.md` 中的当前卡，不要根据评审建议直接改 Schema 或 UI。

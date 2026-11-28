@@ -40,7 +40,7 @@
 | UW-017 | 015 | 外部修改 watcher、三向合并、Review 草稿保留、layout 合并 | 产品能力 | deferred | Modify / Extend | 2s 轮询；Reload 丢弃 Review/布局 | M7 或独立评估 |
 | UW-018 | 011 / 016 / 019 | 多 composition 入口 / 多文件项目 | Rearchitect | deferred | Rearchitect | 仅单入口；项目拆分受限 | M9 方向 |
 | UW-019 | 011 / 013 / 019 | fsync 级崩溃恢复 | 可靠性 | deferred | Modify | 断电窗口仍存在 | 后续独立评估 |
-| UW-020 | 017 / 018 / 019 | MCP subscriptions/progress/cancel/auth/多项目 | 协议能力 | deferred | Extend | Agent 长任务/多项目能力不足 | M8 方向 |
+| UW-020 | 017 / 018 / 019 | MCP subscriptions/progress/cancel/auth/多项目 | 协议能力 | deferred | Extend | Agent 长任务/多项目能力不足 | 037 以只读 batch 覆盖批量读取；progress/cancel 仍无长任务证据，继续 deferred |
 | UW-021 | 018 | Agent Skill LLM 评测、跨平台配置生成 | 工程能力 | deferred | Extend | 仅工具链 e2e，仅 Windows 脚本 | M8 方向 |
 | UW-022 | 022 | 模块库/版本发现与下载 | 产品能力 | deferred | Extend / Rearchitect | 只能选已加载模块 | M9 方向 |
 | UW-023 | 023 | Binding 向导/Move 的 UX 限制（child 固定、required many 只建一个、MAX_DEPTH） | UX 能力 | pending_decision | Modify | 复杂结构需多次操作/改写 child | 026 后按反馈评估 |

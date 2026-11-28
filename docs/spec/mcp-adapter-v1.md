@@ -35,7 +35,7 @@
 
 ## 2. Tools
 
-`tools/list` 返回 8 个工具：
+`tools/list` 返回 9 个工具：
 
 | Tool | 参数 | 语义 |
 |---|---|---|
@@ -45,6 +45,7 @@
 | `composition_source` | `{}` | 只读 composition TOML |
 | `composition_context` | `{}` | 紧凑 Agent 上下文（project/counts/modules/instances/diagnostics/revision） |
 | `composition_impact` | `{module}` 或 `{instance}` 或 `{transaction}` | 模块/实例/事务影响分析（只读） |
+| `composition_batch` | `{requests:[Request,...]}` | 最多 16 条只读 protocol 请求，逐项返回结果 |
 | `composition_prepare_transaction` | `{transaction}` | 校验并返回 Diff，不写 |
 | `composition_apply_transaction` | `{transaction}` | 原子应用并返回 Diff |
 
@@ -105,6 +106,7 @@
 
 - 单进程单项目；不做多项目切换。
 - 不实现 subscriptions、progress、cancellation、分页与认证（M8 037 评估后仍未启用）。
+- `composition_batch` 只接受只读 op；写操作在 batch 中被拒绝（`protocol-operation-not-allowed`）。
 - `initialize` 回显客户端 protocolVersion；服务端只实现当前 MCP 基础消息集。
 - 017 不包含 MCP 客户端配置/Agent Skill；018 负责端到端。
 

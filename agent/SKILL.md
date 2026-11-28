@@ -19,6 +19,7 @@ Revision and TOML formatting stay consistent.
 | `composition_source` | Read-only composition TOML |
 | `composition_context` | Compact project/module/instance/diagnostic context for planning |
 | `composition_impact` | References for a module or instance, or dry-run impact of a transaction |
+| `composition_batch` | Up to 16 read-only queries in one call; each returns its own result |
 | `composition_prepare_transaction` | Validate a transaction and inspect its Diff; no write |
 | `composition_apply_transaction` | Atomically apply a transaction |
 
@@ -35,6 +36,8 @@ Resources: `composition://project/inspect`, `composition://project/model`,
    is large. Use `composition_impact` with `{ "instance": "..." }` or
    `{ "module": { "id": "...", "version": "..." } }` before changing or deleting an object:
    check parent/child bindings, connections, dependents and explicit providers.
+   For several independent reads, call `composition_batch` with up to 16
+   `{ "id", "op", "params" }` items instead of multiple round trips.
 4. Build a transaction:
 
 ```json
@@ -78,6 +81,8 @@ Resources: `composition://project/inspect`, `composition://project/model`,
   an impact transaction target is a prepare-only preview, not an apply.
 - `composition_impact` accepts exactly one of `module`, `instance`, `transaction`; never combine
   them in one call.
+- `composition_batch` is read-only (inspect/resolve/validate/source/context/impact), max 16 items;
+  a failing item does not abort the others. Writes stay in prepare/apply transaction calls.
 - Layout (`.designer/layout.toml`) and Canvas positions are not project semantics and are not
   exposed by MCP.
 - Prefer one command per transaction for clear review; multiple commands are allowed and atomic.

@@ -31,6 +31,7 @@
 | `source` | `{}` | `{entry, text}`；仅可编辑会话 |
 | `context` | `{}` | 紧凑 Agent 上下文（见 §1.1） |
 | `impact` | 三个目标之一（见 §1.2） | 模块/实例/事务影响分析 |
+| `batch` | `{"requests":[Request,...]}` | 只读批量查询（见 §1.3） |
 
 ### 1.1 `context`
 
@@ -82,6 +83,26 @@
 - 目标不存在：`project-not-readable` 或 `protocol-unknown-target`。
 - 影响分析只读；`transaction` 目标不会写入文件或递增 Revision。
 
+### 1.3 `batch`
+
+```json
+{
+  "requests": [
+    { "id": "a", "op": "inspect" },
+    { "id": "b", "op": "context" },
+    { "id": "c", "op": "impact", "params": { "instance": "app" } }
+  ]
+}
+```
+
+- 1..16 条请求；只允许只读 op：`inspect`、`resolve`、`validate`、`source`、
+  `context`、`impact`。写操作、`batch` 自身与未知 op 返回
+  `protocol-operation-not-allowed`，整个 batch 不执行。
+- 空数组或超过 16 条返回 `protocol-invalid-params`。
+- `result` 为 `{count, results}`；每个 `results[i]` 是完整 `Response`
+  （`id`、`ok`、`result`、`diagnostics`、`error`），按请求顺序排列。
+- 单条失败不终止其它请求；顶层 `ok=true` 表示 batch 本身被接受。
+
 ### 命令
 
 | op | params | result |
@@ -114,6 +135,7 @@
   - `project-not-editable`
   - `project-not-readable`（impact 需要可读模型）
   - `protocol-unknown-target`（impact 的模块/实例不存在）
+  - `protocol-operation-not-allowed`（batch 中含写操作/未知 op）
 - 命令诊断示例：`edit-revision-conflict`（外部修改/旧 Revision）、
   `structure-slot-cardinality`（候选模型非法）。
 
@@ -135,12 +157,14 @@ composition-cli context examples/minimal-project
 composition-cli impact examples/minimal-project --instance app
 composition-cli impact examples/minimal-project --module leaf.widget@1.0.0
 composition-cli impact examples/minimal-project --transaction transaction.json
+composition-cli batch examples/minimal-project requests.json
 composition-cli apply examples/minimal-project transaction.json --dry-run
 composition-cli apply examples/minimal-project transaction.json
 composition-cli jsonl examples/minimal-project
 ```
 
-- `query` / `context` / `impact` 输出 pretty JSON；`ok=false` 退出 1。
+- `query` / `context` / `impact` / `batch` 输出 pretty JSON；`ok=false` 退出 1。
+- `batch` 文件可以是请求数组，或 `{ "requests": [...] }` 对象；格式错误退出 2。
 - `impact` 只接受一个目标；同时给多个或都不给退出 2。
 - `apply` 读取 transaction JSON；`--dry-run` 调 `prepare_transaction`，否则 `apply_transaction`；
   `ok=false` 退出 1，IO/JSON 错误退出 2。

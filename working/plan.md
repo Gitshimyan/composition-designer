@@ -6,8 +6,8 @@
 > [授权审计](../docs/reviews/2026-11-27-authorization-audit.md) ·
 > [未实现披露](../docs/reviews/2026-11-27-unimplemented-work-transparency.md) ·
 > [整改计划](../docs/reviews/2026-11-27-audit-response.md)。
-> 测试基线：210 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
-> 当前阶段：S1 完成；**M8 036 完成（context/impact）**；下一步 **037 batch**。
+> 测试基线：218 Core/Protocol/MCP/CLI + 34 UI + 17 Tauri。
+> 当前阶段：S1 完成；**M8 036–037 完成**；下一步 **038 Agent Skill 评测**。
 > 推进规则：一次只推进一张任务卡；推送必须经过 PR 与 block 门禁，且只在用户明确要求时执行。
 
 ## 1. 下一阶段目标
@@ -140,8 +140,8 @@ UW-002/UW-003 关闭。S1 收口。
 | 卡 | 交付 | 授权 | 状态 |
 |---|---|---|---|
 | 036 | protocol/CLI/MCP `context` + `impact`（module / instance / transaction dry-run） | Extend + Rearchitect（协议文档） | done |
-| 037 | protocol/CLI/MCP `batch`（只读、限流、逐项结果）；progress/cancel 不在本阶段 | Extend | todo |
-| 038 | Agent eval harness（Node，跨平台）、`configure.sh`、Skill 文档与评测记录 | Modify + Extend | todo |
+| 037 | protocol/CLI/MCP `batch`（只读、限流、逐项结果）；progress/cancel 不在本阶段 | Extend + Rearchitect（协议文档） | done |
+| 038 | Agent eval harness（Node，跨平台）、`configure.sh`、Skill 文档与评测记录 | Modify + Extend | in_progress |
 
 M8 验收：
 
@@ -264,13 +264,14 @@ npm run desktop
 | 2026-11-28 | 035 | 11 个 v2 数据集（37 总数）、迁移拒绝、Glide v2 试点与 CLI 验收；UW-002/003 关闭；S1 完成 |
 | 2026-11-28 | M8 | Agent Authoring 开始：036 context/impact 查询；037 batch；038 eval/跨平台配置 |
 | 2026-11-28 | 036 | context/impact：protocol/CLI/MCP、协议与 Skill；210 tests；只读 |
+| 2026-11-28 | 037 | 只读 batch：protocol/CLI/MCP、限流与逐项结果；218 tests；无 progress/cancel |
 
 ## 11. 下一步
 
-M7 与 S1 完成，M8 进行中。下一步：
+M7/S1 完成，M8 进行中。下一步：
 
-1. **037 — Agent batch**：只读批量请求与限流；progress/cancel 仍 deferred（UW-020）；
-2. **038 — Agent Skill 评测**：跨平台 eval harness 与配置脚本；
-3. M8 后 S2 Profile/multi-entry；H1 可靠性；模块文件编辑仍为 UW-031 deferred。
+1. **038 — Agent Skill 评测**：跨平台 eval harness（Node）与 `configure.sh`；
+2. M8 后 S2 Profile/multi-entry；H1 可靠性；模块文件编辑仍为 UW-031 deferred；
+3. UW-020（progress/cancel）在 037 评估后仍 deferred。
 
 035 开始前确认：是否需要把 034 的 UI 创建入口纳入试点操作脚本；若需，先写进 035 卡。

@@ -76,6 +76,21 @@ struct TransactionParams {
 }
 
 #[derive(Debug, Deserialize)]
+struct BatchParams {
+    requests: Vec<Request>,
+}
+
+const BATCH_LIMIT: usize = 16;
+
+const READ_ONLY_OPS: &[&str] = &[
+    "inspect", "resolve", "validate", "source", "context", "impact",
+];
+
+fn is_read_only(op: &str) -> bool {
+    READ_ONLY_OPS.contains(&op)
+}
+
+#[derive(Debug, Deserialize)]
 struct ModuleSelector {
     id: composition_domain::ModuleId,
     version: composition_domain::Version,
@@ -119,6 +134,7 @@ impl ProtocolSession {
             "source" => self.source(request.id),
             "context" => self.context(request.id),
             "impact" => self.impact(request.id, request.params),
+            "batch" => self.batch(request.id, request.params),
             "prepare_transaction" => self.transaction(request.id, request.params, false),
             "apply_transaction" => self.transaction(request.id, request.params, true),
             other => error(
@@ -328,6 +344,53 @@ impl ProtocolSession {
                 error: None,
             }
         }
+    }
+
+    fn batch(&mut self, id: String, params: Value) -> Response {
+        let params: BatchParams = match serde_json::from_value(params) {
+            Ok(params) => params,
+            Err(parse_error) => {
+                return error(
+                    id,
+                    "protocol-invalid-params",
+                    format!("invalid batch params: {parse_error}"),
+                )
+            }
+        };
+        if params.requests.is_empty() || params.requests.len() > BATCH_LIMIT {
+            return error(
+                id,
+                "protocol-invalid-params",
+                format!(
+                    "batch requires 1..={BATCH_LIMIT} requests, got {}",
+                    params.requests.len()
+                ),
+            );
+        }
+        if let Some(request) = params
+            .requests
+            .iter()
+            .find(|request| !is_read_only(&request.op))
+        {
+            return error(
+                id,
+                "protocol-operation-not-allowed",
+                format!(
+                    "operation {:?} is not allowed in a read-only batch",
+                    request.op
+                ),
+            );
+        }
+
+        let mut results = Vec::with_capacity(params.requests.len());
+        for request in params.requests {
+            results.push(self.dispatch(request));
+        }
+        success(
+            id,
+            json!({ "count": results.len(), "results": results }),
+            Vec::new(),
+        )
     }
 
     fn transaction(&mut self, id: String, params: Value, apply: bool) -> Response {

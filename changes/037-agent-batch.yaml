@@ -1,0 +1,61 @@
+change:
+  id: change.037-agent-batch
+  intent: 新增只读 batch（1..16 条、只读白名单、逐项结果），贯通 protocol、CLI、MCP 并更新文档；不实现 progress/cancel。
+  coverage_status: complete_with_deferred_items
+  authorization:
+    required:
+      - modify
+      - extend
+      - rearchitect
+    approved:
+      - modify
+      - extend
+      - rearchitect
+    evidence: "用户 2026-11-28 明确授权 M8（036–038）；037 新增只读协议 op 并更新冻结协议文档"
+  targets:
+    - README.md
+    - crates/composition-protocol
+    - crates/composition-cli
+    - crates/composition-mcp
+    - docs/spec/protocol-v1.md
+    - docs/spec/mcp-adapter-v1.md
+    - docs/ai/architecture-entry.md
+    - agent/SKILL.md
+    - agent/README.md
+    - working/plan.md
+    - working/decisions/decision-history.md
+    - working/decisions/unresolved-work.md
+    - working/tasks/037-agent-batch.md
+    - changes/037-agent-batch.yaml
+  operations:
+    - modify
+    - extend
+    - rearchitect
+  scope:
+    allowed:
+      - read_only_batch
+      - cli_batch
+      - mcp_batch_tool
+      - protocol_docs
+      - agent_skill_docs
+      - tests
+      - plan_update
+    forbidden:
+      - transaction_semantics
+      - toml_schema
+      - design_baseline
+      - designer_ui
+      - progress_cancel
+      - write_in_batch
+  unresolved_items:
+    - UW-020
+  impact:
+    expected_schema_changes: false
+    expected_command_changes: true
+    expected_design_baseline_changes: false
+  validation:
+    - cargo test --workspace
+    - cargo test --manifest-path apps/designer/src-tauri/Cargo.toml
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo fmt --all --check
+  notes: 037 只新增只读批量查询；写操作在 batch 中被拒绝。
